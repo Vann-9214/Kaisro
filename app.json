@@ -1,0 +1,40 @@
+{
+  "expo": {
+    "name": "Kaisro",
+    "slug": "kaisro",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "kaisro",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "splash": {
+      "backgroundColor": "#FAF7F2"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FAF7F2"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-font",
+        {
+          "fonts": [
+            "@expo-google-fonts/inter"
+          ]
+        }
+      ],
+      "expo-sqlite"
+    ]
+  }
+}
