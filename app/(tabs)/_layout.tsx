@@ -61,8 +61,7 @@ export default function TabLayout() {
 
       {/* Floating Add Button (FAB) anchored above bottom dock respecting safe-area insets */}
       <View
-        style={[styles.fabContainer, { bottom: fabBottomOffset }]}
-        pointerEvents="box-none"
+        style={[styles.fabContainer, { bottom: fabBottomOffset, pointerEvents: 'box-none' }]}
       >
         <FloatingAddButton onPress={() => openAddSheet('event')} />
       </View>

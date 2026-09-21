@@ -1,53 +1,38 @@
 import React from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text, Pressable } from 'react-native';
+import {
+  Calendar as CalendarIcon,
+  CheckCircle2,
+  Receipt,
+  FileText,
+  X,
+} from 'lucide-react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
-import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { Button } from '@/components/ui/Button';
 import { useUIStore, QuickAddType } from '@/store/useUIStore';
+import { EventForm } from '@/components/events/EventForm';
 import { colors } from '@/constants/theme';
-import { CURRENCY } from '@/constants/currency';
 
-const TYPE_OPTIONS: { value: QuickAddType; label: string }[] = [
-  { value: 'event', label: 'Event' },
-  { value: 'task', label: 'Task' },
-  { value: 'transaction', label: 'Expense' },
-  { value: 'note', label: 'Note' },
+const TABS: {
+  type: QuickAddType;
+  label: string;
+  icon: React.ComponentType<{ size?: number; color?: string }>;
+}[] = [
+  { type: 'event', label: 'Event', icon: CalendarIcon },
+  { type: 'task', label: 'Task', icon: CheckCircle2 },
+  { type: 'transaction', label: 'Expense', icon: Receipt },
+  { type: 'note', label: 'Note', icon: FileText },
 ];
 
 export function QuickAddBottomSheet() {
-  const { isAddSheetOpen, closeAddSheet, activeAddType, setActiveAddType } = useUIStore();
-  const [title, setTitle] = React.useState('');
+  const {
+    isAddSheetOpen,
+    closeAddSheet,
+    activeAddType,
+    editingEvent,
+    selectedDateContext,
+  } = useUIStore();
 
-  const handleSave = () => {
-    // Placeholder action for foundation phase
-    console.log(`[QuickAdd] Created placeholder ${activeAddType}: ${title}`);
-    setTitle('');
-    closeAddSheet();
-  };
-
-  const getVariant = () => {
-    switch (activeAddType) {
-      case 'task':
-        return 'tasks';
-      case 'transaction':
-        return 'money';
-      default:
-        return 'primary';
-    }
-  };
-
-  const getPlaceholder = () => {
-    switch (activeAddType) {
-      case 'event':
-        return 'Event title (e.g. Design Review)';
-      case 'task':
-        return 'Task description...';
-      case 'transaction':
-        return `Amount in ${CURRENCY.symbol} (e.g. 250.00)`;
-      case 'note':
-        return 'Quick note or reflection...';
-    }
-  };
+  const titleText = editingEvent ? 'Edit Event' : 'Quick Add';
 
   return (
     <BottomSheet
@@ -55,48 +40,71 @@ export function QuickAddBottomSheet() {
       onClose={closeAddSheet}
       title={
         <View className="flex-row items-center justify-between pb-2 border-b border-border">
-          <Text className="text-base font-medium text-text">Quick Add</Text>
-          <Text className="text-xs text-text-muted">Local Only</Text>
+          <View className="flex-row items-center">
+            <Text className="text-lg font-medium text-text">{titleText}</Text>
+            {selectedDateContext ? (
+              <View className="ml-2.5 px-2.5 py-0.5 rounded-full bg-background border border-border">
+                <Text className="text-[10px] font-medium text-text-muted">
+                  {new Date(selectedDateContext + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                  })}
+                </Text>
+              </View>
+            ) : null}
+          </View>
+
+          {/* Close (X) circular button */}
+          <Pressable
+            onPress={closeAddSheet}
+            className="w-7 h-7 rounded-full bg-background border border-border items-center justify-center active:bg-surface"
+            accessibilityRole="button"
+            accessibilityLabel="Close"
+          >
+            <X size={14} color={colors.text} />
+          </Pressable>
         </View>
       }
     >
       <View className="space-y-4">
-        {/* Segmented Type Switch */}
-        <SegmentedControl
-          options={TYPE_OPTIONS}
-          selectedValue={activeAddType}
-          onChange={(val) => setActiveAddType(val)}
-        />
+        {/* Segmented Control (Event active, others visible but disabled) */}
+        {!editingEvent && (
+          <View className="flex-row bg-[#FAF7F2] border border-border rounded-full p-1 items-center mb-1">
+            {TABS.map((tab) => {
+              const isSelected = tab.type === activeAddType;
+              const isDisabled = tab.type !== 'event';
+              const IconComp = tab.icon;
 
-        {/* Input Field Placeholder */}
-        <View className="bg-background border border-border rounded p-3 mt-3">
-          <TextInput
-            placeholder={getPlaceholder()}
-            placeholderTextColor={colors['text-muted']}
-            value={title}
-            onChangeText={setTitle}
-            className="text-sm text-text font-normal"
-            autoFocus
-          />
-        </View>
+              return (
+                <Pressable
+                  key={tab.type}
+                  disabled={isDisabled}
+                  className={`flex-1 py-1.5 px-1.5 rounded-full flex-row items-center justify-center ${
+                    isSelected ? 'bg-primary' : 'bg-transparent'
+                  } ${isDisabled ? 'opacity-40' : 'opacity-100'}`}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: isSelected, disabled: isDisabled }}
+                  accessibilityLabel={`${tab.label} tab${isDisabled ? ' (disabled)' : ''}`}
+                >
+                  <IconComp
+                    size={13}
+                    color={isSelected ? colors['on-primary'] : colors['text-muted']}
+                  />
+                  <Text
+                    className={`ml-1 text-xs font-medium ${
+                      isSelected ? 'text-on-primary' : 'text-text-muted'
+                    }`}
+                  >
+                    {tab.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
 
-        {/* Info hint */}
-        <Text className="text-xs text-text-muted mt-2">
-          {activeAddType === 'event' && 'Archival Ink Blue: Anchored to daily timeline.'}
-          {activeAddType === 'task' && 'Soft Sage Teal: Trackable with serene circular checkmark.'}
-          {activeAddType === 'transaction' && `Warm Sand: Recorded in integer centavos (${CURRENCY.symbol}).`}
-          {activeAddType === 'note' && 'Quiet Reflection: Interconnected with events and expenses.'}
-        </Text>
-
-        {/* Action Button */}
-        <View className="mt-4">
-          <Button
-            title={`Create ${TYPE_OPTIONS.find((t) => t.value === activeAddType)?.label}`}
-            variant={getVariant()}
-            onPress={handleSave}
-            fullWidth
-          />
-        </View>
+        {/* Event Form */}
+        <EventForm onClose={closeAddSheet} />
       </View>
     </BottomSheet>
   );

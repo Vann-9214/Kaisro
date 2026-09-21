@@ -11,7 +11,7 @@ import {
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
 import { runMigrations } from '@/db';
-import { seedDatabase } from '@/db/seed';
+import { ensureDefaultCategories } from '@/db/defaultCategories';
 import { QuickAddBottomSheet } from '@/components/QuickAddBottomSheet';
 import { colors } from '@/constants/theme';
 
@@ -28,9 +28,9 @@ export default function RootLayout() {
     async function prepare() {
       try {
         await runMigrations();
-        if (__DEV__) {
-          await seedDatabase();
-        }
+        // Insert starter categories if empty, with no monthly cap.
+        // App starts with zero events, tasks, transactions, or notes.
+        await ensureDefaultCategories();
       } catch (e) {
         console.error('[Kaisro Init Error]', e);
       } finally {
@@ -64,6 +64,7 @@ export default function RootLayout() {
         }}
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="detail" options={{ headerShown: false }} />
       </Stack>
       <QuickAddBottomSheet />
     </SafeAreaProvider>

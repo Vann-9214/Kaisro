@@ -54,16 +54,16 @@ export async function seedDatabase(options: { forceReset?: boolean } = {}): Prom
   if (options.forceReset) {
     console.log('[Kaisro Seed] Force resetting tables...');
     expoDb.execSync(`
-      DELETE FROM note_tags;
       DELETE FROM note_links;
+      DELETE FROM note_tags;
       DELETE FROM notes;
       DELETE FROM tags;
       DELETE FROM subtasks;
       DELETE FROM tasks;
+      DELETE FROM events;
       DELETE FROM transactions;
       DELETE FROM recurring_transactions;
       DELETE FROM categories;
-      DELETE FROM events;
     `);
   }
 
