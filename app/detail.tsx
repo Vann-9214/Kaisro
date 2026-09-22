@@ -7,10 +7,15 @@ import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
 import { colors } from '@/constants/theme';
+import { getDb } from '@/db';
+import * as schema from '@/db/schema';
+import { eq } from 'drizzle-orm';
+import { useUIStore } from '@/store/useUIStore';
 
 export default function DetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const openAddSheet = useUIStore((s) => s.openAddSheet);
   const params = useLocalSearchParams<{
     type?: string;
     id?: string;
@@ -137,6 +142,51 @@ export default function DetailScreen() {
             recurrence management, and note linking will be connected here in the upcoming iteration.
           </Text>
         </Card>
+
+        {params.id && (
+          <Button
+            title={`Edit ${type === 'expense' ? 'Expense' : type === 'task' ? 'Task' : 'Event'}`}
+            variant="secondary"
+            size="md"
+            className="mb-3"
+            onPress={async () => {
+              try {
+                const db = getDb();
+                const numId = parseInt(params.id!, 10);
+                if (type === 'expense') {
+                  const [tx] = await db
+                    .select()
+                    .from(schema.transactions)
+                    .where(eq(schema.transactions.id, numId));
+                  if (tx) {
+                    router.back();
+                    openAddSheet('transaction', tx);
+                  }
+                } else if (type === 'task') {
+                  const [tsk] = await db
+                    .select()
+                    .from(schema.tasks)
+                    .where(eq(schema.tasks.id, numId));
+                  if (tsk) {
+                    router.back();
+                    openAddSheet('task', tsk);
+                  }
+                } else if (type === 'event') {
+                  const [ev] = await db
+                    .select()
+                    .from(schema.events)
+                    .where(eq(schema.events.id, numId));
+                  if (ev) {
+                    router.back();
+                    openAddSheet('event', ev);
+                  }
+                }
+              } catch (e) {
+                console.error('[DetailScreen] Failed to open edit sheet:', e);
+              }
+            }}
+          />
+        )}
 
         <Button
           title="Back to Day View"

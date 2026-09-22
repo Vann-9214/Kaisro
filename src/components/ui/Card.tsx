@@ -21,7 +21,7 @@ export function Card({
   className = '',
   ...rest
 }: CardProps) {
-  let cardClasses = `bg-surface border border-border rounded p-3.5 ${
+  let cardClasses = `bg-surface border border-border rounded-md p-3.5 ${
     elevated ? 'bg-surface-raised' : ''
   }`;
 

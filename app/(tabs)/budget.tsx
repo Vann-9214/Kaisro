@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Card } from '@/components/ui/Card';
 import { Chip } from '@/components/ui/Chip';
@@ -154,6 +154,38 @@ export default function BudgetScreen() {
             </View>
           )}
         </Card>
+
+        {/* Recent Transactions (tap to edit) */}
+        {transactionsList.length > 0 && (
+          <Card className="mb-4">
+            <Text className="text-sm font-medium text-text mb-3">Recent Transactions</Text>
+            <View className="space-y-2">
+              {transactionsList.map((tx, idx) => (
+                <Pressable
+                  key={tx.id}
+                  onPress={() => openAddSheet('transaction', tx)}
+                  className={`flex-row items-center justify-between py-2 ${
+                    idx < transactionsList.length - 1 ? 'border-b border-border' : ''
+                  }`}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Edit transaction: ${tx.note || 'Expense'}`}
+                >
+                  <View className="flex-1 mr-2">
+                    <Text className="text-xs text-text font-medium">{tx.note || 'Expense'}</Text>
+                    {tx.date && (
+                      <Text className="text-[10px] text-text-muted">
+                        {tx.date.split('T')[0]}
+                      </Text>
+                    )}
+                  </View>
+                  <Text className="text-xs font-medium text-on-money tabular-nums">
+                    {formatCurrency(tx.amount)}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </Card>
+        )}
 
         <Button
           title={`+ Add Expense (${CURRENCY.symbol})`}

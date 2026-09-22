@@ -24,6 +24,8 @@ export interface ThemeColorTokens {
   'on-primary': string;
   'on-tasks': string;
   'on-money': string;
+  error: string;
+  'on-error': string;
 }
 
 export const lightTokens: ThemeColorTokens = {
@@ -65,6 +67,12 @@ export const lightTokens: ThemeColorTokens = {
 
   // High-contrast text/icon color on money (Warm Sand) - Deep Amber (#785B28) as defined in Stitch
   'on-money': '#785B28',
+
+  // Error & destructive actions
+  error: '#BA1A1A',
+
+  // Text/icons on error
+  'on-error': '#FFFFFF',
 };
 
 /**
@@ -89,6 +97,8 @@ export const darkTokens: ThemeColorTokens = ENABLE_DARK_MODE_VALUES
       'on-primary': '#14181F',
       'on-tasks': '#14181F',
       'on-money': '#3B2E15',
+      error: '#FFB4AB',
+      'on-error': '#690005',
     }
   : {
       // CLEARLY MARKED PLACEHOLDER: Falls back to light mode tokens
@@ -105,12 +115,73 @@ export const darkTokens: ThemeColorTokens = ENABLE_DARK_MODE_VALUES
       'on-primary': lightTokens['on-primary'],
       'on-tasks': lightTokens['on-tasks'],
       'on-money': lightTokens['on-money'],
+      error: lightTokens.error,
+      'on-error': lightTokens['on-error'],
     };
 
 /**
  * Default active theme token set
  */
 export const colors = lightTokens;
+
+/**
+ * Kaisro Spacing Scale (dp)
+ * Aligned with the Stitch "Serene Editorial Minimal" design system:
+ * - xs: 4dp (space-xs)
+ * - sm: 8dp (space-sm)
+ * - cardGap: 12dp (gutter-sm / card-to-card gap)
+ * - md: 14dp (space-md - card vertical padding)
+ * - base: 16dp (gutter / card horizontal padding / header gaps)
+ * - lg: 20dp (space-lg / margin - sheet horizontal padding, body bottom padding)
+ * - xl: 24dp (delete button top margin)
+ * - 2xl: 32dp (space-xl)
+ */
+export const spacing = {
+  xs: 4,
+  sm: 8,
+  cardGap: 12,
+  md: 14,
+  base: 16,
+  lg: 20,
+  xl: 24,
+  '2xl': 32,
+} as const;
+
+/**
+ * Kaisro Layout & Sheet Geometry Rules
+ * Standardized across all quick-add and edit sheets:
+ */
+export const layout = {
+  // Sheet & Card padding
+  sheetHorizontalPadding: spacing.lg,       // 20dp
+  cardGap: 10,                              // 10dp card gap
+  cardPaddingVertical: 12,                  // 12dp vertical card padding
+  cardPaddingHorizontal: spacing.base,      // 16dp
+  cardBorderRadius: 12,                     // 12dp
+  cardBorderWidth: 1,                       // 1dp hairline
+  singleLineMinHeight: 52,                  // 52dp min height for single-line cards
+
+  // Inside card element spacing
+  iconToLabelGap: spacing.cardGap,           // 12dp between icon and label
+  labelToValueGap: spacing.xs,              // 4dp between label and value/hint line
+
+  // Header geometry
+  headerDragHandleBottom: spacing.xs,       // 4dp under drag handle
+  headerTopPadding: spacing.base,           // 16dp above header content
+  headerToSegmentedGap: spacing.cardGap,    // 12dp between header and segmented control
+  segmentedToCardGap: spacing.cardGap,      // 12dp between segmented control and first card
+
+  // Footer & buttons
+  footerTopPadding: spacing.base,           // 16dp above Save button
+  footerBottomExtraPadding: spacing.cardGap,// 12dp below button
+  footerButtonHeight: 50,                   // 50dp Save button height
+  deleteButtonTopMargin: spacing.lg,        // 20dp above Delete button
+  deleteButtonBottomMargin: spacing.base,   // 16dp below Delete button
+  bodyBottomPadding: spacing.base,          // 16dp bottom padding for scroll body
+
+  // Accessibility / Font scaling cap
+  maxFontScale: 1.3,
+} as const;
 
 /**
  * Module coding reference for components:

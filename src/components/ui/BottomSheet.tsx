@@ -2,16 +2,15 @@ import React, { useEffect, useRef } from 'react';
 import {
   Modal,
   View,
-  Pressable,
   Animated,
-  Dimensions,
   StyleProp,
   ViewStyle,
+  StyleSheet,
   TouchableWithoutFeedback,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
+  useWindowDimensions,
 } from 'react-native';
-import { colors } from '@/constants/theme';
+import { colors, spacing } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface BottomSheetProps {
@@ -19,22 +18,32 @@ export interface BottomSheetProps {
   onClose: () => void;
   children: React.ReactNode;
   title?: React.ReactNode;
+  header?: React.ReactNode;
+  footer?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
+  hideDragHandle?: boolean;
+  overlay?: React.ReactNode;
 }
-
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export function BottomSheet({
   visible,
   onClose,
   children,
   title,
+  header,
+  footer,
   style,
+  hideDragHandle = false,
+  overlay,
 }: BottomSheetProps) {
   const insets = useSafeAreaInsets();
-  const translateY = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+  const { height: windowHeight } = useWindowDimensions();
+
+  // Entrance/exit slide animation (native driver)
+  const translateY = useRef(new Animated.Value(windowHeight)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
+  // Handle modal visibility animation
   useEffect(() => {
     if (visible) {
       Animated.parallel([
@@ -58,72 +67,97 @@ export function BottomSheet({
           useNativeDriver: true,
         }),
         Animated.timing(translateY, {
-          toValue: SCREEN_HEIGHT,
+          toValue: windowHeight,
           duration: 200,
           useNativeDriver: true,
         }),
       ]).start();
     }
-  }, [visible, fadeAnim, translateY]);
+  }, [visible, fadeAnim, translateY, windowHeight]);
+
+  const handleBackdropPress = () => {
+    Keyboard.dismiss();
+    onClose();
+  };
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="none"
-      onRequestClose={onClose}
+      onRequestClose={handleBackdropPress}
       statusBarTranslucent
     >
-      <KeyboardAvoidingView
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        className="flex-1 justify-end"
-      >
-        {/* Dimmed Overlay Backdrop */}
-        <TouchableWithoutFeedback onPress={onClose}>
-          <Animated.View
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: colors.overlay,
-                opacity: fadeAnim,
-              },
-            ]}
-          />
-        </TouchableWithoutFeedback>
-
-        {/* Sliding Bottom Sheet Container */}
+      {/* Dimmed Overlay Backdrop */}
+      <TouchableWithoutFeedback onPress={handleBackdropPress}>
         <Animated.View
           style={[
+            StyleSheet.absoluteFill,
             {
-              transform: [{ translateY }],
+              backgroundColor: colors.overlay,
+              opacity: fadeAnim,
+            },
+          ]}
+        />
+      </TouchableWithoutFeedback>
+
+      {/* Outer sliding container: entrance/exit slide with native driver */}
+      <Animated.View
+        style={[
+          StyleSheet.absoluteFill,
+          {
+            justifyContent: 'flex-end',
+            transform: [{ translateY }],
+          },
+        ]}
+        pointerEvents="box-none"
+      >
+        {/* The sheet container stays static (does NOT resize or move when keyboard opens) */}
+        <View
+          style={[
+            {
+              width: '100%',
+              maxHeight: windowHeight * 0.90,
               backgroundColor: colors['surface-raised'],
               borderTopLeftRadius: 16,
               borderTopRightRadius: 16,
               borderTopWidth: 1,
               borderColor: colors.border,
-              paddingBottom: Math.max(insets.bottom, 16) + 16,
-              maxHeight: SCREEN_HEIGHT * 0.85,
+              overflow: 'hidden',
+              // flexDirection column so header/body/footer stack vertically
+              flexDirection: 'column',
             },
             style,
           ]}
-          className="w-full px-5 pt-3"
         >
-          {/* Top Drag Handle Indicator */}
-          <View className="items-center mb-3">
-            <View className="w-10 h-1 bg-border rounded-full" />
-          </View>
+          {/* Header slot: guaranteed never to shrink */}
+          {header ? (
+            <View style={{ flexShrink: 0, width: '100%' }}>{header}</View>
+          ) : (
+            <View style={{ paddingHorizontal: spacing.lg, paddingTop: spacing.lg, flexShrink: 0, width: '100%' }}>
+              {!hideDragHandle && (
+                <View style={{ alignItems: 'center', marginBottom: spacing.sm }}>
+                  <View style={{ width: 40, height: 4, backgroundColor: colors.border, borderRadius: 9999 }} />
+                </View>
+              )}
+              {title && <View style={{ marginBottom: spacing.base }}>{title}</View>}
+            </View>
+          )}
 
-          {/* Optional Title Bar */}
-          {title && <View className="mb-4">{title}</View>}
-
-          {/* Bottom Sheet Content */}
+          {/* Body slot — no wrapper; height budget is enforced by an explicit maxHeight
+              on the ScrollView in the consumer (QuickAddBottomSheet). This avoids the
+              flex:1-in-maxHeight-parent collapse-to-zero problem. */}
           {children}
-        </Animated.View>
-      </KeyboardAvoidingView>
+
+          {/* Footer slot (optional) */}
+          {footer ? (
+            <View style={{ flexShrink: 0, width: '100%' }}>{footer}</View>
+          ) : null}
+        </View>
+      </Animated.View>
+
+      {/* Overlay slot (e.g. LiftedInputHost) inside Modal, full screen, on top of sheet */}
+      {overlay}
     </Modal>
   );
 }

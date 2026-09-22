@@ -115,6 +115,7 @@ export default function TasksScreen() {
                     <Checkbox
                       checked={Boolean(tsk.done)}
                       onToggle={() => toggleTaskDone(tsk)}
+                      onLabelPress={() => openAddSheet('task', tsk)}
                       label={tsk.title}
                     />
                   </View>

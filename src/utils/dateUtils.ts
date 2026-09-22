@@ -23,6 +23,10 @@ export interface WeekDayItem {
   dayNum: number;
   isWeekend: boolean;
   isToday: boolean;
+  isGhost: boolean;
+  targetYear: number;
+  targetMonth: number;
+  targetWeekNumber: number;
 }
 
 export const MONTH_NAMES = [
@@ -143,6 +147,13 @@ export function getWeekDays(
     const dDay = d.getDay();
     const isWeekend = dDay === 0 || dDay === 6;
 
+    const isGhost = d.getMonth() !== anchorMonth;
+    const targetYear = d.getFullYear();
+    const targetMonth = d.getMonth();
+    const targetWeekNumber = isGhost
+      ? getWeekNumberOfDate(d, startOnMonday)
+      : getWeekNumberOfDate(selectedDate, startOnMonday);
+
     days.push({
       date: d,
       dateStr: dStr,
@@ -150,6 +161,10 @@ export function getWeekDays(
       dayNum: d.getDate(),
       isWeekend,
       isToday: dStr === currentTodayStr,
+      isGhost,
+      targetYear,
+      targetMonth,
+      targetWeekNumber,
     });
   }
 
@@ -311,4 +326,90 @@ export function getMonthWeekDays(
 
   return days;
 }
+
+/**
+ * Calculates the appropriate anchor date for navigating to the NEXT week.
+ * Seamlessly handles month-boundary weeks so that navigating forward from the last
+ * week of month M (with ghost days from M+1) transitions to the 1ST WEEK of month M+1
+ * (with ghost days from M), rather than skipping straight to the 2nd week of M+1.
+ */
+export function getNextWeekAnchor(
+  viewedDateStr: string,
+  startOnMonday: boolean = WEEK_STARTS_ON_MONDAY
+): string {
+  const d = parseISODate(viewedDateStr);
+  const week = getWeekDays(d, startOnMonday);
+  const mon = week[0];
+  const sun = week[6];
+
+  const crossesBoundary = mon.date.getMonth() !== sun.date.getMonth();
+
+  if (crossesBoundary) {
+    if (d.getMonth() === mon.date.getMonth()) {
+      // Currently viewing boundary week under earlier month (e.g. Sep Week 5).
+      // Next step is viewing the SAME boundary week under later month (e.g. Oct Week 1).
+      // Anchor to 1st day of the later month (which is in this week, e.g. Oct 1).
+      const firstDayLaterMonth = new Date(sun.date.getFullYear(), sun.date.getMonth(), 1);
+      return formatDateToISO(firstDayLaterMonth);
+    } else {
+      // Currently viewing boundary week under later month (e.g. Oct Week 1).
+      // Next step is moving to the next week (e.g. Oct Week 2).
+      return shiftDateByDays(mon.dateStr, 7);
+    }
+  }
+
+  // Normal week: check if +7 days lands in a boundary week where Monday is in current month
+  const nextMonday = shiftDateByDays(mon.dateStr, 7);
+  return nextMonday;
+}
+
+/**
+ * Calculates the appropriate anchor date for navigating to the PREVIOUS week.
+ * Seamlessly handles month-boundary weeks so that navigating backward from the 1st
+ * week of month M+1 (with ghost days from M) transitions to the LAST WEEK of month M,
+ * and navigating backward from the 2nd week of M+1 transitions to the 1st week of M+1.
+ */
+export function getPrevWeekAnchor(
+  viewedDateStr: string,
+  startOnMonday: boolean = WEEK_STARTS_ON_MONDAY
+): string {
+  const d = parseISODate(viewedDateStr);
+  const week = getWeekDays(d, startOnMonday);
+  const mon = week[0];
+  const sun = week[6];
+
+  const crossesBoundary = mon.date.getMonth() !== sun.date.getMonth();
+
+  if (crossesBoundary) {
+    if (d.getMonth() === sun.date.getMonth()) {
+      // Currently viewing boundary week under later month (e.g. Oct Week 1).
+      // Prev step is viewing the SAME boundary week under earlier month (e.g. Sep Week 5).
+      // Anchor to last day of earlier month (e.g. Sep 30).
+      const lastDayEarlierMonth = new Date(mon.date.getFullYear(), mon.date.getMonth() + 1, 0);
+      return formatDateToISO(lastDayEarlierMonth);
+    } else {
+      // Currently viewing boundary week under earlier month (e.g. Sep Week 5).
+      // Prev step is moving to previous week in earlier month (e.g. Sep Week 4).
+      return shiftDateByDays(mon.dateStr, -7);
+    }
+  }
+
+  // Check if -7 days from Monday lands in a week that crosses a month boundary
+  const prevMondayStr = shiftDateByDays(mon.dateStr, -7);
+  const prevMonday = parseISODate(prevMondayStr);
+  const prevWeek = getWeekDays(prevMonday, startOnMonday);
+  const prevSun = prevWeek[6];
+
+  if (prevMonday.getMonth() !== prevSun.date.getMonth()) {
+    // Previous week crosses a boundary!
+    // Since we are moving backward from month M+1 (e.g. Oct Week 2),
+    // the previous week should be viewed under month M+1 (e.g. Oct Week 1)!
+    // Anchor to 1st of month M+1 (e.g. Oct 1) instead of prevMonday (which is in Sep)!
+    const firstDayCurrentMonth = new Date(d.getFullYear(), d.getMonth(), 1);
+    return formatDateToISO(firstDayCurrentMonth);
+  }
+
+  return prevMondayStr;
+}
+
 

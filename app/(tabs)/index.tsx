@@ -39,6 +39,9 @@ import {
   MONTH_NAMES,
   getWeekNumberOfDate,
   getOrdinalWeekLabel,
+  WeekDayItem,
+  getNextWeekAnchor,
+  getPrevWeekAnchor,
 } from '@/utils/dateUtils';
 import {
   START_HOUR,
@@ -334,9 +337,9 @@ export default function CalendarScreen() {
   // Computed indicator dots for the 7 visible days across month boundaries
   const weekDotsMap = useWeekDots(weekDateStrs);
 
-  // In Day View, activeDateStr is selectedDate ONLY if it falls in the viewed week.
+  // In Day View, activeDateStr is selectedDate ONLY if it falls in the viewed week and is not a ghost day.
   // There is NO fallback to today or any other day. If none is selected in this week, it is null.
-  const isSelectedInViewedWeek = weekDays.some((d) => d.dateStr === selectedDate);
+  const isSelectedInViewedWeek = weekDays.some((d) => d.dateStr === selectedDate && !d.isGhost);
   const activeDateStr = isSelectedInViewedWeek ? selectedDate : null;
 
   const isViewingToday = activeDateStr === todayStr;
@@ -375,12 +378,12 @@ export default function CalendarScreen() {
 
   // Navigate to previous week: changes viewedDate ONLY without selecting or auto-clicking any date
   const handlePrevWeek = () => {
-    setViewedDate(shiftDateByDays(viewedDate, -7));
+    setViewedDate(getPrevWeekAnchor(viewedDate));
   };
 
   // Navigate to next week: changes viewedDate ONLY without selecting or auto-clicking any date
   const handleNextWeek = () => {
-    setViewedDate(shiftDateByDays(viewedDate, 7));
+    setViewedDate(getNextWeekAnchor(viewedDate));
   };
 
   // Jump to today: sets selectedDate and viewedDate to today, and scrolls timeline
@@ -402,8 +405,12 @@ export default function CalendarScreen() {
   }, [todayStr, isDayEmpty, setSelectedDate]);
 
   // Tap a day slot in the week strip: this is the 1 TRUE CLICK on a date
-  const handlePressDay = (dateStr: string) => {
-    setSelectedDate(dateStr);
+  const handlePressDay = (item: WeekDayItem) => {
+    if (item.isGhost) {
+      // Tapping a ghost date immediately navigates to that month and selects that date
+      setViewedDate(item.dateStr);
+    }
+    setSelectedDate(item.dateStr);
   };
 
   // Compute timeline layout for timed items (events, tasks, expenses)
@@ -638,7 +645,7 @@ export default function CalendarScreen() {
               return (
                 <Pressable
                   key={dayDateStr}
-                  onPress={() => handlePressDay(dayDateStr)}
+                  onPress={() => handlePressDay(item)}
                   android_ripple={null}
                   style={{ minWidth: 44, minHeight: 44 }}
                   className="items-center justify-center flex-1 py-1"
@@ -655,7 +662,7 @@ export default function CalendarScreen() {
                       color: isSelected
                         ? colors.primary
                         : colors['text-muted'],
-                      opacity: !isSelected && item.isWeekend ? 0.7 : 1,
+                      opacity: item.isGhost ? 0.4 : (!isSelected && item.isWeekend ? 0.7 : 1),
                     }}
                   >
                     {item.dayAbbr}
@@ -667,11 +674,12 @@ export default function CalendarScreen() {
                     isSelected={isSelected}
                     isToday={item.isToday}
                     isWeekend={item.isWeekend}
+                    isGhost={item.isGhost}
                   />
 
                   {/* Up to 3 colored indicator dots (~5dp circles) */}
                   <View style={{ height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 4 }}>
-                    {hasAnyDots ? (
+                    {!item.isGhost && hasAnyDots ? (
                       <>
                         {dots.hasEvents && (
                           <View
@@ -844,6 +852,7 @@ export default function CalendarScreen() {
                       <Checkbox
                         checked={Boolean(tsk.done)}
                         onToggle={() => toggleTask(tsk.id, Boolean(tsk.done))}
+                        onLabelPress={() => openAddSheet('task', tsk)}
                         label={tsk.title}
                       />
                     </View>
@@ -1009,14 +1018,21 @@ export default function CalendarScreen() {
                             checked={Boolean(tsk.done)}
                             onToggle={() => toggleTask(tsk.id, Boolean(tsk.done))}
                           />
-                          <Text
-                            className={`ml-2 text-xs font-medium ${
-                              tsk.done ? 'text-text-muted line-through' : 'text-text'
-                            } flex-1`}
-                            numberOfLines={1}
+                          <Pressable
+                            onPress={() => openAddSheet('task', tsk)}
+                            className="ml-2 flex-1"
+                            accessibilityRole="button"
+                            accessibilityLabel={`Edit task ${tsk.title}`}
                           >
-                            {tsk.title}
-                          </Text>
+                            <Text
+                              className={`text-xs font-medium ${
+                                tsk.done ? 'text-text-muted line-through' : 'text-text'
+                              }`}
+                              numberOfLines={1}
+                            >
+                              {tsk.title}
+                            </Text>
+                          </Pressable>
                         </View>
                         {formattedDue ? (
                           <Text className="text-[10px] text-text-muted tabular-nums">

@@ -71,7 +71,13 @@ export default function NotesScreen() {
           </Card>
         ) : (
           notesList.map((note) => (
-            <Card key={note.id} className="mb-4">
+            <Card
+              key={note.id}
+              className="mb-4"
+              onPress={() => openAddSheet('note', note)}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit note: ${note.title}`}
+            >
               <View className="flex-row items-center justify-between mb-2">
                 <Text className="text-base font-medium text-text">{note.title}</Text>
               </View>

@@ -23,6 +23,8 @@ module.exports = {
         "on-primary": "#FFFFFF",
         "on-tasks": "#FFFFFF",
         "on-money": "#785B28",
+        error: "#BA1A1A",
+        "on-error": "#FFFFFF",
       },
       fontFamily: {
         sans: ["Inter_400Regular", "Inter", "sans-serif"],
@@ -40,9 +42,12 @@ module.exports = {
       spacing: {
         "space-xs": "4px",
         "space-sm": "8px",
+        "card-gap": "12px",
         "space-md": "14px",
+        "space-base": "16px",
         "space-lg": "20px",
-        "space-xl": "32px",
+        "space-xl": "24px",
+        "space-2xl": "32px",
       },
     },
   },
