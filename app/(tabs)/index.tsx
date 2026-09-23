@@ -30,6 +30,11 @@ import { TopBar } from '@/components/ui/TopBar';
 import { DayNumber } from '@/components/ui/DayNumber';
 import { useCalendarDay } from '@/hooks/useCalendarDay';
 import { useWeekDots } from '@/hooks/useWeekDots';
+import { MonthCalendarView } from '@/components/MonthCalendarView';
+import { AgendaView } from '@/components/calendar/AgendaView';
+import { WeekView } from '@/components/calendar/WeekView';
+import { getVisibleWeeksForMonth } from '@/utils/weekViewUtils';
+import { parseYearMonth, getPrevMonth, getNextMonth } from '@/utils/monthUtils';
 import {
   WEEK_STARTS_ON_MONDAY,
   formatDateToISO,
@@ -322,8 +327,9 @@ export default function CalendarScreen() {
   // Collapsible All-day & untimed section toggle
   const [isUntimedExpanded, setIsUntimedExpanded] = useState<boolean>(true);
 
-  // Active view switcher tab ('Day' is active, others are disabled placeholders)
-  const [activeView] = useState<'Month' | 'Week' | 'Day' | 'Agenda'>('Day');
+  // Active view switcher tab ('Day', 'Week', 'Month', and 'Agenda' are all functional)
+  const [activeView, setActiveView] = useState<'Month' | 'Week' | 'Day' | 'Agenda'>('Day');
+  const [weekScrollTrigger, setWeekScrollTrigger] = useState<number>(0);
 
   // Generate the 7-day week strip for the currently viewed week (pure projection, Mon to Sun)
   const weekDays = useMemo(() => {
@@ -367,13 +373,18 @@ export default function CalendarScreen() {
     tasks.length === 0 &&
     transactions.length === 0;
 
-  // Month Name & Year for the viewed week (guaranteed never to disappear or drift)
+  // Month Name & Year for the viewed date (guaranteed never to disappear or drift)
   const monthName = MONTH_NAMES[viewedDateObj.getMonth()] ?? 'September';
   const yearStr = String(viewedDateObj.getFullYear());
 
   // Ordinal week label within the month for the viewed week (e.g. "1ST WEEK", "4TH WEEK", "5TH WEEK")
   const ordinalWeekLabel = useMemo(() => {
     return getOrdinalWeekLabel(getWeekNumberOfDate(viewedDateObj, WEEK_STARTS_ON_MONDAY));
+  }, [viewedDateObj]);
+
+  // Number of visible weeks in the viewed month (for Week View badge e.g. "5 WEEKS")
+  const numWeeksInMonth = useMemo(() => {
+    return getVisibleWeeksForMonth(viewedDateObj.getFullYear(), viewedDateObj.getMonth()).length;
   }, [viewedDateObj]);
 
   // Navigate to previous week: changes viewedDate ONLY without selecting or auto-clicking any date
@@ -386,23 +397,84 @@ export default function CalendarScreen() {
     setViewedDate(getNextWeekAnchor(viewedDate));
   };
 
-  // Jump to today: sets selectedDate and viewedDate to today, and scrolls timeline
+  // Navigate to previous month (when activeView === 'Month')
+  const handlePrevMonth = () => {
+    const { year, month } = parseYearMonth(viewedDate);
+    const prev = getPrevMonth(year, month);
+    setViewedDate(prev.dateString);
+  };
+
+  // Navigate to next month (when activeView === 'Month')
+  const handleNextMonth = () => {
+    const { year, month } = parseYearMonth(viewedDate);
+    const next = getNextMonth(year, month);
+    setViewedDate(next.dateString);
+  };
+
+  // Jump to today: sets selectedDate and viewedDate to today, and scrolls timeline if in Day view or jumps to current week in Week view
   const handleJumpToToday = useCallback(() => {
     setSelectedDate(todayStr);
+    setViewedDate(todayStr);
 
-    const now = parseISODate(todayStr);
-    const nowMinutes = now.getHours() * 60 + now.getMinutes();
-    const targetY = calculateTimelineScrollTarget({
-      dateStr: todayStr,
-      todayStr,
-      timelineOffsetY: timelineOffsetYRef.current,
-      viewportHeight: viewportHeightRef.current,
-      contentHeight: contentHeightRef.current,
-      nowMinutes,
-      isEmpty: isDayEmpty,
-    });
-    scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
-  }, [todayStr, isDayEmpty, setSelectedDate]);
+    if (activeView === 'Day') {
+      const now = parseISODate(todayStr);
+      const nowMinutes = now.getHours() * 60 + now.getMinutes();
+      const targetY = calculateTimelineScrollTarget({
+        dateStr: todayStr,
+        todayStr,
+        timelineOffsetY: timelineOffsetYRef.current,
+        viewportHeight: viewportHeightRef.current,
+        contentHeight: contentHeightRef.current,
+        nowMinutes,
+        isEmpty: isDayEmpty,
+      });
+      scrollViewRef.current?.scrollTo({ y: targetY, animated: true });
+    } else if (activeView === 'Week') {
+      setWeekScrollTrigger((prev) => prev + 1);
+    }
+  }, [todayStr, isDayEmpty, setSelectedDate, setViewedDate, activeView]);
+
+  // Agenda SectionList reference and top visible date tracking
+  const agendaSectionListRef = useRef<any>(null);
+  const [agendaTopDate, setAgendaTopDate] = useState<string>(selectedDate || todayStr);
+
+  const handleAgendaVisibleDateChange = useCallback((dateStr: string) => {
+    setAgendaTopDate(dateStr);
+  }, []);
+
+  const agendaDateObj = useMemo(() => parseISODate(agendaTopDate), [agendaTopDate]);
+  const agendaMonthName = MONTH_NAMES[agendaDateObj.getMonth()] ?? 'September';
+  const agendaYearStr = String(agendaDateObj.getFullYear());
+
+  const handleAgendaJumpToToday = useCallback(() => {
+    setSelectedDate(todayStr);
+    setAgendaTopDate(todayStr);
+    try {
+      agendaSectionListRef.current?.scrollToLocation({
+        sectionIndex: 0,
+        itemIndex: 0,
+        animated: true,
+      });
+    } catch {
+      // Fallback if list is empty or not mounted yet
+    }
+  }, [todayStr, setSelectedDate]);
+
+  const isJumpToTodayDisabled = useMemo(() => {
+    if (activeView === 'Day') {
+      return isViewingToday;
+    }
+    if (activeView === 'Week') {
+      return viewedDate.slice(0, 7) === todayStr.slice(0, 7);
+    }
+    if (activeView === 'Agenda') {
+      return selectedDate === todayStr && agendaTopDate === todayStr;
+    }
+    return (
+      selectedDate === todayStr &&
+      viewedDate.slice(0, 7) === todayStr.slice(0, 7)
+    );
+  }, [activeView, isViewingToday, selectedDate, todayStr, viewedDate, agendaTopDate]);
 
   // Tap a day slot in the week strip: this is the 1 TRUE CLICK on a date
   const handlePressDay = (item: WeekDayItem) => {
@@ -507,42 +579,73 @@ export default function CalendarScreen() {
                 letterSpacing: -0.3,
               }}
             >
-              {monthName} {yearStr}
+              {activeView === 'Agenda'
+                ? `${agendaMonthName} ${agendaYearStr}`
+                : `${monthName} ${yearStr}`}
             </Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
-              <View
-                style={{
-                  backgroundColor: colors.surface,
-                  borderWidth: 1,
-                  borderColor: colors.border,
-                  paddingHorizontal: 7,
-                  paddingVertical: 1.5,
-                  borderRadius: 9999,
-                }}
-              >
-                <Text
-                  numberOfLines={1}
-                  maxFontSizeMultiplier={1.2}
+            {activeView === 'Day' ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <View
                   style={{
-                    fontSize: 10,
-                    fontWeight: '600',
-                    letterSpacing: 0.5,
-                    color: colors['text-muted'],
-                    textTransform: 'uppercase',
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    paddingHorizontal: 7,
+                    paddingVertical: 1.5,
+                    borderRadius: 9999,
                   }}
                 >
-                  {ordinalWeekLabel}
-                </Text>
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.2}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '600',
+                      letterSpacing: 0.5,
+                      color: colors['text-muted'],
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {ordinalWeekLabel}
+                  </Text>
+                </View>
               </View>
-            </View>
+            ) : activeView === 'Week' ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 2 }}>
+                <View
+                  style={{
+                    backgroundColor: colors.surface,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    paddingHorizontal: 7,
+                    paddingVertical: 1.5,
+                    borderRadius: 9999,
+                  }}
+                >
+                  <Text
+                    numberOfLines={1}
+                    maxFontSizeMultiplier={1.2}
+                    style={{
+                      fontSize: 10,
+                      fontWeight: '600',
+                      letterSpacing: 0.5,
+                      color: colors['text-muted'],
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {`${numWeeksInMonth} WEEKS`}
+                  </Text>
+                </View>
+              </View>
+            ) : null}
           </View>
 
           {/* Navigation Buttons: fixed 40dp circles, 8dp spacing, hitSlop for touch target */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexShrink: 0 }}>
-            {/* Round Today Button: jumps back to today and scrolls timeline to now (or top if empty) */}
+            {/* Round Today Button: jumps back to today */}
             <Pressable
-              onPress={handleJumpToToday}
-              disabled={isViewingToday}
+              onPress={activeView === 'Agenda' ? handleAgendaJumpToToday : handleJumpToToday}
+              disabled={isJumpToTodayDisabled}
               hitSlop={6}
               style={{
                 width: 40,
@@ -552,79 +655,108 @@ export default function CalendarScreen() {
                 borderColor: colors.border,
                 alignItems: 'center',
                 justifyContent: 'center',
-                backgroundColor: isViewingToday ? 'transparent' : colors.surface,
-                opacity: isViewingToday ? 0.35 : 1,
+                backgroundColor: isJumpToTodayDisabled ? 'transparent' : colors.surface,
+                opacity: isJumpToTodayDisabled ? 0.35 : 1,
               }}
               accessibilityRole="button"
               accessibilityLabel="Jump to today"
-              accessibilityState={{ disabled: isViewingToday }}
+              accessibilityState={{ disabled: isJumpToTodayDisabled }}
             >
               <CalendarDays
                 size={18}
-                color={isViewingToday ? colors['text-muted'] : colors.text}
+                color={isJumpToTodayDisabled ? colors['text-muted'] : colors.text}
               />
             </Pressable>
 
-            {/* Previous Week Button */}
-            <Pressable
-              onPress={handlePrevWeek}
-              hitSlop={6}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colors.surface,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Previous week"
-            >
-              <ChevronLeft size={18} color={colors.text} />
-            </Pressable>
+            {/* Previous & Next Buttons (hidden in Agenda view per design) */}
+            {activeView !== 'Agenda' && (
+              <>
+                <Pressable
+                  onPress={activeView === 'Day' ? handlePrevWeek : handlePrevMonth}
+                  hitSlop={6}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colors.surface,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={activeView === 'Day' ? 'Previous week' : 'Previous month'}
+                >
+                  <ChevronLeft size={18} color={colors.text} />
+                </Pressable>
 
-            {/* Next Week Button */}
-            <Pressable
-              onPress={handleNextWeek}
-              hitSlop={6}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                borderWidth: 1,
-                borderColor: colors.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-                backgroundColor: colors.surface,
-              }}
-              accessibilityRole="button"
-              accessibilityLabel="Next week"
-            >
-              <ChevronRight size={18} color={colors.text} />
-            </Pressable>
+                <Pressable
+                  onPress={activeView === 'Day' ? handleNextWeek : handleNextMonth}
+                  hitSlop={6}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 20,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: colors.surface,
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel={activeView === 'Day' ? 'Next week' : 'Next month'}
+                >
+                  <ChevronRight size={18} color={colors.text} />
+                </Pressable>
+              </>
+            )}
           </View>
         </View>
 
         {/* View Switcher: Segmented Control (Month / Week / Day / Agenda) styled to Stitch */}
-        <View className="flex-row bg-background border border-border rounded-full p-1 items-center mb-3">
+        <View
+          style={{
+            flexDirection: 'row',
+            backgroundColor: colors.background,
+            borderWidth: 1,
+            borderColor: colors.border,
+            borderRadius: 9999,
+            padding: 4,
+            alignItems: 'center',
+            marginBottom: 12,
+          }}
+        >
           {(['Month', 'Week', 'Day', 'Agenda'] as const).map((viewName) => {
             const isSelected = viewName === activeView;
+            const isInteractive = true;
             return (
               <Pressable
                 key={viewName}
-                disabled={!isSelected}
-                className={`flex-1 py-1 px-2.5 rounded-full items-center justify-center ${
-                  isSelected ? 'bg-surface shadow-none' : 'bg-transparent opacity-60'
-                }`}
+                disabled={!isInteractive}
+                onPress={() => {
+                  if (isInteractive) {
+                    setActiveView(viewName);
+                  }
+                }}
+                style={{
+                  flex: 1,
+                  paddingVertical: 4,
+                  paddingHorizontal: 10,
+                  borderRadius: 9999,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: isSelected ? colors.surface : 'transparent',
+                  opacity: isInteractive ? 1 : 0.4,
+                }}
                 accessibilityRole="button"
-                accessibilityState={{ selected: isSelected, disabled: !isSelected }}
+                accessibilityState={{ selected: isSelected, disabled: !isInteractive }}
               >
                 <Text
-                  className={`text-xs font-medium ${
-                    isSelected ? 'text-text' : 'text-text-muted'
-                  }`}
+                  style={{
+                    fontSize: 12,
+                    fontWeight: '500',
+                    color: isSelected ? colors.text : colors['text-muted'],
+                  }}
                 >
                   {viewName}
                 </Text>
@@ -633,97 +765,100 @@ export default function CalendarScreen() {
           })}
         </View>
 
-        {/* Week Strip inside Rounded Surface Card */}
-        <View className="bg-surface border border-border rounded-xl p-2 mb-1">
-          <View className="flex-row items-center justify-between">
-            {weekDays.map((item) => {
-              const dayDateStr = item.dateStr;
-              const isSelected = activeDateStr !== null && dayDateStr === activeDateStr;
-              const dots = weekDotsMap[dayDateStr];
-              const hasAnyDots = dots && (dots.hasEvents || dots.hasTasks || dots.hasExpenses);
+        {/* Week Strip inside Rounded Surface Card (Day View only) */}
+        {activeView === 'Day' && (
+          <View className="bg-surface border border-border rounded-xl p-2 mb-1">
+            <View className="flex-row items-center justify-between">
+              {weekDays.map((item) => {
+                const dayDateStr = item.dateStr;
+                const isSelected = activeDateStr !== null && dayDateStr === activeDateStr;
+                const dots = weekDotsMap[dayDateStr];
+                const hasAnyDots = dots && (dots.hasEvents || dots.hasTasks || dots.hasExpenses);
 
-              return (
-                <Pressable
-                  key={dayDateStr}
-                  onPress={() => handlePressDay(item)}
-                  android_ripple={null}
-                  style={{ minWidth: 44, minHeight: 44 }}
-                  className="items-center justify-center flex-1 py-1"
-                  accessibilityRole="button"
-                  accessibilityLabel={`${item.dayAbbr}, ${item.dayNum}`}
-                  accessibilityState={{ selected: isSelected }}
-                >
-                  {/* Day abbreviation (Mon, Tue, ..., Sun) */}
-                  <Text
-                    style={{
-                      fontSize: 11,
-                      fontWeight: '500',
-                      marginBottom: 4,
-                      color: isSelected
-                        ? colors.primary
-                        : colors['text-muted'],
-                      opacity: item.isGhost ? 0.4 : (!isSelected && item.isWeekend ? 0.7 : 1),
-                    }}
+                return (
+                  <Pressable
+                    key={dayDateStr}
+                    onPress={() => handlePressDay(item)}
+                    android_ripple={null}
+                    style={{ minWidth: 44, minHeight: 44 }}
+                    className="items-center justify-center flex-1 py-1"
+                    accessibilityRole="button"
+                    accessibilityLabel={`${item.dayAbbr}, ${item.dayNum}`}
+                    accessibilityState={{ selected: isSelected }}
                   >
-                    {item.dayAbbr}
-                  </Text>
+                    {/* Day abbreviation (Mon, Tue, ..., Sun) */}
+                    <Text
+                      style={{
+                        fontSize: 11,
+                        fontWeight: '500',
+                        marginBottom: 4,
+                        color: isSelected
+                          ? colors.primary
+                          : colors['text-muted'],
+                        opacity: item.isGhost ? 0.4 : (!isSelected && item.isWeekend ? 0.7 : 1),
+                      }}
+                    >
+                      {item.dayAbbr}
+                    </Text>
 
-                  {/* Shared circular DayNumber badge */}
-                  <DayNumber
-                    dayNum={item.dayNum}
-                    isSelected={isSelected}
-                    isToday={item.isToday}
-                    isWeekend={item.isWeekend}
-                    isGhost={item.isGhost}
-                  />
+                    {/* Shared circular DayNumber badge */}
+                    <DayNumber
+                      dayNum={item.dayNum}
+                      isSelected={isSelected}
+                      isToday={item.isToday}
+                      isWeekend={item.isWeekend}
+                      isGhost={item.isGhost}
+                    />
 
-                  {/* Up to 3 colored indicator dots (~5dp circles) */}
-                  <View style={{ height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 4 }}>
-                    {!item.isGhost && hasAnyDots ? (
-                      <>
-                        {dots.hasEvents && (
-                          <View
-                            style={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: 2.5,
-                              backgroundColor: colors.primary,
-                            }}
-                          />
-                        )}
-                        {dots.hasTasks && (
-                          <View
-                            style={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: 2.5,
-                              backgroundColor: colors.tasks,
-                            }}
-                          />
-                        )}
-                        {dots.hasExpenses && (
-                          <View
-                            style={{
-                              width: 5,
-                              height: 5,
-                              borderRadius: 2.5,
-                              backgroundColor: colors['on-money'],
-                            }}
-                          />
-                        )}
-                      </>
-                    ) : null}
-                  </View>
-                </Pressable>
-              );
-            })}
+                    {/* Up to 3 colored indicator dots (~5dp circles) */}
+                    <View style={{ height: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, marginTop: 4 }}>
+                      {!item.isGhost && hasAnyDots ? (
+                        <>
+                          {dots.hasEvents && (
+                            <View
+                              style={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: 2.5,
+                                backgroundColor: colors.primary,
+                              }}
+                            />
+                          )}
+                          {dots.hasTasks && (
+                            <View
+                              style={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: 2.5,
+                                backgroundColor: colors.tasks,
+                              }}
+                            />
+                          )}
+                          {dots.hasExpenses && (
+                            <View
+                              style={{
+                                width: 5,
+                                height: 5,
+                                borderRadius: 2.5,
+                                backgroundColor: colors['on-money'],
+                              }}
+                            />
+                          )}
+                        </>
+                      ) : null}
+                    </View>
+                  </Pressable>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        )}
       </View>
 
-      {/* Main Scrollable Day Canvas */}
-      <ScrollView
-        ref={scrollViewRef}
+      {/* Main Content Area: Day View Timeline Canvas or Month View Grid */}
+      {activeView === 'Day' ? (
+        <ScrollView
+          ref={scrollViewRef}
         className="flex-1 px-5 pt-3"
         contentOffset={{ x: 0, y: initialScrollY }}
         onLayout={(e) => {
@@ -1093,6 +1228,38 @@ export default function CalendarScreen() {
           )}
         </View>
       </ScrollView>
+      ) : activeView === 'Month' ? (
+        <MonthCalendarView
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          viewedDate={viewedDate}
+          onViewedDateChange={setViewedDate}
+          todayStr={todayStr}
+          onOpenDay={(d) => {
+            setSelectedDate(d);
+            setActiveView('Day');
+          }}
+        />
+      ) : activeView === 'Week' ? (
+        <WeekView
+          year={viewedDateObj.getFullYear()}
+          month={viewedDateObj.getMonth()}
+          todayStr={todayStr}
+          scrollTrigger={weekScrollTrigger}
+          onNavigateToDay={(dateStr) => {
+            setSelectedDate(dateStr);
+            setViewedDate(dateStr);
+            setActiveView('Day');
+          }}
+        />
+      ) : activeView === 'Agenda' ? (
+        <AgendaView
+          startDayStr={selectedDate || todayStr}
+          todayStr={todayStr}
+          onVisibleDateChange={handleAgendaVisibleDateChange}
+          sectionListRef={agendaSectionListRef}
+        />
+      ) : null}
     </View>
   );
 }

@@ -65,7 +65,7 @@ export function expandEventForDate(event: Event, targetDateStr: string): Event |
   const recurrence = (event.recurrence || 'none').toUpperCase() as RecurrenceFrequency;
 
   // 1. Non-recurring event
-  if (recurrence === 'none') {
+  if (recurrence === 'none' || (recurrence as string) === 'NONE') {
     const eventEndDateStr = event.end ? event.end.split('T')[0] : eventStartDateStr;
     if (eventStartDateStr <= targetDateStr && eventEndDateStr >= targetDateStr) {
       return event;
