@@ -7,26 +7,27 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 
 | Step | Status | Verification / commit |
 | --- | --- | --- |
-| 1a | Done; phone check passed | Baseline preserved on this branch |
-| 1b | Done with judgment calls | tsc + verify-task-crud.ts + verify-tasks-list.ts; commit follows |
-| 2a | Done with judgment calls | tsc + verify-budget.ts; commit follows |
-| 2b | Done with judgment calls | tsc + verify-transactions.ts; commit follows |
-| 2c | Done with judgment calls | tsc + verify-categories.ts; commit follows |
-| 2d | Pending | Budget alerts |
-| 3a–3b | Pending | Notes |
-| 4 | Pending | Linking |
-| 7 | Pending | Dark mode |
+| 1a | Done; phone check passed | `eb33758` baseline |
+| 1b | Done with judgment calls | tsc + verify-task-crud.ts + verify-tasks-list.ts; `9237bf0` |
+| 2a | Done with judgment calls | tsc + verify-budget.ts; `8b2a233` |
+| 2b | Done with judgment calls | tsc + verify-transactions.ts; `2234aa0` |
+| 2c | Done with judgment calls | tsc + verify-categories.ts; `bd6c6ed` |
+| 2d | Blocked | Local alert screenshot missing; see BLOCKERS.md |
+| 3a | Blocked | Local Notes screenshot missing; see BLOCKERS.md |
+| 3b | Blocked | Local quick-add Note screenshot missing; see BLOCKERS.md |
+| 4 | Blocked | Local linking screenshots missing; see BLOCKERS.md |
+| 7 | Blocked | Local dark screenshots and design system missing; see BLOCKERS.md |
 
 ## Baseline
 
-The branch began with the approved 1a changes still uncommitted. Preserve them
-in a separate baseline commit before the requested step commits. No real app
-database is used in verification. See phase-1a-verification.md for prior judgments.
+The branch began with the approved 1a changes still uncommitted. They were
+preserved in the baseline commit. No real app database was used in verification.
+See phase-1a-verification.md for prior judgments.
 
 ## Run judgments and deviations
 
-Record each step here after verifying. Screens come only from local screenshots;
-tokens come from the saved design-system definitions and existing semantic theme.
+Screens were read only from local screenshots while they were present; tokens
+came from the saved design-system definitions and existing semantic theme.
 
 ### 1b
 
