@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Pressable, ViewProps, StyleProp, ViewStyle } from 'react-native';
+import { colors, layout } from '@/constants/theme';
 
 export type CardModule = 'default' | 'calendar' | 'tasks' | 'money';
 
@@ -21,7 +22,7 @@ export function Card({
   className = '',
   ...rest
 }: CardProps) {
-  let cardClasses = `bg-surface border border-border rounded-md p-3.5 ${
+  let cardClasses = `bg-surface border border-border p-3.5 ${
     elevated ? 'bg-surface-raised' : ''
   }`;
 
@@ -43,7 +44,7 @@ export function Card({
       <Pressable
         onPress={onPress}
         className={cardClasses}
-        style={style}
+        style={[{ backgroundColor: elevated ? colors['surface-raised'] : colors.surface, borderColor: colors.border, borderWidth: layout.cardBorderWidth, borderRadius: layout.cardBorderRadius, minHeight: 44 }, style]}
         accessibilityRole="button"
         {...rest}
       >
@@ -53,7 +54,7 @@ export function Card({
   }
 
   return (
-    <View className={cardClasses} style={style} {...rest}>
+    <View className={cardClasses} style={[{ backgroundColor: elevated ? colors['surface-raised'] : colors.surface, borderColor: colors.border, borderWidth: layout.cardBorderWidth, borderRadius: layout.cardBorderRadius }, style]} {...rest}>
       {children}
     </View>
   );

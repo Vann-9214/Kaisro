@@ -57,12 +57,9 @@ export function calculateLiftedBarPosition({
     };
   }
 
-  // Edge-to-edge: add +72dp clearance so the entire card and textbox
-  // float comfortably above the keyboard with clear visible margin
-  const KEYBOARD_CLEARANCE = 72;
   const effectiveKeyboardHeight = Math.max(
-    keyboardHeight + KEYBOARD_CLEARANCE,
-    initialWindowHeight - keyboardScreenY + KEYBOARD_CLEARANCE
+    keyboardHeight,
+    initialWindowHeight - keyboardScreenY
   );
 
   return {

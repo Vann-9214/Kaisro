@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { TopBar, FormCard, FormRow, SheetSection, EmptyState, ProgressBar } from '@/components/ui';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
-import { colors, spacing } from '@/constants/theme';
+import { colors, spacing, layout } from '@/constants/theme';
 import { formatCurrency } from '@/constants/currency';
 import { useUIStore } from '@/store/useUIStore';
 import { useLocalData } from '@/hooks/useLocalData';
@@ -25,12 +25,12 @@ export default function BudgetScreen() {
   const budget = data ? buildBudget(budgetMonth, data.categories, data.transactions, data.rules) : null;
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
     <TopBar featureName="Budget" />
-    <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 52 + spacing.lg + spacing.base + insets.bottom }}>
+    <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: layout.tabContentBottomPadding + insets.bottom }}>
       <SheetSection gap="lg">
         <FormRow label={<Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Inter_500Medium' }}>{parseISODate(budgetMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Text>}
           right={<View style={{ flexDirection: 'row', gap: spacing.md }}>
-            <Pressable accessibilityRole="button" accessibilityLabel="Previous month" hitSlop={spacing.sm} onPress={() => setBudgetMonth(shiftMonth(budgetMonth, -1))}><ChevronLeft color={colors.text} size={22} /></Pressable>
-            <Pressable accessibilityRole="button" accessibilityLabel="Next month" hitSlop={spacing.sm} onPress={() => setBudgetMonth(shiftMonth(budgetMonth, 1))}><ChevronRight color={colors.text} size={22} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Previous month" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }} onPress={() => setBudgetMonth(shiftMonth(budgetMonth, -1))}><ChevronLeft color={colors.text} size={22} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Next month" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }} onPress={() => setBudgetMonth(shiftMonth(budgetMonth, 1))}><ChevronRight color={colors.text} size={22} /></Pressable>
           </View>} />
         {error ? <EmptyState variant="full" title="Couldn't load budget" actionLabel="Try again" onAction={refresh} description="Please try reading your ledger again." />
           : !budget ? <ActivityIndicator color={colors.money} /> : <>
@@ -50,7 +50,7 @@ export default function BudgetScreen() {
               value={parseISODate(rule.dueDate).toLocaleDateString()} right={<Text style={{ color: colors['on-money'] }}>{formatCurrency(rule.amount)}</Text>} /></FormCard>)}
           </SheetSection>}
           <SheetSection>
-            <FormRow label={<Text style={{ color: colors.text, fontSize: 16 }}>Categories</Text>} right={<Pressable onPress={() => router.push('/categories')} accessibilityRole="button"><Text style={{ color: colors.primary }}>Manage</Text></Pressable>} />
+            <FormRow label={<Text style={{ color: colors.text, fontSize: 16 }}>Categories</Text>} right={<Pressable onPress={() => router.push('/categories')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.primary }}>Manage</Text></Pressable>} />
             {budget.categoryRows.map(category => <FormCard key={category.id} style={{ backgroundColor: colors.surface }}><SheetSection gap="sm">
               <FormRow icon={<CategoryIcon name={category.icon} />} label={category.name}
                 right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(category.spent)}</Text>} />

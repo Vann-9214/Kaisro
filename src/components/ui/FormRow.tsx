@@ -47,6 +47,7 @@ export function FormRow({
           flexDirection: 'row',
           alignItems: 'center',
           flex: 1,
+          minWidth: 0,
         }}
       >
         {icon && (
@@ -61,7 +62,7 @@ export function FormRow({
           </View>
         )}
 
-        <View style={{ flex: 1, justifyContent: 'center' }}>
+        <View style={{ flex: 1, minWidth: 0, justifyContent: 'center' }}>
           {children ? (
             children
           ) : (
@@ -102,6 +103,7 @@ export function FormRow({
               {Boolean(hint) && !error && (
                 <View style={{ marginTop: layout.labelToValueGap }}>
                   <Text
+                    numberOfLines={2}
                     maxFontSizeMultiplier={layout.maxFontScale}
                     style={{
                       fontSize: 11,
@@ -115,7 +117,8 @@ export function FormRow({
 
               {Boolean(error) && (
                 <View style={{ marginTop: layout.labelToValueGap }}>
-                  <Text
+                    <Text
+                      numberOfLines={2}
                     maxFontSizeMultiplier={layout.maxFontScale}
                     style={{
                       fontSize: 12,
@@ -138,6 +141,7 @@ export function FormRow({
             alignItems: 'center',
             justifyContent: 'center',
             marginLeft: layout.iconToLabelGap,
+            maxWidth: '50%',
           }}
         >
           {right}

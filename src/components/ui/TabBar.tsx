@@ -7,7 +7,7 @@ import {
   PieChart,
   Settings as SettingsIcon,
 } from 'lucide-react-native';
-import { colors } from '@/constants/theme';
+import { colors, layout } from '@/constants/theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface TabBarItem {
@@ -62,7 +62,7 @@ export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTab
         backgroundColor: colors.background,
         borderTopWidth: 1,
         borderTopColor: colors.border,
-        height: totalHeight,
+        minHeight: totalHeight,
         paddingBottom: insets.bottom,
       }}
       className="flex-row items-center justify-around px-2"
@@ -111,12 +111,15 @@ export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTab
             onPress={onPress}
             onLongPress={onLongPress}
             className="flex-1 items-center justify-center py-1"
+            style={{ minHeight: 44 }}
           >
             <View className="items-center justify-center h-7">
               {tabItem.icon({ color: iconColor, size: 20 })}
             </View>
 
             <Text
+              maxFontSizeMultiplier={layout.maxFontScale}
+              numberOfLines={1}
               style={{
                 color: iconColor,
                 fontSize: 10,

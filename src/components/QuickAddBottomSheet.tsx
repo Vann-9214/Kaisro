@@ -4,8 +4,6 @@ import {
   Text,
   Pressable,
   ScrollView,
-  ActivityIndicator,
-  useWindowDimensions,
 } from 'react-native';
 import {
   Calendar as CalendarIcon,
@@ -13,9 +11,7 @@ import {
   Receipt,
   FileText,
   X,
-  Check,
 } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BottomSheet } from '@/components/ui/BottomSheet';
 import { useUIStore, QuickAddType } from '@/store/useUIStore';
 import { EventForm } from '@/components/events/EventForm';
@@ -29,6 +25,7 @@ import {
 } from '@/components/lifted-input';
 import { colors, spacing, layout } from '@/constants/theme';
 import { QuickAddFormHandle } from '@/types/quickAdd';
+import { SheetSaveFooter } from '@/components/ui/SheetSaveFooter';
 
 const TABS: {
   type: QuickAddType;
@@ -42,8 +39,6 @@ const TABS: {
 ];
 
 function QuickAddBottomSheetContent() {
-  const insets = useSafeAreaInsets();
-  const { height: windowHeight } = useWindowDimensions();
   const { closeBar } = useLiftedInput();
   const {
     isAddSheetOpen,
@@ -153,28 +148,6 @@ function QuickAddBottomSheetContent() {
   const buttonLabel = getButtonLabel();
   const titleText = getTitleText();
 
-  // Explicit max height for the ScrollView body so the footer is never pushed out of view.
-  // Root cause: a View with only maxHeight (no definite height) does not pass a bounded
-  // size to its children, so flexShrink is ignored and the footer gets clipped.
-  // Solution: give the ScrollView an exact max height computed from the window budget.
-  //
-  // Header heights (measured from layout constants):
-  //   Normal mode: headerTopPadding(16) + dragHandle(8) + titleBar(42) + segmented(50) = 116dp → round up to 120
-  //   Edit mode:   headerTopPadding(16) + dragHandle(8) + titleBar(42+12 marginBottom) = 78dp → round up to 85
-  // Footer height: borderTop(1) + footerTopPadding(16) + buttonHeight(50) + bottomPadding(12) = 79dp
-  const estimatedHeaderH = isEditMode ? 85 : 120;
-  const footerH =
-    1 + // borderTopWidth
-    layout.footerTopPadding +
-    layout.footerButtonHeight +
-    (insets.bottom > 0
-      ? insets.bottom + layout.footerBottomExtraPadding
-      : layout.footerBottomExtraPadding);
-  const scrollBodyMaxHeight = Math.max(
-    180,
-    Math.floor(windowHeight * 0.90) - estimatedHeaderH - footerH
-  );
-
   // Fixed Header
   const fixedHeader = (
     <View
@@ -207,8 +180,9 @@ function QuickAddBottomSheetContent() {
           ...(!isEditMode ? { marginBottom: 0 } : { marginBottom: layout.segmentedToCardGap }),
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1, minWidth: 0 }}>
           <Text
+            numberOfLines={1}
             maxFontSizeMultiplier={layout.maxFontScale}
             style={{
               fontSize: 18,
@@ -221,7 +195,7 @@ function QuickAddBottomSheetContent() {
           {selectedDateContext ? (
             <View
               style={{
-                marginLeft: 10,
+                marginLeft: spacing.sm,
                 paddingHorizontal: 10,
                 paddingVertical: 2,
                 borderRadius: 9999,
@@ -251,9 +225,10 @@ function QuickAddBottomSheetContent() {
         <Pressable
           onPress={handleClose}
           style={{
-            width: 28,
-            height: 28,
-            borderRadius: 14,
+            width: 44,
+            height: 44,
+            borderRadius: 22,
+            marginLeft: spacing.sm,
             backgroundColor: colors.background,
             borderWidth: 1,
             borderColor: colors.border,
@@ -292,10 +267,11 @@ function QuickAddBottomSheetContent() {
                 onPress={() => handleTabPress(tab.type)}
                 style={{
                   flex: 1,
-                  paddingVertical: 6,
-                  paddingHorizontal: 4,
+                  minHeight: 50,
+                  paddingVertical: spacing.xs,
+                  paddingHorizontal: spacing.xs,
                   borderRadius: 9999,
-                  flexDirection: 'row',
+                  flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: isSelected ? colors.primary : 'transparent',
@@ -311,7 +287,7 @@ function QuickAddBottomSheetContent() {
                 <Text
                   maxFontSizeMultiplier={layout.maxFontScale}
                   style={{
-                    marginLeft: 4,
+                    marginTop: spacing.xs,
                     fontSize: 12,
                     fontWeight: '500',
                     color: isSelected ? colors['on-primary'] : colors['text-muted'],
@@ -327,55 +303,7 @@ function QuickAddBottomSheetContent() {
     </View>
   );
 
-  // Fixed Footer containing exactly one primary Save/Record button
-  const fixedFooter = (
-    <View
-      style={{
-        paddingTop: layout.footerTopPadding,
-        paddingHorizontal: layout.sheetHorizontalPadding,
-        paddingBottom: insets.bottom > 0 ? insets.bottom + layout.footerBottomExtraPadding : layout.footerBottomExtraPadding,
-        borderTopWidth: 1,
-        borderTopColor: colors.border,
-        backgroundColor: colors['surface-raised'],
-      }}
-    >
-      <Pressable
-        onPress={handleSave}
-        disabled={isSaving}
-        style={{
-          minHeight: layout.footerButtonHeight,
-          backgroundColor: colors.primary,
-          borderRadius: layout.cardBorderRadius,
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'center',
-          width: '100%',
-          opacity: isSaving ? 0.85 : 1,
-        }}
-        accessibilityRole="button"
-        accessibilityLabel={buttonLabel}
-      >
-        {isSaving ? (
-          <ActivityIndicator size="small" color={colors['on-primary']} />
-        ) : (
-          <>
-            <Check size={18} color={colors['on-primary']} strokeWidth={2.5} />
-            <Text
-              maxFontSizeMultiplier={layout.maxFontScale}
-              style={{
-                marginLeft: spacing.sm,
-                fontSize: 14,
-                fontWeight: '600',
-                color: colors['on-primary'],
-              }}
-            >
-              {buttonLabel}
-            </Text>
-          </>
-        )}
-      </Pressable>
-    </View>
-  );
+  const fixedFooter = <SheetSaveFooter label={buttonLabel} onPress={handleSave} saving={isSaving} />;
 
   return (
     <BottomSheet
@@ -390,10 +318,7 @@ function QuickAddBottomSheetContent() {
           The footer always remains visible; content scrolls within this bounded area. */}
       <ScrollView
         ref={scrollViewRef}
-        style={{
-          maxHeight: scrollBodyMaxHeight,
-          paddingHorizontal: layout.sheetHorizontalPadding,
-        }}
+        style={{ flex: 1, paddingHorizontal: layout.sheetHorizontalPadding }}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"

@@ -8,7 +8,7 @@ import {
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { colors } from '@/constants/theme';
+import { colors, layout } from '@/constants/theme';
 
 export interface TopBarProps {
   featureName: string;
@@ -45,17 +45,17 @@ export function TopBar({ featureName, rightAction, style }: TopBarProps) {
     >
       <View className="px-5 pt-2 pb-2.5 flex-row items-center justify-between">
         {/* App Branding & Feature Title */}
-        <View className="flex-row items-center">
-          <Text className="text-xl font-semibold text-primary tracking-tight">
+        <View className="flex-row items-center flex-1 min-w-0">
+          <Text maxFontSizeMultiplier={layout.maxFontScale} numberOfLines={1} className="text-xl font-semibold text-primary tracking-tight">
             Kaisro
           </Text>
-          <Text className="text-xl font-light text-text-muted mx-2">/</Text>
-          <Text className="text-xl font-medium text-text">{featureName}</Text>
+          <Text maxFontSizeMultiplier={layout.maxFontScale} className="text-xl font-light text-text-muted mx-2">/</Text>
+          <Text maxFontSizeMultiplier={layout.maxFontScale} numberOfLines={1} ellipsizeMode="tail" style={{ flexShrink: 1 }} className="text-xl font-medium text-text">{featureName}</Text>
         </View>
 
         {/* Optional Right Action Slot (empty by default) */}
         {rightAction ? (
-          <View className="flex-row items-center">{rightAction}</View>
+          <View className="flex-row items-center ml-2">{rightAction}</View>
         ) : null}
       </View>
     </View>

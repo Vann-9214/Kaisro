@@ -117,10 +117,10 @@ export function BottomSheet({
           style={[
             {
               width: '100%',
-              maxHeight: windowHeight * 0.90,
+              height: Math.min(windowHeight * 0.90, windowHeight - insets.top - spacing.sm),
               backgroundColor: colors['surface-raised'],
-              borderTopLeftRadius: 16,
-              borderTopRightRadius: 16,
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
               borderTopWidth: 1,
               borderColor: colors.border,
               overflow: 'hidden',
@@ -147,7 +147,7 @@ export function BottomSheet({
           {/* Body slot — no wrapper; height budget is enforced by an explicit maxHeight
               on the ScrollView in the consumer (QuickAddBottomSheet). This avoids the
               flex:1-in-maxHeight-parent collapse-to-zero problem. */}
-          {children}
+          <View style={{ flex: 1, minHeight: 0, width: '100%' }}>{children}</View>
 
           {/* Footer slot (optional) */}
           {footer ? (

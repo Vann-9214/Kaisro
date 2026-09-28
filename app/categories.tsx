@@ -52,14 +52,14 @@ export default function CategoriesScreen() {
     } catch { Alert.alert('Could not check category', 'Please try again.'); }
   };
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
-    <TopBar featureName="Categories" rightAction={<Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back to Budget"><ArrowLeft size={20} color={colors.primary} /></Pressable>} />
+    <TopBar featureName="Categories" rightAction={<Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back to Budget" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><ArrowLeft size={20} color={colors.primary} /></Pressable>} />
     <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing['2xl'] }}>
       <SheetSection gap="lg">
         <Button title="Add category" onPress={() => open()} fullWidth />
         {error ? <Text style={{ color: colors.text }} onPress={refresh}>Could not load categories. Tap to retry.</Text> : data?.map(category => <FormCard key={category.id} style={{ backgroundColor: colors.surface }}>
-          <FormRow icon={<CategoryIcon name={category.icon} />} label={<Pressable onPress={() => open(category)} accessibilityRole="button" accessibilityLabel={'Edit ' + category.name}><Text style={{ color: colors.text }}>{category.name}</Text></Pressable>}
+          <FormRow icon={<CategoryIcon name={category.icon} />} label={<Pressable onPress={() => open(category)} accessibilityRole="button" accessibilityLabel={'Edit ' + category.name} style={{ minHeight: 44, justifyContent: 'center' }}><Text numberOfLines={2} style={{ color: colors.text }}>{category.name}</Text></Pressable>}
             value={category.monthlyCap === null ? 'No cap' : formatCurrency(category.monthlyCap) + ' cap'}
-            right={category.name.toLowerCase() !== 'other' ? <Pressable onPress={() => requestDelete(category)} accessibilityRole="button" accessibilityLabel={'Delete ' + category.name}><Trash2 size={18} color={colors['text-muted']} /></Pressable> : undefined} />
+            right={category.name.toLowerCase() !== 'other' ? <Pressable onPress={() => requestDelete(category)} accessibilityRole="button" accessibilityLabel={'Delete ' + category.name} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><Trash2 size={18} color={colors['text-muted']} /></Pressable> : undefined} />
         </FormCard>)}
         {moving && <FormCard style={{ backgroundColor: colors.surface }}><SheetSection>
           <Text style={{ color: colors.text }}>Move entries from {moving.name} to:</Text>

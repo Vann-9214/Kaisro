@@ -76,9 +76,11 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
       </SheetSection></FormCard>
       <FormCard><SheetSection gap="sm">
         <FormRow label="Subtasks" right={<Pressable accessibilityRole="button" accessibilityLabel="Add subtask"
+          style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
           onPress={() => { closeBar(); setChildren(items => [...items, { title: '', done: false }]); }}><Plus size={20} color={colors.tasks} /></Pressable>} />
         {children.map((child, index) => <FormRow key={child.id ?? 'new-' + index} label="" right={
           <Pressable accessibilityRole="button" accessibilityLabel={'Remove subtask ' + (index + 1)}
+            style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
             onPress={() => { closeBar(); setChildren(items => items.filter((_, i) => i !== index)); }}><Trash2 size={18} color={colors['text-muted']} /></Pressable>
         }>
           <LiftedField id={'subtask-' + index} label={'Subtask ' + (index + 1)} placeholder="Subtask"
@@ -86,7 +88,7 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
             onChangeText={title => setChildren(items => items.map((item, i) => i === index ? { ...item, title } : item))} />
         </FormRow>)}
       </SheetSection></FormCard>
-      {editingTask && <Pressable onPress={remove} accessibilityRole="button" style={{ padding: spacing.md, alignItems: 'center' }}><Text style={{ color: colors['text-muted'] }}>Delete task</Text></Pressable>}
+      {editingTask && <Pressable onPress={remove} accessibilityRole="button" style={{ minHeight: 44, padding: spacing.md, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Delete task</Text></Pressable>}
     </SheetSection>;
   }
 );

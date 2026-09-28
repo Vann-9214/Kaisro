@@ -68,7 +68,7 @@ export const ExpenseForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProp
       <FormCard><FormRow label="Repeats monthly"
         value={rule ? 'Edits apply to this entry. Turning this off stops future entries.' : 'Uses this date each month, or the last day of shorter months.'}
         right={<Switch value={watch('repeats')} onValueChange={value => setValue('repeats', value)} trackColor={{ true: colors.money, false: colors.border }} />} /></FormCard>
-      {editingTransaction && <Pressable onPress={remove} accessibilityRole="button" style={{ padding: spacing.md, alignItems: 'center' }}><Text style={{ color: colors['text-muted'] }}>Delete entry</Text></Pressable>}
+      {editingTransaction && <Pressable onPress={remove} accessibilityRole="button" style={{ minHeight: 44, padding: spacing.md, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Delete entry</Text></Pressable>}
     </SheetSection>;
   }
 );

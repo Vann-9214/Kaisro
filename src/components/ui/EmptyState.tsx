@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Clock, Plus } from 'lucide-react-native';
-import { colors } from '@/constants/theme';
+import { colors, layout, spacing } from '@/constants/theme';
 
 export interface EmptyStateProps {
   /**
@@ -40,7 +40,7 @@ export function EmptyState({
             backgroundColor: colors.surface,
             borderColor: colors.border,
             borderWidth: 1,
-            borderRadius: 12,
+            borderRadius: layout.cardBorderRadius,
             paddingHorizontal: 12,
             paddingVertical: 10,
             flexDirection: 'row',
@@ -106,7 +106,7 @@ export function EmptyState({
             accessibilityRole="button"
             accessibilityLabel={actionLabel}
             style={({ pressed }) => ({
-              height: 34,
+              minHeight: 44,
               paddingHorizontal: 12,
               borderRadius: 9999,
               backgroundColor: colors.primary,
@@ -205,7 +205,7 @@ export function EmptyState({
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
           style={({ pressed }) => ({
-            height: 40,
+            minHeight: 44,
             paddingHorizontal: 20,
             borderRadius: 9999,
             backgroundColor: colors[actionModule],

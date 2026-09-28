@@ -62,7 +62,7 @@ export function Button({
 
   // Sizing
   if (size === 'sm') {
-    containerClasses += ' h-9 px-3';
+    containerClasses += ' min-h-11 px-3';
     textClasses += ' text-xs';
   } else if (size === 'lg') {
     containerClasses += ' h-12 px-6';

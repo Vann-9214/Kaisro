@@ -24,8 +24,8 @@ export function DateTimeField({ value, onChange, optional = false, fallbackDate 
       <FormCard style={{ flex: 1 }} onPress={() => open('time')}><FormRow icon={<Clock color={colors['text-muted']} size={16} />} label="Time" value={hasTime ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Anytime'} /></FormCard>
     </FormCardRow>
     {optional && value && <View style={{ flexDirection: 'row', gap: spacing.md }}>
-      <Pressable onPress={() => onChange(null)} accessibilityRole="button"><Text style={{ color: colors['text-muted'] }}>Clear date</Text></Pressable>
-      {hasTime && <Pressable onPress={() => onChange(formatDateToISO(date))} accessibilityRole="button"><Text style={{ color: colors['text-muted'] }}>Clear time</Text></Pressable>}
+      <Pressable onPress={() => onChange(null)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Clear date</Text></Pressable>
+      {hasTime && <Pressable onPress={() => onChange(formatDateToISO(date))} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Clear time</Text></Pressable>}
     </View>}
     {mode && <FormCard>
       <DateTimePicker value={date} mode={mode} display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(event, picked) => {
@@ -36,7 +36,7 @@ export function DateTimeField({ value, onChange, optional = false, fallbackDate 
         else next.setHours(picked.getHours(), picked.getMinutes(), 0, 0);
         onChange(mode === 'time' || hasTime || !optional ? formatLocalDateTime(next) : formatDateToISO(next));
       }} />
-      {Platform.OS === 'ios' && <Pressable onPress={() => setMode(null)} accessibilityRole="button"><Text style={{ color: colors.primary, padding: spacing.sm }}>Done</Text></Pressable>}
+      {Platform.OS === 'ios' && <Pressable onPress={() => setMode(null)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.primary, padding: spacing.sm }}>Done</Text></Pressable>}
     </FormCard>}
   </SheetSection>;
 }

@@ -152,10 +152,11 @@ export const spacing = {
  * Standardized across all quick-add and edit sheets:
  */
 export const layout = {
+  tabContentBottomPadding: 52 + spacing.base + spacing.lg,
   // Sheet & Card padding
   sheetHorizontalPadding: spacing.lg,       // 20dp
-  cardGap: 10,                              // 10dp card gap
-  cardPaddingVertical: 12,                  // 12dp vertical card padding
+  cardGap: spacing.cardGap,
+  cardPaddingVertical: spacing.md,
   cardPaddingHorizontal: spacing.base,      // 16dp
   cardBorderRadius: 12,                     // 12dp
   cardBorderWidth: 1,                       // 1dp hairline

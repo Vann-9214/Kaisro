@@ -46,7 +46,7 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
       <SheetSection>
         <FormRow
           icon={<Checkbox checked={task.done} onToggle={() => toggle(task.id)} accessibilityLabel={task.title} />}
-          label={<Pressable onPress={() => openAddSheet('task', task)} accessibilityRole="button" accessibilityLabel={'Edit ' + task.title}><Text style={[styles.body, task.done && styles.completed]}>{task.title}</Text></Pressable>}
+          label={<Pressable onPress={() => openAddSheet('task', task)} accessibilityRole="button" accessibilityLabel={'Edit ' + task.title} style={{ minHeight: 44, justifyContent: 'center' }}><Text numberOfLines={2} maxFontSizeMultiplier={layout.maxFontScale} style={[styles.body, task.done && styles.completed]}>{task.title}</Text></Pressable>}
           value={
             <View style={styles.metadata}>
               <Chip label={formatTaskDue(task.dueAt, today)} size="sm" variant={expanded ? 'tasks' : 'default'} />
@@ -54,7 +54,7 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
               {hasSubtasks && <Chip label={completed + '/' + task.subtasks.length} size="sm" icon={<ListChecks size={12} color={colors['text-muted']} />} />}
             </View>
           }
-          right={hasSubtasks ? <Pressable onPress={() => setExpanded(value => !value)} accessibilityRole="button" accessibilityLabel={'Subtasks for ' + task.title} accessibilityState={{ expanded }} hitSlop={spacing.sm}>{expanded ? <ChevronDown size={20} color={colors['text-muted']} /> : <ChevronRight size={20} color={colors['text-muted']} />}</Pressable> : undefined}
+          right={hasSubtasks ? <Pressable onPress={() => setExpanded(value => !value)} accessibilityRole="button" accessibilityLabel={'Subtasks for ' + task.title} accessibilityState={{ expanded }} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>{expanded ? <ChevronDown size={20} color={colors['text-muted']} /> : <ChevronRight size={20} color={colors['text-muted']} />}</Pressable> : undefined}
         />
         {expanded && (
           <SheetSection gap="xs" style={styles.subtasks}>
@@ -89,7 +89,7 @@ export default function TasksScreen() {
     <View style={styles.screen}>
       <TopBar featureName="Tasks" />
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: 52 + spacing.base + spacing.lg + insets.bottom }]}
+        contentContainerStyle={[styles.content, { paddingBottom: layout.tabContentBottomPadding + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
         <SheetSection gap="lg">
@@ -148,8 +148,8 @@ export default function TasksScreen() {
               ) : list.groups.map(group => (
                 <SheetSection key={group.title} gap="sm">
                   <View style={styles.sectionHeading}>
-                    <Text accessibilityRole="header" style={[styles.eyebrow, group.title === 'Overdue' && styles.overdue]}>{group.title.toUpperCase()} ({group.data.length})</Text>
-                    <Text style={styles.eyebrow}>{GROUP_HINTS[group.title]}</Text>
+                    <Text accessibilityRole="header" numberOfLines={2} style={[styles.eyebrow, group.title === 'Overdue' && styles.overdue, { flexShrink: 1 }]}>{group.title.toUpperCase()} ({group.data.length})</Text>
+                    <Text numberOfLines={2} style={[styles.eyebrow, { flexShrink: 1, textAlign: 'right' }]}>{GROUP_HINTS[group.title]}</Text>
                   </View>
                   <SheetSection>{group.data.map(task => <TaskRow key={task.id} task={task} today={today} />)}</SheetSection>
                 </SheetSection>

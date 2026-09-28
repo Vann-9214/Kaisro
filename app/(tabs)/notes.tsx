@@ -3,13 +3,16 @@ import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sql } from 'drizzle-orm';
 import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
+import { TopBar } from '@/components/ui/TopBar';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { SheetSection } from '@/components/ui/SheetSection';
+import { FileText } from 'lucide-react-native';
 import { useUIStore } from '@/store/useUIStore';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
-import { colors } from '@/constants/theme';
+import { colors, spacing, layout } from '@/constants/theme';
 
 export default function NotesScreen() {
   const openAddSheet = useUIStore((s) => s.openAddSheet);
@@ -43,46 +46,33 @@ export default function NotesScreen() {
   }, [fetchNotes, refreshCounter]);
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-background">
+      <TopBar featureName="Notes" />
       <ScrollView
-        className="flex-1 px-5 pt-3"
-        contentContainerStyle={{ paddingBottom: bottomScrollPadding }}
+        className="flex-1"
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: bottomScrollPadding }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View className="mb-6">
-          <Text className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
-            Reflections & Context
-          </Text>
-          <Text className="text-2xl font-medium text-text">Notes</Text>
-        </View>
-
-        {/* Notes Content */}
+        <SheetSection gap="lg">
         {isLoading ? (
           <View className="py-8 items-center justify-center">
             <ActivityIndicator size="small" color={colors.primary} />
           </View>
         ) : notesList.length === 0 ? (
-          <Card className="mb-4">
-            <Text className="text-sm font-medium text-text mb-1">No notes yet</Text>
-            <Text className="text-xs text-text-muted leading-5">
-              Your notebook is completely open. Tap "+ Add Note" to capture your reflections and thoughts.
-            </Text>
-          </Card>
+          <EmptyState variant="full" title="No notes yet" description="Your notebook is completely open." actionLabel="Add a note" icon={<FileText size={24} color={colors.primary} />} onAction={() => openAddSheet('note')} />
         ) : (
           notesList.map((note) => (
             <Card
               key={note.id}
-              className="mb-4"
               onPress={() => openAddSheet('note', note)}
               accessibilityRole="button"
               accessibilityLabel={`Edit note: ${note.title}`}
             >
               <View className="flex-row items-center justify-between mb-2">
-                <Text className="text-base font-medium text-text">{note.title}</Text>
+                <Text numberOfLines={2} maxFontSizeMultiplier={layout.maxFontScale} style={{ flexShrink: 1 }} className="text-base font-medium text-text">{note.title}</Text>
               </View>
               {Boolean(note.body) && (
-                <Text className="text-xs text-text-muted leading-5 mb-2">
+                <Text numberOfLines={3} maxFontSizeMultiplier={layout.maxFontScale} className="text-xs text-text-muted leading-5 mb-2">
                   {note.body}
                 </Text>
               )}
@@ -96,6 +86,7 @@ export default function NotesScreen() {
           size="sm"
           onPress={() => openAddSheet('note')}
         />
+        </SheetSection>
       </ScrollView>
     </View>
   );

@@ -103,6 +103,7 @@ export function AgendaView({
         <Text
           numberOfLines={1}
           style={{
+            flexShrink: 1,
             fontSize: 14,
             fontWeight: '600',
             color: section.isToday ? colors.primary : colors.text,
@@ -116,6 +117,8 @@ export function AgendaView({
           <Text
             numberOfLines={1}
             style={{
+              flexShrink: 1,
+              marginLeft: 8,
               fontSize: 12,
               fontWeight: '500',
               color: colors['text-muted'],

@@ -37,7 +37,7 @@ import {
 } from '@/utils/recurrence';
 import { formatTimeDisplay } from '@/utils/timelineLayout';
 import { colors, spacing, layout } from '@/constants/theme';
-import { FormCard, FormCardRow, FormRow } from '@/components/ui';
+import { FormCard, FormCardRow, FormRow, SheetSection } from '@/components/ui';
 import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { useLiftedInput } from '@/components/lifted-input/LiftedInputContext';
 import { QuickAddFormHandle, QuickAddFormProps } from '@/types/quickAdd';
@@ -371,7 +371,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   return (
     <>
       {/* Stacked Cards Container with standardized 12dp card gap */}
-      <View style={{ gap: layout.cardGap }}>
+      <SheetSection>
         {/* 1. Title Lifted Field Card */}
         <FormCard>
           <Controller
@@ -422,7 +422,6 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                     onValueChange={onChange}
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={colors.surface}
-                    style={Platform.OS === 'android' ? { marginVertical: -8 } : undefined}
                   />
                 )}
               />
@@ -466,7 +465,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 style={{
                   fontSize: 12,
                   color: colors['text-muted'],
-                  marginTop: 2,
+                  marginTop: spacing.xs,
                   fontVariant: ['tabular-nums'],
                 }}
               >
@@ -509,7 +508,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 style={{
                   fontSize: 12,
                   color: colors['text-muted'],
-                  marginTop: 2,
+                    marginTop: spacing.xs,
                   fontVariant: ['tabular-nums'],
                 }}
               >
@@ -626,14 +625,13 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                     onValueChange={onChange}
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={colors.surface}
-                    style={Platform.OS === 'android' ? { marginVertical: -8 } : undefined}
                   />
                 )}
               />
             }
           />
         </FormCard>
-      </View>
+      </SheetSection>
 
       {/* 8. Delete Button in Edit Mode: 24dp above, centered, 16dp space below */}
       {isEditMode && (
@@ -647,7 +645,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         >
           <Pressable
             onPress={handleDelete}
-            style={{ paddingVertical: spacing.xs, paddingHorizontal: spacing.base }}
+            style={{ minHeight: 44, paddingHorizontal: spacing.base, justifyContent: 'center' }}
             accessibilityRole="button"
             accessibilityLabel="Delete event"
           >
@@ -697,7 +695,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       >
         <Pressable
           onPress={() => setIsRecurrenceModalOpen(false)}
-          className="flex-1 bg-black/40 justify-center items-center px-6"
+          className="flex-1 justify-center items-center px-6"
+          style={{ backgroundColor: colors.overlay }}
         >
           <View
             style={{
@@ -728,7 +727,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
               </Text>
               <Pressable
                 onPress={() => setIsRecurrenceModalOpen(false)}
-                className="p-1 rounded-full active:bg-background"
+                className="rounded-full active:bg-background"
+                style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
                 accessibilityRole="button"
                 accessibilityLabel="Close recurrence picker"
               >
@@ -747,7 +747,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                   style={{
                     paddingVertical: layout.cardGap,
                     paddingHorizontal: spacing.base,
-                    borderRadius: 8,
+                    borderRadius: layout.cardBorderRadius,
+                    minHeight: 44,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
@@ -785,7 +786,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       >
         <Pressable
           onPress={() => setIsReminderModalOpen(false)}
-          className="flex-1 bg-black/40 justify-center items-center px-6"
+          className="flex-1 justify-center items-center px-6"
+          style={{ backgroundColor: colors.overlay }}
         >
           <View
             style={{
@@ -816,7 +818,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
               </Text>
               <Pressable
                 onPress={() => setIsReminderModalOpen(false)}
-                className="p-1 rounded-full active:bg-background"
+                className="rounded-full active:bg-background"
+                style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
                 accessibilityRole="button"
                 accessibilityLabel="Close reminder picker"
               >
@@ -835,7 +838,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                   style={{
                     paddingVertical: layout.cardGap,
                     paddingHorizontal: spacing.base,
-                    borderRadius: 8,
+                    borderRadius: layout.cardBorderRadius,
+                    minHeight: 44,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',

@@ -80,6 +80,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
           left: layout.sheetHorizontalPadding,
           right: layout.sheetHorizontalPadding,
           bottom: bottomOffset,
+          maxHeight: Math.max(160, currentWindowHeight - bottomOffset - insets.top - spacing.sm),
           opacity: entrance,
         }}
       >
@@ -117,7 +118,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
 
             <Pressable
               onPress={handleNextOrDone}
-              className="bg-primary px-3.5 py-1.5 rounded-lg active:opacity-85"
+              style={{ minHeight: 44, minWidth: 44, paddingHorizontal: spacing.md, alignItems: 'center', justifyContent: 'center', borderRadius: layout.cardBorderRadius, backgroundColor: colors.primary }}
               accessibilityRole="button"
               accessibilityLabel={actionButtonText}
             >

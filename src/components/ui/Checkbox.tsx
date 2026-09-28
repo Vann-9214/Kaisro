@@ -47,6 +47,7 @@ export function Checkbox({
         accessibilityLabel={accessibilityLabel ?? label}
         accessibilityState={{ checked, disabled }}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
       >
         <View
           className={`w-5 h-5 rounded-full items-center justify-center ${

@@ -65,8 +65,9 @@ export function Chip({
       <Pressable
         onPress={onPress}
         className={containerClasses}
-        style={style}
+        style={[{ minHeight: 44, borderRadius: 9999 }, style]}
         accessibilityRole="button"
+        accessibilityLabel={label}
       >
         {content}
       </Pressable>

@@ -61,7 +61,7 @@ import {
 } from '@/utils/timelineLayout';
 import { useNowStore, useNowTimer } from '@/store/useNowStore';
 import { formatCurrency } from '@/constants/currency';
-import { colors } from '@/constants/theme';
+import { colors, layout } from '@/constants/theme';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { calculateTimelineScrollTarget } from '@/utils/timelineLayout';
 
@@ -554,7 +554,7 @@ export default function CalendarScreen() {
   const totalTimelineHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + 14;
 
   // Minimal bottom padding so scrolling stops cleanly on the 12:00 AM closing line without empty white space
-  const bottomScrollPadding = 10;
+  const bottomScrollPadding = layout.tabContentBottomPadding + insets.bottom;
 
   return (
     <View className="flex-1 bg-background">

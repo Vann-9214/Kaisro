@@ -13,7 +13,7 @@ import * as schema from '@/db/schema';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { useUIStore } from '@/store/useUIStore';
 import { colors, spacing, layout } from '@/constants/theme';
-import { FormCard } from '@/components/ui';
+import { FormCard, SheetSection } from '@/components/ui';
 import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { QuickAddFormHandle, QuickAddFormProps } from '@/types/quickAdd';
 
@@ -187,7 +187,7 @@ export const NoteForm = React.forwardRef<QuickAddFormHandle, NoteFormProps>(
     };
 
     return (
-      <View style={{ gap: layout.cardGap }}>
+      <SheetSection>
         {/* 1. Note Title Lifted Field Card */}
         <FormCard singleLine>
           <Controller
@@ -276,7 +276,7 @@ export const NoteForm = React.forwardRef<QuickAddFormHandle, NoteFormProps>(
           >
             <Pressable
               onPress={handleDelete}
-              style={{ paddingVertical: spacing.xs, paddingHorizontal: spacing.base }}
+              style={{ minHeight: 44, paddingHorizontal: spacing.base, justifyContent: 'center' }}
               accessibilityRole="button"
               accessibilityLabel="Delete note"
             >
@@ -293,7 +293,7 @@ export const NoteForm = React.forwardRef<QuickAddFormHandle, NoteFormProps>(
             </Pressable>
           </View>
         )}
-      </View>
+      </SheetSection>
     );
   }
 );

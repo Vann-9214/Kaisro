@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { layout } from '@/constants/theme';
 
 export interface SegmentedControlOption<T extends string = string> {
   value: T;
@@ -33,10 +34,13 @@ export function SegmentedControl<T extends string = string>({
             className={`flex-1 py-1.5 px-3 rounded-full items-center justify-center ${
               isSelected ? 'bg-surface' : 'bg-transparent'
             }`}
+            style={{ minHeight: 44, minWidth: 0 }}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
           >
             <Text
+              numberOfLines={1}
+              maxFontSizeMultiplier={layout.maxFontScale}
               className={`text-xs font-medium ${
                 isSelected ? 'text-text' : 'text-text-muted'
               }`}

@@ -36,7 +36,7 @@ export function FormCard({
   ...rest
 }: FormCardProps) {
   const cardStyle: ViewStyle = {
-    backgroundColor: colors.background,
+    backgroundColor: colors.surface,
     borderColor: colors.border,
     borderWidth: layout.cardBorderWidth,
     borderRadius: layout.cardBorderRadius,
