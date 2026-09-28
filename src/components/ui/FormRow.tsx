@@ -103,7 +103,6 @@ export function FormRow({
               {Boolean(hint) && !error && (
                 <View style={{ marginTop: layout.labelToValueGap }}>
                   <Text
-                    numberOfLines={2}
                     maxFontSizeMultiplier={layout.maxFontScale}
                     style={{
                       fontSize: 11,
@@ -117,8 +116,7 @@ export function FormRow({
 
               {Boolean(error) && (
                 <View style={{ marginTop: layout.labelToValueGap }}>
-                    <Text
-                      numberOfLines={2}
+                  <Text
                     maxFontSizeMultiplier={layout.maxFontScale}
                     style={{
                       fontSize: 12,

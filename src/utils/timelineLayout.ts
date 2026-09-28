@@ -4,6 +4,7 @@ import { TransactionWithCategory } from '@/hooks/useCalendarDay';
 export const START_HOUR = 0; // 12:00 AM (midnight start of day)
 export const END_HOUR = 24; // 12:00 AM (midnight end of day / closing line)
 export const HOUR_HEIGHT = 72; // 72px per 1-hour slot
+const MIN_VISUAL_MINUTES = 45; // At 72dp/hour this leaves 54dp for a 44dp control, card padding, and borders.
 
 /**
  * Vertical pixel distance threshold within which the live "now" indicator
@@ -204,16 +205,16 @@ export function computeUnifiedTimelineLayout(
     startMinutes = Math.max(0, Math.min(maxDayMinutes, startMinutes));
     endMinutes = Math.max(startMinutes, Math.min(maxDayMinutes, endMinutes));
 
-    const durationMinutes = Math.max(30, endMinutes - startMinutes);
-    const clampedDuration = Math.min(durationMinutes, maxDayMinutes - startMinutes);
+    const durationMinutes = Math.max(MIN_VISUAL_MINUTES, endMinutes - startMinutes);
+    const visualDuration = durationMinutes;
 
     rawEntries.push({
       id: `event-${ev.id}`,
       type: 'event',
       event: ev,
       startMinutes,
-      endMinutes: startMinutes + clampedDuration,
-      durationMinutes: clampedDuration,
+      endMinutes: startMinutes + visualDuration,
+      durationMinutes: visualDuration,
     });
   }
 
@@ -224,8 +225,8 @@ export function computeUnifiedTimelineLayout(
     if (!due) continue;
 
     let startMinutes = (due.hour - startHour) * 60 + due.minute;
-    startMinutes = Math.max(0, Math.min(maxDayMinutes - 34, startMinutes));
-    const durationMinutes = 34; // task card visual height
+    startMinutes = Math.max(0, Math.min(maxDayMinutes, startMinutes));
+    const durationMinutes = MIN_VISUAL_MINUTES;
 
     rawEntries.push({
       id: `task-${tsk.id}`,
@@ -244,8 +245,8 @@ export function computeUnifiedTimelineLayout(
     if (!txTime) continue;
 
     let startMinutes = (txTime.hour - startHour) * 60 + txTime.minute;
-    startMinutes = Math.max(0, Math.min(maxDayMinutes - 30, startMinutes));
-    const durationMinutes = 30; // expense pill visual height
+    startMinutes = Math.max(0, Math.min(maxDayMinutes, startMinutes));
+    const durationMinutes = MIN_VISUAL_MINUTES;
 
     rawEntries.push({
       id: `tx-${tx.id}`,

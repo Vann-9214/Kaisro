@@ -144,9 +144,7 @@ export function BottomSheet({
             </View>
           )}
 
-          {/* Body slot — no wrapper; height budget is enforced by an explicit maxHeight
-              on the ScrollView in the consumer (QuickAddBottomSheet). This avoids the
-              flex:1-in-maxHeight-parent collapse-to-zero problem. */}
+          {/* The body takes the measured space left after the header and footer. */}
           <View style={{ flex: 1, minHeight: 0, width: '100%' }}>{children}</View>
 
           {/* Footer slot (optional) */}

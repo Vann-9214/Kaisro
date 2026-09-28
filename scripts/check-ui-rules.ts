@@ -3,7 +3,7 @@ import path from 'node:path';
 import ts from 'typescript';
 
 const root = path.resolve(__dirname, '..');
-const uiRoots = ['app', 'src/components', 'src/hooks', 'src/store', 'src/constants', 'src/utils'];
+const uiRoots = ['app', 'src'];
 const formFiles = new Set([
   'src/components/QuickAddBottomSheet.tsx',
   'src/components/ui/EditorSheet.tsx',
@@ -34,7 +34,7 @@ for (const file of uiRoots.flatMap(dir => listFiles(path.join(root, dir)))) {
   const isSheet = isForm && relative !== 'src/components/lifted-input/LiftedInputHost.tsx';
 
   function visit(node: ts.Node): void {
-    if (relative !== 'src/constants/theme.ts' &&
+    if (relative !== 'src/constants/theme.ts' && relative !== 'src/db/seed.ts' &&
         (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
         /#[0-9a-fA-F]{3,8}\b/.test(node.text)) {
       report(file, source, node, 'hardcoded hex color; use a semantic theme token');
@@ -72,14 +72,14 @@ for (const file of uiRoots.flatMap(dir => listFiles(path.join(root, dir)))) {
       if (!code.includes(`<${tab}`)) report(file, source, source, `quick-add tab ${tab} is missing`);
     }
     if (!code.includes('<SheetSaveFooter') || !code.includes('footer={fixedFooter}') ||
-        !code.includes('<LiftedInputHost footer={fixedFooter}')) {
+        !code.includes('<LiftedInputHost footer={overlayFooter}')) {
       report(file, source, source, 'all quick-add create/edit tabs must render the shared Save footer, including with the keyboard');
     }
   }
   if (relative === 'src/components/ui/EditorSheet.tsx') {
     const code = source.getFullText();
     if (!code.includes('<SheetSaveFooter') || !code.includes('footer={footer}') ||
-        !code.includes('<LiftedInputHost footer={footer}')) {
+        !code.includes('<LiftedInputHost footer={overlayFooter}')) {
       report(file, source, source, 'edit sheet must render the shared Save footer, including with the keyboard');
     }
   }

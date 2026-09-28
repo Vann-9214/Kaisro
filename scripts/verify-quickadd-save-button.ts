@@ -9,15 +9,18 @@ const bottomSheetPath = path.resolve(__dirname, '../src/components/QuickAddBotto
 const bottomSheetContent = fs.readFileSync(bottomSheetPath, 'utf8');
 
 assert(bottomSheetContent.includes('footer={fixedFooter}'), 'QuickAddBottomSheet must pass footer={fixedFooter} to BottomSheet');
-assert(bottomSheetContent.includes('minHeight: layout.footerButtonHeight'), 'Footer button must use layout.footerButtonHeight');
-assert(bottomSheetContent.includes('backgroundColor: colors.primary'), 'Footer button must use semantic token colors.primary');
-assert(bottomSheetContent.includes("colors['on-primary']"), 'Footer text/icon must use semantic token on-primary');
-assert(bottomSheetContent.includes('insets.bottom'), 'Footer must respect safe area insets');
+assert(bottomSheetContent.includes('<SheetSaveFooter'), 'QuickAddBottomSheet must render the shared Save footer');
+assert(bottomSheetContent.includes('footer={overlayFooter}'), 'Lifted input must render the shared Save footer above the keyboard');
+const footerContent = fs.readFileSync(path.resolve(__dirname, '../src/components/ui/SheetSaveFooter.tsx'), 'utf8');
+assert(footerContent.includes('minHeight: layout.footerButtonHeight'), 'Footer button must use layout.footerButtonHeight');
+assert(footerContent.includes('backgroundColor: colors.primary'), 'Footer button must use semantic token colors.primary');
+assert(footerContent.includes("colors['on-primary']"), 'Footer text/icon must use semantic token on-primary');
+assert(footerContent.includes('insets.bottom'), 'Footer must respect safe area insets');
 
 // Verify label logic
 assert(bottomSheetContent.includes("'Save Event'"), "Label for event tab must be 'Save Event'");
 assert(bottomSheetContent.includes("'Save Task'"), "Label for task tab must be 'Save Task'");
-assert(bottomSheetContent.includes("'Record Expense'"), "Label for transaction tab must be 'Record Expense'");
+assert(bottomSheetContent.includes("'Save Entry'"), "Label for transaction tab must be 'Save Entry'");
 assert(bottomSheetContent.includes("'Save Note'"), "Label for note tab must be 'Save Note'");
 assert(bottomSheetContent.includes("'Save changes'"), "Label in edit mode must be 'Save changes'");
 

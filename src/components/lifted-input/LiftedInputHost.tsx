@@ -59,7 +59,9 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   const nav = getFieldNavigation(order, activeField.id);
   const isLast = activeField.actionLabel === 'Done' || nav.isLastField;
   const actionButtonText = activeField.actionLabel || (isLast ? 'Done' : 'Next');
-  const inputMaxHeight = Math.max(44, Math.min(110, currentWindowHeight - bottomOffset - insets.top - 200));
+  const dockOffset = isKeyboardVisible ? bottomOffset : insets.bottom;
+  const availableHeight = currentWindowHeight - dockOffset - insets.top - spacing.sm;
+  const inputMaxHeight = Math.max(44, Math.min(110, availableHeight - 164));
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -80,8 +82,8 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
           position: 'absolute',
           left: layout.sheetHorizontalPadding,
           right: layout.sheetHorizontalPadding,
-          bottom: bottomOffset,
-          maxHeight: Math.max(160, currentWindowHeight - bottomOffset - insets.top - spacing.sm),
+          bottom: dockOffset,
+          maxHeight: Math.max(160, availableHeight),
           opacity: entrance,
         }}
       >
@@ -162,7 +164,8 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
                   textAlignVertical="top"
                   maxFontSizeMultiplier={layout.maxFontScale}
                   accessibilityLabel={activeField.label}
-                  className="text-base text-text leading-5 flex-1 min-h-[60px]"
+                  style={{ minHeight: 44 }}
+                  className="text-base text-text leading-5 flex-1"
                 />
               </ScrollView>
             ) : (

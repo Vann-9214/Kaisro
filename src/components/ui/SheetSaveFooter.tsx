@@ -4,14 +4,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check } from 'lucide-react-native';
 import { colors, layout, spacing } from '@/constants/theme';
 
-export function SheetSaveFooter({ label = 'Save', onPress, saving = false }: {
-  label?: string; onPress: () => void | Promise<void>; saving?: boolean;
+export function SheetSaveFooter({ label = 'Save', onPress, saving = false, compact = false }: {
+  label?: string; onPress: () => void | Promise<void>; saving?: boolean; compact?: boolean;
 }) {
   const insets = useSafeAreaInsets();
   return <View style={{
-    paddingTop: layout.footerTopPadding,
+    paddingTop: compact ? spacing.sm : layout.footerTopPadding,
     paddingHorizontal: layout.sheetHorizontalPadding,
-    paddingBottom: insets.bottom + layout.footerBottomExtraPadding,
+    paddingBottom: compact ? spacing.sm : insets.bottom + layout.footerBottomExtraPadding,
     borderTopWidth: layout.cardBorderWidth,
     borderTopColor: colors.border,
     backgroundColor: colors['surface-raised'],

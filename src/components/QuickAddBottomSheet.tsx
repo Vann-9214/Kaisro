@@ -188,6 +188,7 @@ function QuickAddBottomSheetContent() {
               fontSize: 18,
               fontWeight: '500',
               color: colors.text,
+              flexShrink: 1,
             }}
           >
             {titleText}
@@ -304,6 +305,7 @@ function QuickAddBottomSheetContent() {
   );
 
   const fixedFooter = <SheetSaveFooter label={buttonLabel} onPress={handleSave} saving={isSaving} />;
+  const overlayFooter = <SheetSaveFooter label={buttonLabel} onPress={handleSave} saving={isSaving} compact />;
 
   return (
     <BottomSheet
@@ -312,10 +314,9 @@ function QuickAddBottomSheetContent() {
       header={fixedHeader}
       footer={fixedFooter}
       hideDragHandle
-      overlay={<LiftedInputHost footer={fixedFooter} />}
+      overlay={<LiftedInputHost footer={overlayFooter} />}
     >
-      {/* Scrollable Body — explicit maxHeight so it never pushes the footer off screen.
-          The footer always remains visible; content scrolls within this bounded area. */}
+      {/* The body scrolls in the space left after the header and fixed Save footer. */}
       <ScrollView
         ref={scrollViewRef}
         style={{ flex: 1, paddingHorizontal: layout.sheetHorizontalPadding }}

@@ -48,10 +48,10 @@ console.log('=== 1. VERIFYING PURE LIFTED BAR POSITIONING FUNCTION ===\n');
   if (result.systemDidResize !== false) {
     throw new Error('Expected systemDidResize to be false');
   }
-  if (result.bottomOffset !== 372) {
-    throw new Error(`Expected bottomOffset to be 372, got ${result.bottomOffset}`);
+  if (result.bottomOffset !== 300) {
+    throw new Error(`Expected bottomOffset to be 300, got ${result.bottomOffset}`);
   }
-  console.log('  ✓ PASS: Bar sits above keyboard with 72dp clearance (offset 372dp in 848dp window).\n');
+  console.log('  ✓ PASS: Bar docks flush above the 300dp keyboard.\n');
 }
 
 // Case 3: Keyboard visible when the system DOES resize the window (adjustResize)
@@ -81,7 +81,7 @@ console.log('=== 1. VERIFYING PURE LIFTED BAR POSITIONING FUNCTION ===\n');
   console.log('  ✓ PASS: System window resize detected; bar docks to bottom with offset 0 (no double adjustment).\n');
 }
 
-// Case 4: Docking on tall keyboard with 72dp clearance
+// Case 4: Docking flush on a tall keyboard
 // Keyboard height: 350dp
 {
   const result = calculateLiftedBarPosition({
@@ -92,13 +92,13 @@ console.log('=== 1. VERIFYING PURE LIFTED BAR POSITIONING FUNCTION ===\n');
     bottomInset: 48,
   });
 
-  console.log('Case 4: Docking on tall keyboard with 72dp clearance');
+  console.log('Case 4: Docking flush on a tall keyboard');
   console.log(`  Output: bottomOffset=${result.bottomOffset}, isKeyboardVisible=${result.isKeyboardVisible}`);
 
-  if (result.bottomOffset !== 422) {
-    throw new Error(`Expected bottomOffset to be 422, got ${result.bottomOffset}`);
+  if (result.bottomOffset !== 350) {
+    throw new Error(`Expected bottomOffset to be 350, got ${result.bottomOffset}`);
   }
-  console.log(`  ✓ PASS: Bar docks at ${result.bottomOffset}dp (350dp keyboard + 72dp clearance).\n`);
+  console.log(`  ✓ PASS: Bar docks at ${result.bottomOffset}dp, directly above the keyboard.\n`);
 }
 
 console.log('=== 2. VERIFYING FIELD-ORDER NAVIGATION LOGIC ===\n');

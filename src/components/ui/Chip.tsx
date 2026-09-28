@@ -56,7 +56,7 @@ export function Chip({
   const content = (
     <>
       {icon && <View className="mr-1.5">{icon}</View>}
-      <Text className={textClasses}>{label}</Text>
+      <Text numberOfLines={1} ellipsizeMode="tail" style={{ flexShrink: 1 }} className={textClasses}>{label}</Text>
     </>
   );
 
@@ -65,7 +65,7 @@ export function Chip({
       <Pressable
         onPress={onPress}
         className={containerClasses}
-        style={[{ minHeight: 44, borderRadius: 9999 }, style]}
+        style={[{ minHeight: 44, maxWidth: '100%', borderRadius: 9999 }, style]}
         accessibilityRole="button"
         accessibilityLabel={label}
       >
@@ -75,7 +75,7 @@ export function Chip({
   }
 
   return (
-    <View className={containerClasses} style={style}>
+    <View className={containerClasses} style={[{ maxWidth: '100%' }, style]}>
       {content}
     </View>
   );

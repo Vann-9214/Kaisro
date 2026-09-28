@@ -1104,17 +1104,17 @@ export default function CalendarScreen() {
                         <View className="flex-1">
                           <Text
                             className="text-xs font-medium text-text leading-4"
-                            numberOfLines={item.height > 50 ? 2 : 1}
+                            numberOfLines={item.height > 80 ? 2 : 1}
                           >
                             {ev.title}
                           </Text>
-                          {item.height > 44 && (
+                          {item.height > 70 && (
                             <Text className="text-[10px] text-text-muted tabular-nums mt-0.5">
                               {formatTimeRange(ev.start, ev.end)}
                             </Text>
                           )}
                         </View>
-                        {item.height > 60 && ev.location && (
+                        {item.height > 110 && ev.location && (
                           <View className="flex-row items-center mt-1">
                             <MapPin size={10} color={colors['text-muted']} />
                             <Text
@@ -1157,6 +1157,7 @@ export default function CalendarScreen() {
                           <Pressable
                             onPress={() => openAddSheet('task', tsk)}
                             className="ml-2 flex-1"
+                            style={{ minHeight: 44, justifyContent: 'center' }}
                             accessibilityRole="button"
                             accessibilityLabel={`Edit task ${tsk.title}`}
                           >
@@ -1212,7 +1213,7 @@ export default function CalendarScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`Expense: ${formatCurrency(tx.amount)}`}
                       >
-                        <Text className="text-xs font-semibold text-on-money tabular-nums">
+                        <Text numberOfLines={1} style={{ flexShrink: 1 }} className="text-xs font-semibold text-on-money tabular-nums">
                           {formatCurrency(tx.amount)}
                         </Text>
                         <Text className="text-[10px] text-text-muted truncate ml-1 flex-1 text-right" numberOfLines={1}>
