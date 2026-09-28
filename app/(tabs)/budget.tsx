@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react-native';
+import { useRouter } from 'expo-router';
 import { TopBar, FormCard, FormRow, SheetSection, EmptyState, ProgressBar } from '@/components/ui';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
 import { colors, spacing } from '@/constants/theme';
@@ -20,6 +21,7 @@ export default function BudgetScreen() {
   const { budgetMonth, setBudgetMonth, openAddSheet } = useUIStore();
   const { data, error, refresh } = useLocalData(readBudget);
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const budget = data ? buildBudget(budgetMonth, data.categories, data.transactions, data.rules) : null;
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
     <TopBar featureName="Budget" />
@@ -48,7 +50,7 @@ export default function BudgetScreen() {
               value={parseISODate(rule.dueDate).toLocaleDateString()} right={<Text style={{ color: colors['on-money'] }}>{formatCurrency(rule.amount)}</Text>} /></FormCard>)}
           </SheetSection>}
           <SheetSection>
-            <Text style={{ color: colors.text, fontSize: 16 }}>Categories</Text>
+            <FormRow label={<Text style={{ color: colors.text, fontSize: 16 }}>Categories</Text>} right={<Pressable onPress={() => router.push('/categories')} accessibilityRole="button"><Text style={{ color: colors.primary }}>Manage</Text></Pressable>} />
             {budget.categoryRows.map(category => <FormCard key={category.id} style={{ backgroundColor: colors.surface }}><SheetSection gap="sm">
               <FormRow icon={<CategoryIcon name={category.icon} />} label={category.name}
                 right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(category.spent)}</Text>} />

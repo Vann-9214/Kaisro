@@ -5,6 +5,12 @@ import { DEFAULT_CATEGORIES } from '@/constants/defaultCategories';
 
 export { DEFAULT_CATEGORIES };
 
+/** Keep the protected fallback category present, including after a dev seed reset. */
+export function ensureOtherCategory(database = getDb()): void {
+  const exists = database.select().from(schema.categories).all().some(category => category.name.toLowerCase() === 'other');
+  if (!exists) database.insert(schema.categories).values({ name: 'Other', icon: 'more-horizontal', monthlyCap: null, color: 'text-muted' }).run();
+}
+
 /**
  * Idempotently inserts default starter categories if the categories table is empty.
  * Safe to call on every app startup.
@@ -72,4 +78,3 @@ export async function clearAllDataAndReset(
     onComplete();
   }
 }
-

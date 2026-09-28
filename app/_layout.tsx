@@ -13,7 +13,7 @@ import {
 import { runMigrations, getDb } from '@/db';
 import { catchUpMonthly } from '@/db/transactionActions';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
-import { ensureDefaultCategories } from '@/db/defaultCategories';
+import { ensureDefaultCategories, ensureOtherCategory } from '@/db/defaultCategories';
 import { QuickAddBottomSheet } from '@/components/QuickAddBottomSheet';
 import { colors } from '@/constants/theme';
 
@@ -33,6 +33,7 @@ export default function RootLayout() {
         // Insert starter categories if empty, with no monthly cap.
         // App starts with zero events, tasks, transactions, or notes.
         await ensureDefaultCategories();
+        ensureOtherCategory();
         catchUpMonthly(getDb());
       } catch (e) {
         console.error('[Kaisro Init Error]', e);
@@ -78,6 +79,7 @@ export default function RootLayout() {
       >
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="detail" options={{ headerShown: false }} />
+        <Stack.Screen name="categories" options={{ headerShown: false }} />
       </Stack>
       <QuickAddBottomSheet />
     </SafeAreaProvider>

@@ -7,7 +7,7 @@ import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
 import { CURRENCY } from '@/constants/currency';
 import { seedDatabase } from '@/db/seed';
-import { clearAllDataAndReset } from '@/db/defaultCategories';
+import { clearAllDataAndReset, ensureOtherCategory } from '@/db/defaultCategories';
 import { useUIStore } from '@/store/useUIStore';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { getDb } from '@/db';
@@ -42,6 +42,7 @@ export default function SettingsScreen() {
         setLoadingSample(true);
         try {
           await seedDatabase({ forceReset: true });
+          ensureOtherCategory();
           useCalendarSync.getState().triggerRefresh();
           Alert.alert(
             'Sample Data Loaded',

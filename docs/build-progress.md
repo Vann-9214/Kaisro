@@ -11,7 +11,8 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 | 1b | Done with judgment calls | tsc + verify-task-crud.ts + verify-tasks-list.ts; commit follows |
 | 2a | Done with judgment calls | tsc + verify-budget.ts; commit follows |
 | 2b | Done with judgment calls | tsc + verify-transactions.ts; commit follows |
-| 2c–2d | Pending | Categories and alerts |
+| 2c | Done with judgment calls | tsc + verify-categories.ts; commit follows |
+| 2d | Pending | Budget alerts |
 | 3a–3b | Pending | Notes |
 | 4 | Pending | Linking |
 | 7 | Pending | Dark mode |
@@ -70,6 +71,16 @@ tokens come from the saved design-system definitions and existing semantic theme
   Deleting an occurrence leaves the rule/cursor intact and does not recreate it.
 - Save uses the neutral label Save Entry for both income and expense. Native
   pickers use local timestamps to match Calendar's stored-date convention.
+
+### 2c
+
+- No Stitch design exists. The manage screen uses TopBar, FormCard/FormRow,
+  Chips, and a shared BottomSheet with the lifted-input host and fixed Save.
+- Existing icons are selected from the bundled category icon set. Cap entry is
+  optional positive integer centavos. Names are unique without case sensitivity.
+- Protected Other stays present on app start and after the dev seed tool runs;
+  it cannot be renamed to something else or deleted. Deleting a used category
+  requires selecting a destination and confirming the move. Rules move too.
 
 ## Device verification
 
