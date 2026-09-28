@@ -58,5 +58,7 @@ Drizzle ORM, and React Hook Form.
 ## Current build status
 
 - Calendar (Day, Week, Month, Agenda): done.
-- Tasks 1a: phone check passed. Task forms 1b: next.
-- Budget, Notes, linking, dev build, notifications, and dark mode: not started.
+- Tasks 1a: phone check passed. Task forms and completion 1b: implemented.
+- Budget 2a–2c: implemented. Budget alert 2d: blocked by missing image.
+- Notes, linking, and dark mode: blocked by missing local design references.
+- Dev build and notifications: explicitly deferred by the user.
