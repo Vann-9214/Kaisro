@@ -16,6 +16,8 @@ interface UIState {
   selectedDateContext: string;
   selectedDate: string;
   viewedDate: string;
+  taskDueAt: string | null;
+  setTaskDueAt: (value: string | null) => void;
   setSelectedDate: (dateStr: string) => void;
   setViewedDate: (dateStr: string) => void;
   openAddSheet: (
@@ -37,6 +39,8 @@ export const useUIStore = create<UIState>((set) => ({
   selectedDateContext: '',
   selectedDate: formatDateToISO(new Date()),
   viewedDate: formatDateToISO(new Date()),
+  taskDueAt: null,
+  setTaskDueAt: taskDueAt => set({ taskDueAt }),
   setSelectedDate: (dateStr: string) =>
     set({ selectedDate: dateStr, selectedDateContext: dateStr, viewedDate: dateStr }),
   setViewedDate: (dateStr: string) => set({ viewedDate: dateStr }),
@@ -61,6 +65,7 @@ export const useUIStore = create<UIState>((set) => ({
       editingTransaction,
       editingNote,
       selectedDateContext: dateContext,
+      taskDueAt: editingTask ? editingTask.dueAt : dateContext || null,
     });
   },
   closeAddSheet: () =>

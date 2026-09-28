@@ -384,7 +384,7 @@ function QuickAddBottomSheetContent() {
       header={fixedHeader}
       footer={fixedFooter}
       hideDragHandle
-      overlay={<LiftedInputHost />}
+      overlay={<LiftedInputHost footer={fixedFooter} />}
     >
       {/* Scrollable Body — explicit maxHeight so it never pushes the footer off screen.
           The footer always remains visible; content scrolls within this bounded area. */}

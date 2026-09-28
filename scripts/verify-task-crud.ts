@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { eq } from 'drizzle-orm';
+import { testDatabase } from './testDatabase';
+import { saveTask, deleteTask, toggleTaskCompletion, toggleSubtaskCompletion, type TaskDraft } from '../src/db/taskActions';
+import { tasks, subtasks } from '../src/db/schema';
+const { db, close } = testDatabase();
+try {
+  const draft: TaskDraft = { title: ' Work ', priority: 'medium', dueAt: null, reminderMinutes: null, subtasks: [{ title: 'First', done: false }] };
+  assert.throws(() => saveTask(db, { ...draft, title: '  ' }));
+  assert.equal(db.select().from(tasks).all().length, 0);
+  const task = saveTask(db, draft);
+  assert.equal(task.title, 'Work'); assert.equal(task.priority, 'medium'); assert.equal(task.dueAt, null);
+  const child = db.select().from(subtasks).get()!;
+  toggleTaskCompletion(db, task.id);
+  assert.ok(db.select().from(tasks).get()!.doneAt);
+  toggleTaskCompletion(db, task.id);
+  assert.equal(db.select().from(tasks).get()!.doneAt, null);
+  toggleSubtaskCompletion(db, child.id);
+  const edited = saveTask(db, { ...draft, dueAt: '2026-10-01', reminderMinutes: 15, subtasks: [{ ...child, title: 'Renamed', done: true }, { title: 'Second', done: false }] }, task.id);
+  assert.equal(edited.dueAt, '2026-10-01'); assert.equal(edited.reminderMinutes, 15);
+  assert.equal(db.select().from(subtasks).where(eq(subtasks.id, child.id)).get()!.done, true);
+  assert.throws(() => saveTask(db, { ...draft, title: 'Must roll back', subtasks: [{ id: 9999, title: 'Missing', done: false }] }, task.id));
+  assert.equal(db.select().from(tasks).get()!.title, 'Work');
+  assert.equal(db.select().from(subtasks).all().length, 2);
+  saveTask(db, { ...draft, dueAt: '2026-10-01T08:30:00+08:00', subtasks: [] }, task.id);
+  assert.equal(db.select().from(subtasks).all().length, 0);
+  deleteTask(db, task.id);
+  assert.equal(db.select().from(tasks).all().length, 0);
+  console.log('PASS: task validation, create/edit/delete, atomic rollback, dates/reminders, completion timestamps and subtask preservation');
+} finally { close(); }

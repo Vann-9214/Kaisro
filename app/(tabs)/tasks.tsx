@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CheckCircle2, ChevronDown, ChevronRight, Flag, ListChecks } from 'lucide-react-native';
 import { TopBar } from '@/components/ui/TopBar';
@@ -13,6 +13,9 @@ import { Chip } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUIStore } from '@/store/useUIStore';
 import { useTasksList } from '@/hooks/useTasksList';
+import { getDb } from '@/db';
+import { toggleTaskCompletion, toggleSubtaskCompletion } from '@/db/taskActions';
+import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { colors, layout, spacing } from '@/constants/theme';
 import { formatDateToISO } from '@/utils/dateUtils';
 import { buildTaskList, formatTaskDue, type TaskListFilter, type TaskListItem, type TaskGroup } from '@/utils/taskListUtils';
@@ -23,9 +26,15 @@ const FILTERS: { value: TaskListFilter; label: string }[] = [
 const GROUP_HINTS: Record<TaskGroup, string> = {
   Overdue: 'Action required', Morning: 'Before 12:00 PM', Afternoon: '12:00 PM onward', Anytime: 'No strict time',
 };
-const readOnly = () => {};
+function toggle(id: number, subtask = false) {
+  try {
+    if (subtask) toggleSubtaskCompletion(getDb(), id); else toggleTaskCompletion(getDb(), id);
+    useCalendarSync.getState().triggerRefresh();
+  } catch { Alert.alert('Could not update task', 'Please try again.'); }
+}
 
 function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
+  const openAddSheet = useUIStore(s => s.openAddSheet);
   const [expanded, setExpanded] = useState(false);
   const hasSubtasks = task.subtasks.length > 0;
   const completed = task.subtasks.filter(child => child.done).length;
@@ -33,14 +42,11 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
   return (
     <FormCard
       style={styles.card}
-      onPress={hasSubtasks ? () => setExpanded(value => !value) : undefined}
-      accessibilityLabel={hasSubtasks ? (expanded ? 'Collapse' : 'Expand') + ' subtasks for ' + task.title : undefined}
-      accessibilityState={hasSubtasks ? { expanded } : undefined}
     >
       <SheetSection>
         <FormRow
-          icon={<Checkbox checked={task.done} disabled onToggle={readOnly} accessibilityLabel={task.title} />}
-          label={<Text style={[styles.body, task.done && styles.completed]}>{task.title}</Text>}
+          icon={<Checkbox checked={task.done} onToggle={() => toggle(task.id)} accessibilityLabel={task.title} />}
+          label={<Pressable onPress={() => openAddSheet('task', task)} accessibilityRole="button" accessibilityLabel={'Edit ' + task.title}><Text style={[styles.body, task.done && styles.completed]}>{task.title}</Text></Pressable>}
           value={
             <View style={styles.metadata}>
               <Chip label={formatTaskDue(task.dueAt, today)} size="sm" variant={expanded ? 'tasks' : 'default'} />
@@ -48,13 +54,13 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
               {hasSubtasks && <Chip label={completed + '/' + task.subtasks.length} size="sm" icon={<ListChecks size={12} color={colors['text-muted']} />} />}
             </View>
           }
-          right={hasSubtasks ? (expanded ? <ChevronDown size={16} color={colors['text-muted']} /> : <ChevronRight size={16} color={colors['text-muted']} />) : undefined}
+          right={hasSubtasks ? <Pressable onPress={() => setExpanded(value => !value)} accessibilityRole="button" accessibilityLabel={'Subtasks for ' + task.title} accessibilityState={{ expanded }} hitSlop={spacing.sm}>{expanded ? <ChevronDown size={20} color={colors['text-muted']} /> : <ChevronRight size={20} color={colors['text-muted']} />}</Pressable> : undefined}
         />
         {expanded && (
           <SheetSection gap="xs" style={styles.subtasks}>
             {task.subtasks.map(child => (
               <FormRow key={child.id}
-                icon={<Checkbox checked={child.done} disabled onToggle={readOnly} accessibilityLabel={child.title} />}
+                icon={<Checkbox checked={child.done} onToggle={() => toggle(child.id, true)} accessibilityLabel={child.title} />}
                 label={<Text style={[styles.caption, child.done && styles.completed]}>{child.title}</Text>}
               />
             ))}

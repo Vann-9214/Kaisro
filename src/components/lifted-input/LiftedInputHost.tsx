@@ -6,6 +6,7 @@ import {
   Pressable,
   StyleSheet,
   ScrollView,
+  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLiftedInput } from './LiftedInputContext';
@@ -13,7 +14,7 @@ import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { calculateLiftedBarPosition, getFieldNavigation } from '@/utils/keyboardLayout';
 import { colors, spacing, layout } from '@/constants/theme';
 
-export function LiftedInputHost() {
+export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
   const { activeField, closeBar, handleNextOrDone } = useLiftedInput();
   const {
@@ -25,6 +26,11 @@ export function LiftedInputHost() {
   } = useKeyboardInsets();
 
   const inputRef = useRef<TextInput>(null);
+  const entrance = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    entrance.setValue(0);
+    if (activeField) Animated.timing(entrance, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+  }, [activeField?.id, entrance]);
 
   // Focus input on active field change
   useEffect(() => {
@@ -62,27 +68,29 @@ export function LiftedInputHost() {
         style={[
           StyleSheet.absoluteFill,
           {
-            backgroundColor: 'rgba(51, 49, 46, 0.35)',
+            backgroundColor: colors.overlay,
           },
         ]}
       />
 
       {/* Floating lifted input card above the keyboard */}
-      <View
+      <Animated.View
         style={{
           position: 'absolute',
           left: layout.sheetHorizontalPadding,
           right: layout.sheetHorizontalPadding,
           bottom: bottomOffset,
+          opacity: entrance,
         }}
       >
+        {footer}
         <View
           style={{
             backgroundColor: colors['surface-raised'],
             borderRadius: 16,
             borderWidth: 1,
             borderColor: colors.border,
-            shadowColor: '#000',
+            shadowColor: colors.text,
             shadowOffset: { width: 0, height: 4 },
             shadowOpacity: 0.12,
             shadowRadius: 10,
@@ -177,7 +185,7 @@ export function LiftedInputHost() {
             )}
           </View>
         </View>
-      </View>
+      </Animated.View>
     </View>
   );
 }
