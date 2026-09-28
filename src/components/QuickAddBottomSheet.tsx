@@ -196,8 +196,8 @@ function QuickAddBottomSheetContent() {
             <View
               style={{
                 marginLeft: spacing.sm,
-                paddingHorizontal: 10,
-                paddingVertical: 2,
+                paddingHorizontal: spacing.sm,
+                paddingVertical: spacing.xs,
                 borderRadius: 9999,
                 backgroundColor: colors.background,
                 borderWidth: 1,

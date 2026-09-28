@@ -8,6 +8,7 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "check-types": "tsc --noEmit",
+    "check:ui": "tsx scripts/check-ui-rules.ts",
     "db:generate": "drizzle-kit generate",
     "seed": "tsx src/db/seed.ts"
   },
