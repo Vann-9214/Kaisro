@@ -1,6 +1,6 @@
 import '../global.css';
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, AppState, Alert } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -10,7 +10,9 @@ import {
   Inter_500Medium,
   Inter_600SemiBold,
 } from '@expo-google-fonts/inter';
-import { runMigrations } from '@/db';
+import { runMigrations, getDb } from '@/db';
+import { catchUpMonthly } from '@/db/transactionActions';
+import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { ensureDefaultCategories } from '@/db/defaultCategories';
 import { QuickAddBottomSheet } from '@/components/QuickAddBottomSheet';
 import { colors } from '@/constants/theme';
@@ -31,6 +33,7 @@ export default function RootLayout() {
         // Insert starter categories if empty, with no monthly cap.
         // App starts with zero events, tasks, transactions, or notes.
         await ensureDefaultCategories();
+        catchUpMonthly(getDb());
       } catch (e) {
         console.error('[Kaisro Init Error]', e);
       } finally {
@@ -39,6 +42,16 @@ export default function RootLayout() {
     }
     prepare();
   }, []);
+
+  useEffect(() => {
+    if (!dbReady) return;
+    const listener = AppState.addEventListener('change', state => {
+      if (state !== 'active') return;
+      try { if (catchUpMonthly(getDb()) > 0) useCalendarSync.getState().triggerRefresh(); }
+      catch { Alert.alert('Monthly entries could not be updated', 'Reopen the app to try again.'); }
+    });
+    return () => listener.remove();
+  }, [dbReady]);
 
   if (!fontsLoaded || !dbReady) {
     return (

@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { Event, Task, Transaction, Note } from '@/db/schema';
-import { formatDateToISO } from '@/utils/dateUtils';
+import { formatDateToISO, formatLocalDateTime } from '@/utils/dateUtils';
 
 export type QuickAddType = 'event' | 'task' | 'transaction' | 'note';
 
@@ -17,6 +17,8 @@ interface UIState {
   selectedDate: string;
   viewedDate: string;
   taskDueAt: string | null;
+  transactionDate: string;
+  setTransactionDate: (value: string) => void;
   budgetMonth: string;
   setBudgetMonth: (month: string) => void;
   setTaskDueAt: (value: string | null) => void;
@@ -42,6 +44,8 @@ export const useUIStore = create<UIState>((set) => ({
   selectedDate: formatDateToISO(new Date()),
   viewedDate: formatDateToISO(new Date()),
   taskDueAt: null,
+  transactionDate: formatLocalDateTime(new Date()),
+  setTransactionDate: transactionDate => set({ transactionDate }),
   budgetMonth: formatDateToISO(new Date()).slice(0, 7),
   setBudgetMonth: budgetMonth => set({ budgetMonth }),
   setTaskDueAt: taskDueAt => set({ taskDueAt }),
@@ -70,6 +74,7 @@ export const useUIStore = create<UIState>((set) => ({
       editingNote,
       selectedDateContext: dateContext,
       taskDueAt: editingTask ? editingTask.dueAt : dateContext || null,
+      transactionDate: editingTransaction?.date ?? (dateContext ? dateContext + formatLocalDateTime(new Date()).slice(10) : formatLocalDateTime(new Date())),
     });
   },
   closeAddSheet: () =>

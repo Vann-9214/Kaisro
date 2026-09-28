@@ -64,7 +64,7 @@ export default function TabLayout() {
       <View
         style={[styles.fabContainer, { bottom: fabBottomOffset, pointerEvents: 'box-none' }]}
       >
-        <FloatingAddButton onPress={() => openAddSheet(pathname === '/tasks' ? 'task' : 'event')} />
+        <FloatingAddButton onPress={() => openAddSheet(pathname === '/tasks' ? 'task' : pathname === '/budget' ? 'transaction' : 'event')} />
       </View>
     </View>
   );

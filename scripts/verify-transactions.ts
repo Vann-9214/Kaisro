@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import { eq } from 'drizzle-orm';
+import { testDatabase } from './testDatabase';
+import { saveTransaction, deleteTransaction, catchUpMonthly, type TransactionDraft } from '../src/db/transactionActions';
+import { transactions, recurringTransactions } from '../src/db/schema';
+import { parseToCentavos } from '../src/constants/currency';
+const { db, close } = testDatabase();
+try {
+  assert.equal(parseToCentavos('1,234.56'), 123456); assert.equal(parseToCentavos('0.29'), 29);
+  for (const value of ['1.001', 'abc12', '1e4', '1,2', 'NaN', '9007199254740991.99']) assert.equal(parseToCentavos(value), 0);
+  const draft: TransactionDraft = { type: 'expense', amount: 29, categoryId: null, date: '2024-01-31T09:45:00', note: 'Monthly', repeats: true };
+  assert.throws(() => saveTransaction(db, { ...draft, amount: 0 }));
+  assert.throws(() => saveTransaction(db, { ...draft, amount: 1.2 }));
+  assert.throws(() => saveTransaction(db, { ...draft, categoryId: 999 }));
+  const first = saveTransaction(db, draft);
+  assert.equal(db.select().from(recurringTransactions).get()!.nextDate, '2024-02-29');
+  assert.equal(catchUpMonthly(db, new Date(2024, 3, 30, 12)), 3);
+  assert.deepEqual(db.select().from(transactions).all().map(row => row.date.slice(0, 10)), ['2024-01-31', '2024-02-29', '2024-03-31', '2024-04-30']);
+  assert.equal(catchUpMonthly(db, new Date(2024, 3, 30, 12)), 0);
+  deleteTransaction(db, first.id);
+  assert.equal(db.select().from(recurringTransactions).all().length, 1);
+  assert.equal(catchUpMonthly(db, new Date(2024, 3, 30, 12)), 0);
+  const entry = db.select().from(transactions).get()!;
+  saveTransaction(db, { ...draft, amount: 1001, type: 'income', date: entry.date, repeats: true }, entry.id);
+  assert.equal(db.select().from(transactions).where(eq(transactions.id, entry.id)).get()!.type, 'income');
+  assert.equal(db.select().from(recurringTransactions).get()!.amount, 29);
+  assert.equal(catchUpMonthly(db, new Date(2024, 4, 31, 12)), 1);
+  assert.equal(db.select().from(recurringTransactions).get()!.nextDate, '2024-06-30');
+  console.log('PASS: exact centavos validation, expense/income CRUD, month-end and leap-year clamping, catch-up idempotency, independent occurrence edit/delete');
+} finally { close(); }

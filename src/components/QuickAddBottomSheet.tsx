@@ -80,7 +80,7 @@ function QuickAddBottomSheetContent() {
         case 'task':
           return 'Edit Task';
         case 'transaction':
-          return 'Edit Expense';
+          return 'Edit Budget Entry';
         case 'note':
           return 'Edit Note';
       }
@@ -98,7 +98,7 @@ function QuickAddBottomSheetContent() {
       case 'task':
         return 'Save Task';
       case 'transaction':
-        return 'Record Expense';
+        return 'Save Entry';
       case 'note':
         return 'Save Note';
     }

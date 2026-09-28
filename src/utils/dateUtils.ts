@@ -54,6 +54,10 @@ export function formatDateToISO(d: Date): string {
   return `${yr}-${mo}-${da}`;
 }
 
+export function formatLocalDateTime(date: Date): string {
+  return `${formatDateToISO(date)}T${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:00`;
+}
+
 /**
  * Parses a YYYY-MM-DD string into a local Date instance at 00:00:00.
  */
@@ -411,5 +415,4 @@ export function getPrevWeekAnchor(
 
   return prevMondayStr;
 }
-
 

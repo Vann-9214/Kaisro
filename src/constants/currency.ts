@@ -40,8 +40,10 @@ export function parseToCentavos(amount: string | number): number {
   if (typeof amount === 'number') {
     return Math.round(amount * 100);
   }
-  const cleanStr = amount.replace(/[^0-9.-]/g, '');
-  const parsed = parseFloat(cleanStr);
-  if (isNaN(parsed)) return 0;
-  return Math.round(parsed * 100);
+  const input = amount.trim();
+  if (!/^-?(?:\d+|\d{1,3}(?:,\d{3})+)(?:\.\d{1,2})?$/.test(input)) return 0;
+  const negative = input.startsWith('-');
+  const [whole, fraction = ''] = input.replace(/[-,]/g, '').split('.');
+  const cents = Number(whole) * 100 + Number(fraction.padEnd(2, '0'));
+  return Number.isSafeInteger(cents) ? (negative ? -cents : cents) : 0;
 }

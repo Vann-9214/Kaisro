@@ -3,7 +3,7 @@ import { View, Pressable, Text, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { Calendar, Clock } from 'lucide-react-native';
 import { colors, spacing } from '@/constants/theme';
-import { formatDateToISO, parseISODate } from '@/utils/dateUtils';
+import { formatDateToISO, formatLocalDateTime, parseISODate } from '@/utils/dateUtils';
 import { useLiftedInput } from '@/components/lifted-input';
 import { FormCard, FormCardRow } from './FormCard';
 import { FormRow } from './FormRow';
@@ -34,7 +34,7 @@ export function DateTimeField({ value, onChange, optional = false, fallbackDate 
         const next = new Date(date);
         if (mode === 'date') next.setFullYear(picked.getFullYear(), picked.getMonth(), picked.getDate());
         else next.setHours(picked.getHours(), picked.getMinutes(), 0, 0);
-        onChange(mode === 'time' || hasTime || !optional ? next.toISOString() : formatDateToISO(next));
+        onChange(mode === 'time' || hasTime || !optional ? formatLocalDateTime(next) : formatDateToISO(next));
       }} />
       {Platform.OS === 'ios' && <Pressable onPress={() => setMode(null)} accessibilityRole="button"><Text style={{ color: colors.primary, padding: spacing.sm }}>Done</Text></Pressable>}
     </FormCard>}

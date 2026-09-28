@@ -10,7 +10,7 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 | 1a | Done; phone check passed | Baseline preserved on this branch |
 | 1b | Done with judgment calls | tsc + verify-task-crud.ts + verify-tasks-list.ts; commit follows |
 | 2a | Done with judgment calls | tsc + verify-budget.ts; commit follows |
-| 2b | In progress | Expense/income form and recurrence |
+| 2b | Done with judgment calls | tsc + verify-transactions.ts; commit follows |
 | 2c–2d | Pending | Categories and alerts |
 | 3a–3b | Pending | Notes |
 | 4 | Pending | Linking |
@@ -44,8 +44,6 @@ tokens come from the saved design-system definitions and existing semantic theme
 - Verification uses the actual Expo Drizzle adapter with an isolated in-memory
   SQLite client shim, including rollback and completion timestamp checks.
 
-## Device verification
-
 ### 2a
 
 - Opened budget and empty-budget screenshots. The requested income/expenses/
@@ -57,6 +55,21 @@ tokens come from the saved design-system definitions and existing semantic theme
   bar. Only monthly obligations active in the viewed month appear; none means hidden.
 - Reused flat cards and shared icons instead of tiny screenshot-specific tiles.
   Month selection lives in the existing UI store. Entries are grouped by local date.
+
+### 2b
+
+- The supplied quick-add-expense screenshot is cropped at the top. Used its date,
+  repeats, and footer details; reused existing amount/category/description fields
+  for the absent top portion. Added the requested Expense/Income selector. No
+  Account field was added (accounts are outside the roadmap). Linking waits for 4.
+- Amount strings permit only positive values with up to two decimals; malformed
+  or over-precision values are rejected rather than silently rounded.
+- Monthly rules keep the original day and local time, clamp shorter months, and
+  catch up on cold start and foreground resume. Occurrence edits affect only that
+  entry. Turning repeats off ends future entries; re-enabling resumes next month.
+  Deleting an occurrence leaves the rule/cursor intact and does not recreate it.
+- Save uses the neutral label Save Entry for both income and expense. Native
+  pickers use local timestamps to match Calendar's stored-date convention.
 
 ## Device verification
 

@@ -62,7 +62,7 @@ export default function BudgetScreen() {
             <Text style={{ color: colors.text, fontSize: 16 }}>Recent transactions</Text>
             {budget.groups.map(group => <SheetSection key={group.day} gap="sm">
               <Text style={{ color: colors['text-muted'], fontSize: 12 }}>{parseISODate(group.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
-              {group.entries.map(entry => <FormCard key={entry.id} style={{ backgroundColor: colors.surface }}>
+              {group.entries.map(entry => <FormCard key={entry.id} style={{ backgroundColor: colors.surface }} onPress={() => openAddSheet('transaction', entry)}>
                 <FormRow label={entry.note || data?.categories.find(category => category.id === entry.categoryId)?.name || 'Other'}
                   value={entry.type === 'income' ? 'Income' : entry.type === 'transfer' ? 'Transfer' : 'Expense'}
                   right={<Text style={{ color: entry.type === 'income' ? colors.tasks : colors.text, fontVariant: ['tabular-nums'] }}>{entry.type === 'income' ? '+' : entry.type === 'expense' ? '−' : ''}{formatCurrency(entry.amount)}</Text>} />
