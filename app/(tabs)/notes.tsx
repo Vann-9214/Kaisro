@@ -80,12 +80,12 @@ export default function NotesScreen() {
           ))
         )}
 
-        <Button
+        {notesList.length > 0 && <Button
           title="+ Add Note"
           variant="secondary"
           size="sm"
           onPress={() => openAddSheet('note')}
-        />
+        />}
         </SheetSection>
       </ScrollView>
     </View>

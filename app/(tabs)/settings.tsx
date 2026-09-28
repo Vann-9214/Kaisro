@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { sql } from 'drizzle-orm';
 import { Card } from '@/components/ui/Card';
+import { TopBar } from '@/components/ui/TopBar';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
 import { CURRENCY } from '@/constants/currency';
@@ -110,20 +111,13 @@ export default function SettingsScreen() {
   };
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View className="flex-1 bg-background">
+      <TopBar featureName="Settings" />
       <ScrollView
         className="flex-1 px-5 pt-3"
         contentContainerStyle={{ paddingBottom: bottomScrollPadding }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View className="mb-6">
-          <Text className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
-            Preferences & Storage
-          </Text>
-          <Text className="text-2xl font-medium text-text">Settings</Text>
-        </View>
-
         {/* Currency Card */}
         <Card className="mb-4">
           <View className="flex-row items-center justify-between mb-2">

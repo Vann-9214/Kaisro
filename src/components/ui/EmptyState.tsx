@@ -72,12 +72,11 @@ export function EmptyState({
           <Text
             numberOfLines={1}
             ellipsizeMode="tail"
-            maxFontSizeMultiplier={1.15}
+            maxFontSizeMultiplier={layout.maxFontScale}
             style={{
               fontSize: 12.5,
               fontWeight: '500',
               color: colors.text,
-              lineHeight: 16,
             }}
           >
             {title}
@@ -86,11 +85,10 @@ export function EmptyState({
             <Text
               numberOfLines={1}
               ellipsizeMode="tail"
-              maxFontSizeMultiplier={1.15}
+              maxFontSizeMultiplier={layout.maxFontScale}
               style={{
                 fontSize: 10.5,
                 color: colors['text-muted'],
-                lineHeight: 14,
                 marginTop: 1,
               }}
             >
@@ -119,7 +117,7 @@ export function EmptyState({
             <Plus size={13} color={colors['on-primary']} strokeWidth={2.2} />
             <Text
               numberOfLines={1}
-              maxFontSizeMultiplier={1.15}
+              maxFontSizeMultiplier={layout.maxFontScale}
               style={{
                 fontSize: 11.5,
                 fontWeight: '600',
@@ -169,7 +167,7 @@ export function EmptyState({
 
       {/* Title */}
       <Text
-        maxFontSizeMultiplier={1.2}
+        maxFontSizeMultiplier={layout.maxFontScale}
         style={{
           fontSize: 16,
           fontWeight: '500',
@@ -184,12 +182,11 @@ export function EmptyState({
       {/* Description */}
       {description ? (
         <Text
-          maxFontSizeMultiplier={1.2}
+          maxFontSizeMultiplier={layout.maxFontScale}
           style={{
             fontSize: 12,
             color: colors['text-muted'],
             textAlign: 'center',
-            lineHeight: 18,
             marginBottom: 20,
             maxWidth: 280,
           }}
@@ -217,7 +214,7 @@ export function EmptyState({
         >
           <Plus size={15} color={colors[actionModule === 'tasks' ? 'on-tasks' : actionModule === 'money' ? 'on-money' : 'on-primary']} strokeWidth={2.2} />
           <Text
-            maxFontSizeMultiplier={1.2}
+            maxFontSizeMultiplier={layout.maxFontScale}
             style={{
               fontSize: 13,
               fontWeight: '600',

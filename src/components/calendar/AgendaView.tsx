@@ -8,7 +8,8 @@ import {
   ViewToken,
 } from 'react-native';
 import { Repeat } from 'lucide-react-native';
-import { colors } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, layout } from '@/constants/theme';
 import { formatCurrency } from '@/constants/currency';
 import { Checkbox } from '@/components/ui/Checkbox';
 import { Chip } from '@/components/ui/Chip';
@@ -35,6 +36,7 @@ export function AgendaView({
   sectionListRef: externalListRef,
 }: AgendaViewProps) {
   const internalListRef = useRef<SectionList<AgendaDayCardData, AgendaDaySection>>(null);
+  const insets = useSafeAreaInsets();
   const listRef = externalListRef ?? internalListRef;
 
   const openAddSheet = useUIStore((s) => s.openAddSheet);
@@ -306,7 +308,7 @@ export function AgendaView({
           alignItems: 'center',
           justifyContent: 'center',
           paddingVertical: 24,
-          paddingBottom: 110, // Content clears bottom tab bar and floating button
+          paddingBottom: layout.tabContentBottomPadding + insets.bottom,
         }}
       >
         <Text

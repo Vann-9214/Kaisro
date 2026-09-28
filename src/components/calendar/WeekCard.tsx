@@ -102,7 +102,7 @@ export function WeekCard({
         backgroundColor: colors.surface,
         borderColor: isCurrent ? colors.primary : colors.border,
         borderWidth: 1,
-        borderRadius: 14,
+        borderRadius: 12,
         marginBottom: 12,
         opacity: isPast ? 0.85 : 1,
         overflow: 'hidden',
@@ -281,9 +281,10 @@ export function WeekCard({
                 flex: 1,
                 alignItems: 'center',
                 justifyContent: 'center',
+                minHeight: 44,
                 paddingVertical: 4,
                 borderRadius: 8,
-                backgroundColor: isBusiest ? 'rgba(58, 74, 122, 0.08)' : 'transparent',
+                backgroundColor: isBusiest ? colors.surface : 'transparent',
                 opacity: isGhost ? 0.35 : 1,
               }}
               accessibilityRole="button"
@@ -615,6 +616,7 @@ export function WeekCard({
                 <Pressable
                   onPress={() => setShowAllItems(true)}
                   style={{
+                    minHeight: 44,
                     paddingVertical: 8,
                     alignItems: 'center',
                     justifyContent: 'center',

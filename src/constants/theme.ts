@@ -133,8 +133,7 @@ export const colors = lightTokens;
  * - md: 14dp (space-md - card vertical padding)
  * - base: 16dp (gutter / card horizontal padding / header gaps)
  * - lg: 20dp (space-lg / margin - sheet horizontal padding, body bottom padding)
- * - xl: 24dp (delete button top margin)
- * - 2xl: 32dp (space-xl)
+ * - xl and 2xl: 32dp (space-xl)
  */
 export const spacing = {
   xs: 4,
@@ -143,7 +142,7 @@ export const spacing = {
   md: 14,
   base: 16,
   lg: 20,
-  xl: 24,
+  xl: 32,
   '2xl': 32,
 } as const;
 
@@ -183,6 +182,8 @@ export const layout = {
   // Accessibility / Font scaling cap
   maxFontScale: 1.3,
 } as const;
+
+export const tabDockHeight = (fontScale: number) => Math.max(56, Math.ceil(56 * Math.min(fontScale, layout.maxFontScale)));
 
 /**
  * Module coding reference for components:

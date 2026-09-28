@@ -59,6 +59,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   const nav = getFieldNavigation(order, activeField.id);
   const isLast = activeField.actionLabel === 'Done' || nav.isLastField;
   const actionButtonText = activeField.actionLabel || (isLast ? 'Done' : 'Next');
+  const inputMaxHeight = Math.max(44, Math.min(110, currentWindowHeight - bottomOffset - insets.top - 200));
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
@@ -88,7 +89,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
         <View
           style={{
             backgroundColor: colors['surface-raised'],
-            borderRadius: 16,
+            borderRadius: layout.cardBorderRadius,
             borderWidth: 1,
             borderColor: colors.border,
             shadowColor: colors.text,
@@ -144,7 +145,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
 
             {activeField.multiline ? (
               <ScrollView
-                style={{ maxHeight: 110 }}
+                style={{ maxHeight: inputMaxHeight }}
                 showsVerticalScrollIndicator
                 keyboardShouldPersistTaps="handled"
               >

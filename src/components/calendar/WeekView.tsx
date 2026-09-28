@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
-import { colors } from '@/constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { colors, layout } from '@/constants/theme';
 import { formatCurrency } from '@/constants/currency';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useCalendarWeekView, WeekData } from '@/hooks/useCalendarWeekView';
@@ -27,6 +28,7 @@ export function WeekView({
   scrollTrigger = 0,
 }: WeekViewProps) {
   const flatListRef = useRef<FlatList<WeekData>>(null);
+  const insets = useSafeAreaInsets();
   const openAddSheet = useUIStore((s) => s.openAddSheet);
 
   const { weeks, isLoading, isMonthEmpty, toggleTask } = useCalendarWeekView(
@@ -173,7 +175,7 @@ export function WeekView({
       contentContainerStyle={{
         paddingHorizontal: 20,
         paddingTop: 12,
-        paddingBottom: 110, // Clears tab bar and floating action button
+        paddingBottom: layout.tabContentBottomPadding + insets.bottom,
       }}
       showsVerticalScrollIndicator={false}
       onScrollToIndexFailed={(info) => {

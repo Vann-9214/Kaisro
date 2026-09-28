@@ -8,12 +8,13 @@ import {
 } from 'react-native';
 import { Calendar, DateData } from 'react-native-calendars';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronRight, MapPin, Plus } from 'lucide-react-native';
 import { useUIStore } from '@/store/useUIStore';
 import { useCalendarDay } from '@/hooks/useCalendarDay';
 import { useMonthDots } from '@/hooks/useMonthDots';
 import { parseYearMonth, formatYearMonth } from '@/utils/monthUtils';
-import { colors } from '@/constants/theme';
+import { colors, layout } from '@/constants/theme';
 import { formatCurrency } from '@/constants/currency';
 import {
   formatTimeRange,
@@ -74,6 +75,7 @@ export function MonthCalendarView({
   onOpenDay,
 }: MonthCalendarViewProps) {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const openAddSheet = useUIStore((s) => s.openAddSheet);
 
   // Parse viewed year and month from viewedDate
@@ -168,6 +170,7 @@ export function MonthCalendarView({
             width: '100%',
             alignItems: 'center',
             justifyContent: 'center',
+            minHeight: 44,
             paddingVertical: 2,
           }}
           accessibilityRole="button"
@@ -257,7 +260,7 @@ export function MonthCalendarView({
     <ScrollView
       className="flex-1 px-5 pt-3"
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 90 }}
+      contentContainerStyle={{ paddingBottom: layout.tabContentBottomPadding + insets.bottom }}
     >
       {/* 1. Month Calendar Grid inside a Serene Surface Card */}
       <View
@@ -381,6 +384,7 @@ export function MonthCalendarView({
               alignItems: 'center',
               paddingHorizontal: 10,
               paddingVertical: 5,
+              minHeight: 44,
               borderRadius: 9999,
               backgroundColor: colors.surface,
               borderWidth: 1,
@@ -424,12 +428,13 @@ export function MonthCalendarView({
                 key={`event-${ev.id}`}
                 onPress={() => openAddSheet('event', ev, selectedDate)}
                 style={({ pressed }) => ({
-                  backgroundColor: colors.background,
+                  backgroundColor: colors.surface,
                   borderWidth: 1,
                   borderColor: colors.border,
-                  borderLeftWidth: 3.5,
+                  borderLeftWidth: 1,
                   borderLeftColor: colors.primary,
-                  borderRadius: 8,
+                  borderRadius: layout.cardBorderRadius,
+                  minHeight: 44,
                   paddingVertical: 8,
                   paddingHorizontal: 10,
                   marginBottom: 6,
@@ -487,12 +492,13 @@ export function MonthCalendarView({
                 <View
                   key={`task-${tsk.id}`}
                   style={{
-                    backgroundColor: colors.background,
+                    backgroundColor: colors.surface,
                     borderWidth: 1,
                     borderColor: colors.border,
-                    borderLeftWidth: 3.5,
+                    borderLeftWidth: 1,
                     borderLeftColor: colors.tasks,
-                    borderRadius: 8,
+                    borderRadius: layout.cardBorderRadius,
+                    minHeight: 44,
                     paddingVertical: 7,
                     paddingHorizontal: 10,
                     marginBottom: 6,
@@ -515,7 +521,7 @@ export function MonthCalendarView({
                     />
                     <Pressable
                       onPress={() => openAddSheet('task', tsk)}
-                      style={{ marginLeft: 8, flex: 1 }}
+                      style={{ marginLeft: 8, flex: 1, minHeight: 44, justifyContent: 'center' }}
                       accessibilityRole="button"
                       accessibilityLabel={`Edit task: ${tsk.title}`}
                     >
@@ -575,12 +581,13 @@ export function MonthCalendarView({
                     })
                   }
                   style={({ pressed }) => ({
-                    backgroundColor: colors.background,
+                    backgroundColor: colors.surface,
                     borderWidth: 1,
                     borderColor: colors.border,
-                    borderLeftWidth: 3.5,
+                    borderLeftWidth: 1,
                     borderLeftColor: colors.money,
-                    borderRadius: 8,
+                    borderRadius: layout.cardBorderRadius,
+                    minHeight: 44,
                     paddingVertical: 7,
                     paddingHorizontal: 10,
                     marginBottom: 6,
@@ -618,7 +625,7 @@ export function MonthCalendarView({
                   </View>
                   <View
                     style={{
-                      backgroundColor: 'rgba(232, 201, 155, 0.3)',
+                      backgroundColor: colors.surface,
                       paddingHorizontal: 8,
                       paddingVertical: 3,
                       borderRadius: 9999,

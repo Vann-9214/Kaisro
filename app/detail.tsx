@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Calendar, DollarSign, CheckSquare, MapPin, Tag } from 'lucide-react-native';
 import { Card } from '@/components/ui/Card';
+import { TopBar } from '@/components/ui/TopBar';
 import { Chip } from '@/components/ui/Chip';
 import { Button } from '@/components/ui/Button';
 import { colors } from '@/constants/theme';
@@ -64,19 +65,8 @@ export default function DetailScreen() {
   const config = getModuleConfig();
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      {/* Navigation Bar */}
-      <View className="flex-row items-center px-4 py-3 border-b border-border bg-background">
-        <Pressable
-          onPress={() => router.back()}
-          className="w-9 h-9 items-center justify-center rounded-full active:bg-surface border border-border"
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft size={20} color={colors.text} />
-        </Pressable>
-        <Text className="ml-3 text-lg font-medium text-text">Detail View</Text>
-      </View>
+    <View className="flex-1 bg-background">
+      <TopBar featureName="Detail" rightAction={<Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><ArrowLeft size={20} color={colors.text} /></Pressable>} />
 
       <ScrollView
         className="flex-1 px-5 pt-5"

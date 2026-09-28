@@ -702,7 +702,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
             style={{
               backgroundColor: colors.surface,
               width: '100%',
-              borderRadius: 16,
+              borderRadius: layout.cardBorderRadius,
               padding: spacing.base,
               borderWidth: 1,
               borderColor: colors.border,
@@ -793,7 +793,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
             style={{
               backgroundColor: colors.surface,
               width: '100%',
-              borderRadius: 16,
+              borderRadius: layout.cardBorderRadius,
               padding: spacing.base,
               borderWidth: 1,
               borderColor: colors.border,

@@ -28,11 +28,11 @@ export function Card({
 
   // Optional module left accent line (3px)
   if (module === 'calendar') {
-    cardClasses += ' border-l-4 border-l-primary';
+    cardClasses += ' border-l border-l-primary';
   } else if (module === 'tasks') {
-    cardClasses += ' border-l-4 border-l-tasks';
+    cardClasses += ' border-l border-l-tasks';
   } else if (module === 'money') {
-    cardClasses += ' border-l-4 border-l-money';
+    cardClasses += ' border-l border-l-money';
   }
 
   if (className) {

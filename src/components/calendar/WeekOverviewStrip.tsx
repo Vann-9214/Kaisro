@@ -52,7 +52,7 @@ export function WeekOverviewStrip({ weeks, onSelectWeek }: WeekOverviewStripProp
                 {isCurrent && (
                   <View
                     style={{
-                      backgroundColor: 'rgba(58, 74, 122, 0.12)',
+                      backgroundColor: colors.surface,
                       paddingHorizontal: 5,
                       paddingVertical: 1,
                       borderRadius: 9999,
@@ -101,7 +101,7 @@ export function WeekOverviewStrip({ weeks, onSelectWeek }: WeekOverviewStripProp
                       width: 14,
                       height: barHeight,
                       borderRadius: 4,
-                      backgroundColor: isCurrent ? colors.primary : 'rgba(58, 74, 122, 0.35)',
+                      backgroundColor: isCurrent ? colors.primary : colors.border,
                     }}
                   />
                 )}

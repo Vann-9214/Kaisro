@@ -77,7 +77,7 @@ interface NowLineProps {
  * - 2dp primary line continues across timeline from pill, behind cards layer (zIndex: 5).
  * - 10dp filled primary dot with 2dp ring in background color, centered exactly on the spine (left: 60).
  * - Pill lives strictly in the left gutter (left: -12, width: 65, right-aligned to 53) at zIndex: 30.
- * - Primary text on light tint of primary (~12% opacity / rgba(58, 74, 122, 0.12)), fully rounded.
+ * - Primary text on a quiet semantic surface, fully rounded.
  */
 const NowLine = React.memo(function NowLine({ isToday }: NowLineProps) {
   useNowTimer(isToday);
@@ -130,7 +130,7 @@ const NowLine = React.memo(function NowLine({ isToday }: NowLineProps) {
         >
           <View
             style={{
-              backgroundColor: 'rgba(58, 74, 122, 0.12)',
+              backgroundColor: colors.surface,
               borderRadius: 9999,
               paddingHorizontal: 6,
               paddingVertical: 2,
@@ -254,7 +254,7 @@ const TimelineHourRow = React.memo(function TimelineHourRow({
           backgroundColor:
             slot.hour === END_HOUR
               ? colors.border
-              : 'rgba(226, 222, 215, 0.4)',
+              : colors.border,
         }}
       />
 
@@ -269,7 +269,7 @@ const TimelineHourRow = React.memo(function TimelineHourRow({
               top: Math.round(HOUR_HEIGHT / 2),
               width: 3,
               height: 1,
-              backgroundColor: 'rgba(226, 222, 215, 0.45)',
+              backgroundColor: colors.border,
             }}
           />
 
@@ -281,7 +281,7 @@ const TimelineHourRow = React.memo(function TimelineHourRow({
               right: 0,
               top: Math.round(HOUR_HEIGHT / 2),
               height: 1,
-              backgroundColor: 'rgba(226, 222, 215, 0.22)',
+              backgroundColor: colors.border,
             }}
           />
         </>
@@ -648,9 +648,9 @@ export default function CalendarScreen() {
               disabled={isJumpToTodayDisabled}
               hitSlop={6}
               style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
+                width: 44,
+                height: 44,
+                borderRadius: 22,
                 borderWidth: 1,
                 borderColor: colors.border,
                 alignItems: 'center',
@@ -675,9 +675,9 @@ export default function CalendarScreen() {
                   onPress={activeView === 'Day' ? handlePrevWeek : handlePrevMonth}
                   hitSlop={6}
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
                     borderWidth: 1,
                     borderColor: colors.border,
                     alignItems: 'center',
@@ -694,9 +694,9 @@ export default function CalendarScreen() {
                   onPress={activeView === 'Day' ? handleNextWeek : handleNextMonth}
                   hitSlop={6}
                   style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: 20,
+                    width: 44,
+                    height: 44,
+                    borderRadius: 22,
                     borderWidth: 1,
                     borderColor: colors.border,
                     alignItems: 'center',
@@ -960,7 +960,8 @@ export default function CalendarScreen() {
                   <Pressable
                     key={`allday-${ev.id}`}
                     onPress={() => openAddSheet('event', ev, activeDateStr)}
-                    className="bg-surface border border-border border-l-4 border-l-primary rounded-lg p-2.5 mb-1.5 flex-row items-center justify-between"
+                    className="bg-surface border border-border border-l-primary rounded-xl p-2.5 mb-1.5 flex-row items-center justify-between"
+                    style={{ minHeight: 44 }}
                     accessibilityRole="button"
                     accessibilityLabel={`Edit event: ${ev.title}`}
                   >
@@ -981,7 +982,7 @@ export default function CalendarScreen() {
                 {untimedTasks.map((tsk) => (
                   <View
                     key={`untimed-${tsk.id}`}
-                    className="bg-surface border border-border border-l-4 border-l-tasks rounded-lg px-3 py-1.5 mb-1.5 flex-row items-center justify-between"
+                    className="bg-surface border border-border border-l-tasks rounded-xl px-3 py-1.5 mb-1.5 flex-row items-center justify-between"
                   >
                     <View className="flex-1 mr-2">
                       <Checkbox
@@ -1096,7 +1097,7 @@ export default function CalendarScreen() {
                           left: `${leftPercent}%`,
                           width: `${widthPercent - 1.5}%`,
                         }}
-                        className="bg-surface border border-border border-l-4 border-l-primary rounded-lg p-2 justify-between active:opacity-90 overflow-hidden"
+                        className="bg-surface border border-border border-l-primary rounded-xl p-2 justify-between active:opacity-90 overflow-hidden"
                         accessibilityRole="button"
                         accessibilityLabel={`Edit event: ${ev.title}`}
                       >
@@ -1146,7 +1147,7 @@ export default function CalendarScreen() {
                           left: `${leftPercent}%`,
                           width: `${widthPercent - 1.5}%`,
                         }}
-                        className="bg-surface border border-border border-l-4 border-l-tasks rounded-lg px-2 py-1 flex-row items-center justify-between overflow-hidden"
+                        className="bg-surface border border-border border-l-tasks rounded-xl px-2 py-1 flex-row items-center justify-between overflow-hidden"
                       >
                         <View className="flex-1 flex-row items-center mr-1">
                           <Checkbox
