@@ -16,7 +16,7 @@ export interface EmptyStateProps {
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   testID?: string;
-  actionModule?: 'primary' | 'tasks';
+  actionModule?: 'primary' | 'tasks' | 'money';
 }
 
 export function EmptyState({
@@ -215,13 +215,13 @@ export function EmptyState({
             opacity: pressed ? 0.85 : 1,
           })}
         >
-          <Plus size={15} color={colors[actionModule === 'tasks' ? 'on-tasks' : 'on-primary']} strokeWidth={2.2} />
+          <Plus size={15} color={colors[actionModule === 'tasks' ? 'on-tasks' : actionModule === 'money' ? 'on-money' : 'on-primary']} strokeWidth={2.2} />
           <Text
             maxFontSizeMultiplier={1.2}
             style={{
               fontSize: 13,
               fontWeight: '600',
-              color: colors[actionModule === 'tasks' ? 'on-tasks' : 'on-primary'],
+              color: colors[actionModule === 'tasks' ? 'on-tasks' : actionModule === 'money' ? 'on-money' : 'on-primary'],
               marginLeft: 6,
             }}
           >

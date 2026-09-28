@@ -1,199 +1,76 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, ScrollView, ActivityIndicator, Pressable } from 'react-native';
+import React from 'react';
+import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
-import { ProgressBar } from '@/components/ui/ProgressBar';
-import { Button } from '@/components/ui/Button';
-import { CURRENCY, formatCurrency } from '@/constants/currency';
+import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react-native';
+import { TopBar, FormCard, FormRow, SheetSection, EmptyState, ProgressBar } from '@/components/ui';
+import { CategoryIcon } from '@/components/ui/CategoryIcon';
+import { colors, spacing } from '@/constants/theme';
+import { formatCurrency } from '@/constants/currency';
 import { useUIStore } from '@/store/useUIStore';
-import { useCalendarSync } from '@/hooks/useCalendarDay';
-import { getDb } from '@/db';
-import * as schema from '@/db/schema';
-import { colors } from '@/constants/theme';
+import { useLocalData } from '@/hooks/useLocalData';
+import { getDb, categories, transactions, recurringTransactions } from '@/db';
+import { buildBudget, shiftMonth } from '@/utils/budgetUtils';
+import { parseISODate } from '@/utils/dateUtils';
 
+function readBudget() {
+  const db = getDb();
+  return { categories: db.select().from(categories).all(), transactions: db.select().from(transactions).all(), rules: db.select().from(recurringTransactions).all() };
+}
 export default function BudgetScreen() {
-  const openAddSheet = useUIStore((s) => s.openAddSheet);
+  const { budgetMonth, setBudgetMonth, openAddSheet } = useUIStore();
+  const { data, error, refresh } = useLocalData(readBudget);
   const insets = useSafeAreaInsets();
-  const refreshCounter = useCalendarSync((s) => s.refreshCounter);
-
-  const [categoriesList, setCategoriesList] = useState<schema.Category[]>([]);
-  const [transactionsList, setTransactionsList] = useState<schema.Transaction[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Reserve space for TabBar (56 + insets.bottom) + FAB (52 + 16) + margin (24)
-  const bottomScrollPadding = 56 + insets.bottom + 16 + 52 + 24;
-
-  const currentMonthStr = useMemo(() => {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = (now.getMonth() + 1).toString().padStart(2, '0');
-    return `${y}-${m}`;
-  }, []);
-
-  const headerMonthYear = useMemo(() => {
-    const now = new Date();
-    return now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  }, []);
-
-  const fetchBudgetData = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const db = getDb();
-      const [cats, txs] = await Promise.all([
-        db.select().from(schema.categories),
-        db.select().from(schema.transactions),
-      ]);
-      setCategoriesList(cats);
-      setTransactionsList(txs);
-    } catch (e) {
-      console.error('[BudgetScreen Error]', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchBudgetData();
-  }, [fetchBudgetData, refreshCounter]);
-
-  // Current month's total outflow in integer centavos
-  const totalSpentCentavos = useMemo(() => {
-    return transactionsList
-      .filter(
-        (tx) =>
-          tx.type === 'expense' &&
-          tx.date &&
-          tx.date.startsWith(currentMonthStr)
-      )
-      .reduce((sum, tx) => sum + tx.amount, 0);
-  }, [transactionsList, currentMonthStr]);
-
-  // Aggregate monthly cap from all categories that have a non-null cap
-  const totalCapCentavos = useMemo(() => {
-    const cappedCategories = categoriesList.filter(
-      (c) => c.monthlyCap !== null && c.monthlyCap !== undefined && c.monthlyCap > 0
-    );
-    if (cappedCategories.length === 0) return null;
-    return cappedCategories.reduce((sum, c) => sum + (c.monthlyCap ?? 0), 0);
-  }, [categoriesList]);
-
-  const spendRatio =
-    totalCapCentavos !== null && totalCapCentavos > 0
-      ? Math.min(1, totalSpentCentavos / totalCapCentavos)
-      : 0;
-
-  return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
-      <ScrollView
-        className="flex-1 px-5 pt-3"
-        contentContainerStyle={{ paddingBottom: bottomScrollPadding }}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View className="mb-6">
-          <Text className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
-            {headerMonthYear} Ledger
-          </Text>
-          <Text className="text-2xl font-medium text-text">Budget & Spending</Text>
-        </View>
-
-        {/* Budget Overview Card */}
-        <Card module="money" className="mb-4">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-xs font-medium text-text-muted uppercase tracking-wide">
-              Monthly Outflow ({CURRENCY.code})
-            </Text>
-            <Chip
-              label={totalCapCentavos !== null ? `${Math.round(spendRatio * 100)}%` : 'No Cap'}
-              variant="money"
-              size="sm"
-            />
-          </View>
-          <Text className="text-2xl font-medium text-text mb-1 tabular-nums">
-            {formatCurrency(totalSpentCentavos)}
-          </Text>
-          <Text className="text-xs text-text-muted mb-3 tabular-nums">
-            {totalCapCentavos !== null
-              ? `Cap: ${formatCurrency(totalCapCentavos)} (${Math.round(spendRatio * 100)}% utilized)`
-              : 'No monthly cap configured'}
-          </Text>
-          {totalCapCentavos !== null && (
-            <ProgressBar progress={spendRatio} module="money" />
-          )}
-        </Card>
-
-        {/* Category Breakdown Card */}
-        <Card className="mb-4">
-          <Text className="text-sm font-medium text-text mb-3">Categories & Caps</Text>
-          {isLoading ? (
-            <View className="py-4 items-center justify-center">
-              <ActivityIndicator size="small" color={colors.money} />
-            </View>
-          ) : categoriesList.length === 0 ? (
-            <Text className="text-xs text-text-muted italic py-1">
-              No categories found.
-            </Text>
-          ) : (
-            <View className="space-y-2">
-              {categoriesList.map((cat, idx) => (
-                <View
-                  key={cat.id}
-                  className={`flex-row items-center justify-between py-1.5 ${
-                    idx < categoriesList.length - 1 ? 'border-b border-border' : ''
-                  }`}
-                >
-                  <Text className="text-xs text-text font-medium">{cat.name}</Text>
-                  <Text className="text-xs font-medium text-text-muted tabular-nums">
-                    {cat.monthlyCap !== null && cat.monthlyCap !== undefined && cat.monthlyCap > 0
-                      ? formatCurrency(cat.monthlyCap)
-                      : '—'}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          )}
-        </Card>
-
-        {/* Recent Transactions (tap to edit) */}
-        {transactionsList.length > 0 && (
-          <Card className="mb-4">
-            <Text className="text-sm font-medium text-text mb-3">Recent Transactions</Text>
-            <View className="space-y-2">
-              {transactionsList.map((tx, idx) => (
-                <Pressable
-                  key={tx.id}
-                  onPress={() => openAddSheet('transaction', tx)}
-                  className={`flex-row items-center justify-between py-2 ${
-                    idx < transactionsList.length - 1 ? 'border-b border-border' : ''
-                  }`}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Edit transaction: ${tx.note || 'Expense'}`}
-                >
-                  <View className="flex-1 mr-2">
-                    <Text className="text-xs text-text font-medium">{tx.note || 'Expense'}</Text>
-                    {tx.date && (
-                      <Text className="text-[10px] text-text-muted">
-                        {tx.date.split('T')[0]}
-                      </Text>
-                    )}
-                  </View>
-                  <Text className="text-xs font-medium text-on-money tabular-nums">
-                    {formatCurrency(tx.amount)}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
-          </Card>
-        )}
-
-        <Button
-          title={`+ Add Expense (${CURRENCY.symbol})`}
-          variant="money"
-          size="sm"
-          onPress={() => openAddSheet('transaction')}
-        />
-      </ScrollView>
-    </View>
-  );
+  const budget = data ? buildBudget(budgetMonth, data.categories, data.transactions, data.rules) : null;
+  return <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <TopBar featureName="Budget" />
+    <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 52 + spacing.lg + spacing.base + insets.bottom }}>
+      <SheetSection gap="lg">
+        <FormRow label={<Text style={{ color: colors.text, fontSize: 24, fontFamily: 'Inter_500Medium' }}>{parseISODate(budgetMonth + '-01').toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</Text>}
+          right={<View style={{ flexDirection: 'row', gap: spacing.md }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Previous month" hitSlop={spacing.sm} onPress={() => setBudgetMonth(shiftMonth(budgetMonth, -1))}><ChevronLeft color={colors.text} size={22} /></Pressable>
+            <Pressable accessibilityRole="button" accessibilityLabel="Next month" hitSlop={spacing.sm} onPress={() => setBudgetMonth(shiftMonth(budgetMonth, 1))}><ChevronRight color={colors.text} size={22} /></Pressable>
+          </View>} />
+        {error ? <EmptyState variant="full" title="Couldn't load budget" actionLabel="Try again" onAction={refresh} description="Please try reading your ledger again." />
+          : !budget ? <ActivityIndicator color={colors.money} /> : <>
+          <FormCard style={{ backgroundColor: colors.surface }}><SheetSection gap="sm">
+            <Text style={{ color: colors['text-muted'] }}>MONTHLY SUMMARY</Text>
+            <FormRow label="Income" right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.income)}</Text>} />
+            <FormRow label="Expenses" right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.expenses)}</Text>} />
+            <FormRow label="Remaining" right={<Text style={{ color: colors['on-money'], fontSize: 24, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.remaining)}</Text>} />
+          </SheetSection></FormCard>
+          {budget.entries.length === 0 && <FormCard style={{ backgroundColor: colors.surface }}>
+            <EmptyState variant="full" title="No spending logged yet" description="Track quiet daily purchases or archival notes with mindful precision." actionLabel="Log an expense" actionModule="money"
+              icon={<Receipt size={22} color={colors['on-money']} />} onAction={() => openAddSheet('transaction')} />
+          </FormCard>}
+          {budget.recurring.length > 0 && <SheetSection>
+            <Text style={{ color: colors.text, fontSize: 16 }}>Recurring obligations</Text>
+            {budget.recurring.map(rule => <FormCard key={rule.id}><FormRow label={rule.note || data?.categories.find(category => category.id === rule.categoryId)?.name || 'Monthly entry'}
+              value={parseISODate(rule.dueDate).toLocaleDateString()} right={<Text style={{ color: colors['on-money'] }}>{formatCurrency(rule.amount)}</Text>} /></FormCard>)}
+          </SheetSection>}
+          <SheetSection>
+            <Text style={{ color: colors.text, fontSize: 16 }}>Categories</Text>
+            {budget.categoryRows.map(category => <FormCard key={category.id} style={{ backgroundColor: colors.surface }}><SheetSection gap="sm">
+              <FormRow icon={<CategoryIcon name={category.icon} />} label={category.name}
+                right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(category.spent)}</Text>} />
+              {category.monthlyCap !== null && category.monthlyCap > 0 && <>
+                <ProgressBar module="money" progress={Math.min(1, category.spent / category.monthlyCap)} />
+                <Text style={{ color: colors['text-muted'], fontSize: 12 }}>{formatCurrency(category.monthlyCap)} cap</Text>
+              </>}
+            </SheetSection></FormCard>)}
+          </SheetSection>
+          {budget.groups.length > 0 && <SheetSection>
+            <Text style={{ color: colors.text, fontSize: 16 }}>Recent transactions</Text>
+            {budget.groups.map(group => <SheetSection key={group.day} gap="sm">
+              <Text style={{ color: colors['text-muted'], fontSize: 12 }}>{parseISODate(group.day).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}</Text>
+              {group.entries.map(entry => <FormCard key={entry.id} style={{ backgroundColor: colors.surface }}>
+                <FormRow label={entry.note || data?.categories.find(category => category.id === entry.categoryId)?.name || 'Other'}
+                  value={entry.type === 'income' ? 'Income' : entry.type === 'transfer' ? 'Transfer' : 'Expense'}
+                  right={<Text style={{ color: entry.type === 'income' ? colors.tasks : colors.text, fontVariant: ['tabular-nums'] }}>{entry.type === 'income' ? '+' : entry.type === 'expense' ? '−' : ''}{formatCurrency(entry.amount)}</Text>} />
+              </FormCard>)}
+            </SheetSection>)}
+          </SheetSection>}
+        </>}
+      </SheetSection>
+    </ScrollView>
+  </View>;
 }

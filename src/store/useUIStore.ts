@@ -17,6 +17,8 @@ interface UIState {
   selectedDate: string;
   viewedDate: string;
   taskDueAt: string | null;
+  budgetMonth: string;
+  setBudgetMonth: (month: string) => void;
   setTaskDueAt: (value: string | null) => void;
   setSelectedDate: (dateStr: string) => void;
   setViewedDate: (dateStr: string) => void;
@@ -40,6 +42,8 @@ export const useUIStore = create<UIState>((set) => ({
   selectedDate: formatDateToISO(new Date()),
   viewedDate: formatDateToISO(new Date()),
   taskDueAt: null,
+  budgetMonth: formatDateToISO(new Date()).slice(0, 7),
+  setBudgetMonth: budgetMonth => set({ budgetMonth }),
   setTaskDueAt: taskDueAt => set({ taskDueAt }),
   setSelectedDate: (dateStr: string) =>
     set({ selectedDate: dateStr, selectedDateContext: dateStr, viewedDate: dateStr }),
