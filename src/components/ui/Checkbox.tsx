@@ -9,6 +9,7 @@ export interface CheckboxProps {
   label?: string;
   onLabelPress?: () => void;
   disabled?: boolean;
+  accessibilityLabel?: string;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -18,6 +19,7 @@ export function Checkbox({
   label,
   onLabelPress,
   disabled = false,
+  accessibilityLabel,
   style,
 }: CheckboxProps) {
   const handleBoxPress = () => {
@@ -42,6 +44,7 @@ export function Checkbox({
         onPress={handleBoxPress}
         disabled={disabled}
         accessibilityRole="checkbox"
+        accessibilityLabel={accessibilityLabel ?? label}
         accessibilityState={{ checked, disabled }}
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
       >

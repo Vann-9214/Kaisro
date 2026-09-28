@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/ui/TabBar';
 import { FloatingAddButton } from '@/components/ui/FloatingAddButton';
@@ -10,6 +10,7 @@ import { colors } from '@/constants/theme';
 export default function TabLayout() {
   const openAddSheet = useUIStore((s) => s.openAddSheet);
   const insets = useSafeAreaInsets();
+  const pathname = usePathname();
 
   // Tab bar base dock height is 56px, plus insets.bottom.
   // FAB sits cleanly 16px above the tab bar top edge.
@@ -63,7 +64,7 @@ export default function TabLayout() {
       <View
         style={[styles.fabContainer, { bottom: fabBottomOffset, pointerEvents: 'box-none' }]}
       >
-        <FloatingAddButton onPress={() => openAddSheet('event')} />
+        <FloatingAddButton onPress={() => openAddSheet(pathname === '/tasks' ? 'task' : 'event')} />
       </View>
     </View>
   );

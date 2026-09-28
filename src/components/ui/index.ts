@@ -13,3 +13,4 @@ export * from './DayNumber';
 export * from './KeyboardSafeScrollView';
 export * from './FormCard';
 export * from './FormRow';
+export * from './SheetSection';

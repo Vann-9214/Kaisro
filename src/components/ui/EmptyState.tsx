@@ -16,6 +16,7 @@ export interface EmptyStateProps {
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
   testID?: string;
+  actionModule?: 'primary' | 'tasks';
 }
 
 export function EmptyState({
@@ -27,6 +28,7 @@ export function EmptyState({
   icon,
   style,
   testID,
+  actionModule = 'primary',
 }: EmptyStateProps) {
   if (variant === 'inline') {
     return (
@@ -206,20 +208,20 @@ export function EmptyState({
             height: 40,
             paddingHorizontal: 20,
             borderRadius: 9999,
-            backgroundColor: colors.primary,
+            backgroundColor: colors[actionModule],
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
             opacity: pressed ? 0.85 : 1,
           })}
         >
-          <Plus size={15} color={colors['on-primary']} strokeWidth={2.2} />
+          <Plus size={15} color={colors[actionModule === 'tasks' ? 'on-tasks' : 'on-primary']} strokeWidth={2.2} />
           <Text
             maxFontSizeMultiplier={1.2}
             style={{
               fontSize: 13,
               fontWeight: '600',
-              color: colors['on-primary'],
+              color: colors[actionModule === 'tasks' ? 'on-tasks' : 'on-primary'],
               marginLeft: 6,
             }}
           >

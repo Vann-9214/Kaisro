@@ -1,143 +1,189 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, ScrollView, ActivityIndicator } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { sql, eq } from 'drizzle-orm';
-import { Card } from '@/components/ui/Card';
-import { Chip } from '@/components/ui/Chip';
+import { CheckCircle2, ChevronDown, ChevronRight, Flag, ListChecks } from 'lucide-react-native';
+import { TopBar } from '@/components/ui/TopBar';
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { FormCard, FormCardRow } from '@/components/ui/FormCard';
+import { FormRow } from '@/components/ui/FormRow';
+import { SheetSection } from '@/components/ui/SheetSection';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { Checkbox } from '@/components/ui/Checkbox';
+import { Chip } from '@/components/ui/Chip';
 import { ProgressBar } from '@/components/ui/ProgressBar';
-import { Button } from '@/components/ui/Button';
 import { useUIStore } from '@/store/useUIStore';
-import { useCalendarSync } from '@/hooks/useCalendarDay';
-import { getDb } from '@/db';
-import * as schema from '@/db/schema';
-import { colors } from '@/constants/theme';
+import { useTasksList } from '@/hooks/useTasksList';
+import { colors, layout, spacing } from '@/constants/theme';
+import { formatDateToISO } from '@/utils/dateUtils';
+import { buildTaskList, formatTaskDue, type TaskListFilter, type TaskListItem, type TaskGroup } from '@/utils/taskListUtils';
+
+const FILTERS: { value: TaskListFilter; label: string }[] = [
+  { value: 'today', label: 'Today' }, { value: 'upcoming', label: 'Upcoming' }, { value: 'all', label: 'All lists' },
+];
+const GROUP_HINTS: Record<TaskGroup, string> = {
+  Overdue: 'Action required', Morning: 'Before 12:00 PM', Afternoon: '12:00 PM onward', Anytime: 'No strict time',
+};
+const readOnly = () => {};
+
+function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
+  const [expanded, setExpanded] = useState(false);
+  const hasSubtasks = task.subtasks.length > 0;
+  const completed = task.subtasks.filter(child => child.done).length;
+  const priority = task.priority === 'urgent' ? 'High' : task.priority[0].toUpperCase() + task.priority.slice(1);
+  return (
+    <FormCard
+      style={styles.card}
+      onPress={hasSubtasks ? () => setExpanded(value => !value) : undefined}
+      accessibilityLabel={hasSubtasks ? (expanded ? 'Collapse' : 'Expand') + ' subtasks for ' + task.title : undefined}
+      accessibilityState={hasSubtasks ? { expanded } : undefined}
+    >
+      <SheetSection>
+        <FormRow
+          icon={<Checkbox checked={task.done} disabled onToggle={readOnly} accessibilityLabel={task.title} />}
+          label={<Text style={[styles.body, task.done && styles.completed]}>{task.title}</Text>}
+          value={
+            <View style={styles.metadata}>
+              <Chip label={formatTaskDue(task.dueAt, today)} size="sm" variant={expanded ? 'tasks' : 'default'} />
+              <Chip label={priority} size="sm" icon={<Flag size={10} color={colors['text-muted']} />} />
+              {hasSubtasks && <Chip label={completed + '/' + task.subtasks.length} size="sm" icon={<ListChecks size={12} color={colors['text-muted']} />} />}
+            </View>
+          }
+          right={hasSubtasks ? (expanded ? <ChevronDown size={16} color={colors['text-muted']} /> : <ChevronRight size={16} color={colors['text-muted']} />) : undefined}
+        />
+        {expanded && (
+          <SheetSection gap="xs" style={styles.subtasks}>
+            {task.subtasks.map(child => (
+              <FormRow key={child.id}
+                icon={<Checkbox checked={child.done} disabled onToggle={readOnly} accessibilityLabel={child.title} />}
+                label={<Text style={[styles.caption, child.done && styles.completed]}>{child.title}</Text>}
+              />
+            ))}
+          </SheetSection>
+        )}
+      </SheetSection>
+    </FormCard>
+  );
+}
 
 export default function TasksScreen() {
-  const openAddSheet = useUIStore((s) => s.openAddSheet);
+  const [filter, setFilter] = useState<TaskListFilter>('today');
+  const [showDone, setShowDone] = useState(false);
+  const { tasks, subtasks, isLoading, error, refresh } = useTasksList();
+  const openAddSheet = useUIStore(s => s.openAddSheet);
   const insets = useSafeAreaInsets();
-  const refreshCounter = useCalendarSync((s) => s.refreshCounter);
-
-  const [tasksList, setTasksList] = useState<schema.Task[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Reserve space for TabBar (56 + insets.bottom) + FAB (52 + 16) + margin (24)
-  const bottomScrollPadding = 56 + insets.bottom + 16 + 52 + 24;
-
-  const fetchTasks = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const db = getDb();
-      const rows = await db
-        .select()
-        .from(schema.tasks)
-        .orderBy(sql`${schema.tasks.done} ASC`, sql`${schema.tasks.createdAt} DESC`);
-      setTasksList(rows);
-    } catch (e) {
-      console.error('[TasksScreen Error]', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchTasks();
-  }, [fetchTasks, refreshCounter]);
-
-  const toggleTaskDone = async (task: schema.Task) => {
-    const nextDone = !task.done;
-    const now = new Date().toISOString();
-    const db = getDb();
-    await db
-      .update(schema.tasks)
-      .set({
-        done: nextDone,
-        doneAt: nextDone ? now : null,
-        updatedAt: now,
-      })
-      .where(eq(schema.tasks.id, task.id));
-    useCalendarSync.getState().triggerRefresh();
-  };
-
-  const totalCount = tasksList.length;
-  const completedCount = tasksList.filter((t) => t.done).length;
-  const progress = totalCount > 0 ? completedCount / totalCount : 0;
+  // Today follows the device clock; calendar selection remains solely in useUIStore.
+  const now = new Date();
+  const today = formatDateToISO(now);
+  const list = buildTaskList(tasks, subtasks, filter, now);
+  const percent = Math.round(list.progress * 100);
+  const title = FILTERS.find(option => option.value === filter)!.label;
+  const addTask = () => openAddSheet('task', null, today);
 
   return (
-    <View className="flex-1 bg-background" style={{ paddingTop: insets.top }}>
+    <View style={styles.screen}>
+      <TopBar featureName="Tasks" />
       <ScrollView
-        className="flex-1 px-5 pt-3"
-        contentContainerStyle={{ paddingBottom: bottomScrollPadding }}
+        contentContainerStyle={[styles.content, { paddingBottom: 52 + spacing.base + spacing.lg + insets.bottom }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View className="mb-6">
-          <Text className="text-xs font-medium text-text-muted uppercase tracking-wider mb-1">
-            Tasks & Priorities
-          </Text>
-          <Text className="text-2xl font-medium text-text">Tasks</Text>
-        </View>
-
-        {/* Progress Card */}
-        <Card module="tasks" className="mb-4">
-          <View className="flex-row items-center justify-between mb-2">
-            <Text className="text-sm font-medium text-text">Daily Task Progress</Text>
-            <Chip
-              label={`${Math.round(progress * 100)}%`}
-              variant="tasks"
-              size="sm"
-            />
-          </View>
-          <ProgressBar progress={progress} module="tasks" className="my-2" />
-          <Text className="text-xs text-text-muted">
-            {completedCount} of {totalCount} tasks marked complete
-          </Text>
-        </Card>
-
-        {/* Tasks List Card */}
-        <Card className="mb-4">
-          <Text className="text-sm font-medium text-text mb-3">Today's Focus</Text>
-          {isLoading ? (
-            <View className="py-4 items-center justify-center">
-              <ActivityIndicator size="small" color={colors.tasks} />
+        <SheetSection gap="lg">
+          <SheetSection>
+            <View>
+              <Text accessibilityRole="header" style={styles.heading}>{title}</Text>
+              <Text style={styles.caption}>{now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</Text>
             </View>
-          ) : tasksList.length === 0 ? (
-            <View className="py-3">
-              <Text className="text-xs text-text-muted italic">
-                No tasks yet. Tap "+ Add Task" to plan your work.
-              </Text>
-            </View>
+            <SegmentedControl options={FILTERS} selectedValue={filter} onChange={value => { setFilter(value); setShowDone(false); }} />
+          </SheetSection>
+
+          {isLoading ? <ActivityIndicator accessibilityLabel="Loading tasks" color={colors.tasks} /> : error ? (
+            <EmptyState variant="full" title="Couldn't load tasks" description="Try reading your tasks again." actionLabel="Try again" onAction={refresh} />
           ) : (
-            <View className="space-y-2.5">
-              {tasksList.map((tsk) => (
-                <View key={tsk.id} className="py-1 flex-row items-center justify-between">
-                  <View className="flex-1 mr-2">
-                    <Checkbox
-                      checked={Boolean(tsk.done)}
-                      onToggle={() => toggleTaskDone(tsk)}
-                      onLabelPress={() => openAddSheet('task', tsk)}
-                      label={tsk.title}
+            <SheetSection gap="lg">
+              {list.total > 0 && (
+                <FormCard style={styles.card}>
+                  <SheetSection gap="sm">
+                    <FormRow
+                      label={<Text style={styles.body}>{list.remaining} {list.remaining === 1 ? 'task' : 'tasks'} left <Text style={styles.caption}>· {list.done.length} of {list.total} done</Text></Text>}
+                      right={<Text style={styles.percent}>{percent}%</Text>}
                     />
-                  </View>
-                  {tsk.priority === 'urgent' && (
-                    <Chip label="Urgent" variant="tasks" size="sm" />
-                  )}
-                  {tsk.priority === 'high' && (
-                    <Chip label="High" variant="tasks" size="sm" />
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-        </Card>
+                    <View accessibilityRole="progressbar" accessibilityLabel="Task completion" accessibilityValue={{ min: 0, max: 100, now: percent }}>
+                      <ProgressBar progress={list.progress} module="tasks" />
+                    </View>
+                    <Text style={styles.caption}>{percent}% of {filter === 'today' ? "today's focus" : 'this list'} completed with intent</Text>
+                  </SheetSection>
+                </FormCard>
+              )}
 
-        <Button
-          title="+ Add Task"
-          variant="tasks"
-          size="sm"
-          onPress={() => openAddSheet('task')}
-        />
+              {list.remaining === 0 ? (
+                <SheetSection>
+                  <FormCard style={styles.card}>
+                    <EmptyState variant="full" title="All caught up"
+                      description={filter === 'today' ? 'Your agenda is clear for the day. Enjoy the quiet moment or begin something new.' : filter === 'upcoming' ? 'No unfinished tasks scheduled for the days ahead.' : 'Your task list is clear. Enjoy the quiet moment or begin something new.'}
+                      actionLabel="Add a task" onAction={addTask} actionModule="tasks"
+                      icon={<CheckCircle2 size={24} color={colors.tasks} strokeWidth={1.5} />}
+                      style={styles.empty}
+                    />
+                  </FormCard>
+                  <FormCardRow style={styles.summaryRow}>
+                    <FormCard style={styles.summaryCard}>
+                      <SheetSection gap="sm">
+                        <Text style={styles.eyebrow}>COMPLETED TODAY</Text>
+                        <Text style={styles.body}>{list.completedToday} {list.completedToday === 1 ? 'task' : 'tasks'}</Text>
+                      </SheetSection>
+                    </FormCard>
+                    <FormCard style={styles.summaryCard}>
+                      <SheetSection gap="sm">
+                        <Text style={styles.eyebrow}>NEXT UP</Text>
+                        <Text style={styles.caption}>{list.next ? formatTaskDue(list.next.dueAt, today, true) : 'Nothing scheduled'}</Text>
+                      </SheetSection>
+                    </FormCard>
+                  </FormCardRow>
+                </SheetSection>
+              ) : list.groups.map(group => (
+                <SheetSection key={group.title} gap="sm">
+                  <View style={styles.sectionHeading}>
+                    <Text accessibilityRole="header" style={[styles.eyebrow, group.title === 'Overdue' && styles.overdue]}>{group.title.toUpperCase()} ({group.data.length})</Text>
+                    <Text style={styles.eyebrow}>{GROUP_HINTS[group.title]}</Text>
+                  </View>
+                  <SheetSection>{group.data.map(task => <TaskRow key={task.id} task={task} today={today} />)}</SheetSection>
+                </SheetSection>
+              ))}
+
+              <SheetSection gap="sm">
+                <Pressable disabled={list.done.length === 0} onPress={() => setShowDone(value => !value)}
+                  accessibilityRole="button" accessibilityLabel={'Done, ' + list.done.length + ' tasks'}
+                  accessibilityState={{ expanded: showDone, disabled: list.done.length === 0 }}
+                  style={styles.doneHeader}
+                >
+                  <Text style={styles.body}><Text style={styles.percent}>• </Text>Done ({list.done.length})</Text>
+                  {showDone ? <ChevronDown size={18} color={colors['text-muted']} /> : <ChevronRight size={18} color={colors['text-muted']} />}
+                </Pressable>
+                {showDone && list.done.map(task => <TaskRow key={task.id} task={task} today={today} />)}
+              </SheetSection>
+            </SheetSection>
+          )}
+        </SheetSection>
       </ScrollView>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  screen: { flex: 1, backgroundColor: colors.background },
+  content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
+  heading: { fontFamily: 'Inter_500Medium', fontSize: 24, lineHeight: 32, color: colors.text },
+  body: { fontFamily: 'Inter_400Regular', fontSize: 14, lineHeight: 22, color: colors.text },
+  caption: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, color: colors['text-muted'] },
+  eyebrow: { fontFamily: 'Inter_500Medium', fontSize: 10, lineHeight: 14, color: colors['text-muted'] },
+  percent: { fontFamily: 'Inter_500Medium', fontSize: 14, color: colors.tasks, fontVariant: ['tabular-nums'] },
+  card: { backgroundColor: colors.surface },
+  metadata: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
+  completed: { color: colors['text-muted'], textDecorationLine: 'line-through' },
+  subtasks: { marginLeft: spacing.lg + layout.iconToLabelGap, paddingTop: spacing.xs },
+  sectionHeading: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.sm },
+  overdue: { color: colors.text },
+  doneHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: layout.singleLineMinHeight },
+  empty: { paddingHorizontal: spacing.lg, paddingVertical: spacing['2xl'] },
+  summaryRow: { gap: spacing.cardGap },
+  summaryCard: { flex: 1 },
+});

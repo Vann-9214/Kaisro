@@ -143,6 +143,7 @@ vite.config.ts.timestamp-*
 .vite/
 
 # Expo & Mobile
+.stitch-reference/
 .expo/
 *.jks
 *.p8
