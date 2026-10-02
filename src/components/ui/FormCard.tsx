@@ -6,7 +6,6 @@ import {
   PressableProps,
   StyleProp,
   ViewStyle,
-  StyleSheet,
 } from 'react-native';
 import { colors, layout } from '@/constants/theme';
 
@@ -47,6 +46,8 @@ export function FormCard({
   };
 
   if (onPress) {
+    // NativeWind merges styles as objects; a Pressable style callback loses
+    // the card's padding, border and flex width during that merge.
     return (
       <Pressable
         onPress={onPress}
@@ -54,12 +55,8 @@ export function FormCard({
         accessibilityRole={accessibilityRole ?? 'button'}
         accessibilityLabel={accessibilityLabel}
         accessibilityState={accessibilityState}
-        style={({ pressed }) => [
-          cardStyle,
-          style,
-          pressed && { opacity: 0.75 },
-        ]}
-        className={className}
+        style={[cardStyle, style]}
+        className={`active:opacity-75 ${className}`}
         {...rest}
       >
         {children}

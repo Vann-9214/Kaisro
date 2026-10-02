@@ -11,6 +11,8 @@ export interface LiftedBarPositionInputs {
   keyboardScreenY: number;
   keyboardHeight?: number;
   bottomInset: number;
+  /** Actual modal viewport in screen coordinates, independent of the app window. */
+  viewport?: { screenY: number; height: number };
 }
 
 export interface LiftedBarPositionOutput {
@@ -32,6 +34,7 @@ export function calculateLiftedBarPosition({
   keyboardScreenY,
   keyboardHeight = 0,
   bottomInset,
+  viewport,
 }: LiftedBarPositionInputs): LiftedBarPositionOutput {
   const isKeyboardVisible =
     keyboardHeight > 0 || (keyboardScreenY > 0 && keyboardScreenY < initialWindowHeight);
@@ -41,6 +44,17 @@ export function calculateLiftedBarPosition({
       bottomOffset: 0,
       isKeyboardVisible: false,
       systemDidResize: false,
+    };
+  }
+
+  if (viewport) {
+    // A native Modal can resize independently of useWindowDimensions(). Use
+    // its measured bottom edge and the keyboard's top in the same coordinates.
+    const overlap = viewport.screenY + viewport.height - keyboardScreenY;
+    return {
+      bottomOffset: Math.round(Math.max(0, Math.min(viewport.height, overlap))),
+      isKeyboardVisible: true,
+      systemDidResize: viewport.height < initialWindowHeight - 80,
     };
   }
 

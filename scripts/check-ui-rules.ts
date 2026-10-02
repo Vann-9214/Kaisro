@@ -34,6 +34,16 @@ for (const file of uiRoots.flatMap(dir => listFiles(path.join(root, dir)))) {
   const isSheet = isForm && relative !== 'src/components/lifted-input/LiftedInputHost.tsx';
 
   function visit(node: ts.Node): void {
+    if ((ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
+        node.tagName.getText(source) === 'Pressable') {
+      for (const attr of node.attributes.properties) {
+        if (ts.isJsxAttribute(attr) && attr.name.text === 'style' && attr.initializer &&
+            ts.isJsxExpression(attr.initializer) && attr.initializer.expression &&
+            (ts.isArrowFunction(attr.initializer.expression) || ts.isFunctionExpression(attr.initializer.expression))) {
+          report(file, source, attr, 'NativeWind drops Pressable style callbacks; use static styles and active: classes');
+        }
+      }
+    }
     if (relative !== 'src/constants/theme.ts' && relative !== 'src/db/seed.ts' &&
         (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
         /#[0-9a-fA-F]{3,8}\b/.test(node.text)) {

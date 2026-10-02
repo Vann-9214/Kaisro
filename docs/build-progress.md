@@ -87,3 +87,24 @@ came from the saved design-system definitions and existing semantic theme.
 
 Final checks will cover Android/iOS native pickers, lifted fields/keyboard,
 safe areas, notifications excluded from this run, and light/dark contrast.
+
+## UI repair and Expo patches — 2026-10-02
+
+Implemented repairs from the four supplied phone screenshots. Restored shared
+pressable card geometry, reset Quick Add scroll position when changing forms,
+and docked lifted inputs using the native modal's measured viewport. Save stays
+visible and invalid submissions reveal the form errors. Fixed Today to use the
+current time and removed duplicate bottom safe-area spacing from Day view.
+
+The same NativeWind style callback problem affected Month, Agenda, and shared
+empty-state buttons; those controls now use static styles with pressed classes.
+The UI checker rejects this pattern to prevent recurrence.
+
+Installed Expo 57.0.26, Constants 57.0.20, Linking 57.0.11, Router 57.0.24.
+Checks passed: TypeScript, UI rules, verify-ui-repairs.ts with isolated SQLite,
+existing keyboard/Save/day-layout scripts, Expo dependency check, Android bundle
+export. Native phone verification remains pending; ADB found no connected device.
+
+See [UI repair verification](ui-repair-verification.md) for screenshot findings,
+visual judgments, and the phone checklist. Original Stitch comparisons remain
+blocked because `.stitch-reference/` and its design-system file are absent.

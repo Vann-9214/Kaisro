@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,7 @@ import { colors, spacing, layout } from '@/constants/theme';
 
 export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   const insets = useSafeAreaInsets();
-  const { activeField, closeBar, handleNextOrDone } = useLiftedInput();
+  const { activeField, closeBar, handleNextOrDone, isReduceMotion } = useLiftedInput();
   const {
     keyboardScreenY,
     keyboardHeight,
@@ -26,18 +26,31 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   } = useKeyboardInsets();
 
   const inputRef = useRef<TextInput>(null);
+  const viewportRef = useRef<View>(null);
+  const [viewport, setViewport] = useState<{ screenY: number; height: number }>();
+  const measureViewport = useCallback(() => {
+    viewportRef.current?.measureInWindow((_x, screenY, _width, height) => {
+      if (height > 0) setViewport(previous =>
+        previous?.screenY === screenY && previous.height === height ? previous : { screenY, height });
+    });
+  }, []);
+  useEffect(() => {
+    const frame = requestAnimationFrame(measureViewport);
+    return () => cancelAnimationFrame(frame);
+  }, [activeField?.id, keyboardScreenY, currentWindowHeight, measureViewport]);
   const entrance = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     entrance.setValue(0);
-    if (activeField) Animated.timing(entrance, { toValue: 1, duration: 160, useNativeDriver: true }).start();
-  }, [activeField?.id, entrance]);
+    if (activeField) Animated.timing(entrance, { toValue: 1, duration: isReduceMotion ? 0 : 160, useNativeDriver: true }).start();
+  }, [activeField?.id, entrance, isReduceMotion]);
 
   // Focus input on active field change
   useEffect(() => {
     if (activeField) {
-      setTimeout(() => {
+      const timer = setTimeout(() => {
         inputRef.current?.focus();
       }, 30);
+      return () => clearTimeout(timer);
     }
   }, [activeField?.id]);
 
@@ -52,6 +65,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
     keyboardScreenY,
     keyboardHeight,
     bottomInset: insets.bottom,
+    viewport,
   });
 
   // Navigation order
@@ -60,11 +74,11 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   const isLast = activeField.actionLabel === 'Done' || nav.isLastField;
   const actionButtonText = activeField.actionLabel || (isLast ? 'Done' : 'Next');
   const dockOffset = isKeyboardVisible ? bottomOffset : insets.bottom;
-  const availableHeight = currentWindowHeight - dockOffset - insets.top - spacing.sm;
+  const availableHeight = (viewport?.height ?? currentWindowHeight) - dockOffset - insets.top - spacing.sm;
   const inputMaxHeight = Math.max(44, Math.min(110, availableHeight - 164));
 
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
+    <View ref={viewportRef} collapsable={false} onLayout={measureViewport} style={StyleSheet.absoluteFill} pointerEvents="box-none">
       {/* Dimmed scrim overlay over the rest of the sheet - instant, no animation */}
       <Pressable
         onPress={closeBar}
@@ -85,20 +99,18 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
           bottom: dockOffset,
           maxHeight: Math.max(160, availableHeight),
           opacity: entrance,
+          transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [spacing.sm, 0] }) }],
+          backgroundColor: colors['surface-raised'],
+          borderRadius: layout.cardBorderRadius,
+          borderWidth: layout.cardBorderWidth,
+          borderColor: colors.border,
+          overflow: 'hidden',
         }}
       >
         {footer}
         <View
           style={{
             backgroundColor: colors['surface-raised'],
-            borderRadius: layout.cardBorderRadius,
-            borderWidth: 1,
-            borderColor: colors.border,
-            shadowColor: colors.text,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.12,
-            shadowRadius: 10,
-            elevation: 8,
             paddingHorizontal: spacing.base, // 16dp horizontal
             paddingVertical: spacing.cardGap, // 12dp vertical
           }}
@@ -147,7 +159,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
 
             {activeField.multiline ? (
               <ScrollView
-                style={{ maxHeight: inputMaxHeight }}
+                style={{ flex: 1, maxHeight: inputMaxHeight }}
                 showsVerticalScrollIndicator
                 keyboardShouldPersistTaps="handled"
               >

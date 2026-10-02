@@ -137,7 +137,11 @@ function QuickAddBottomSheetContent() {
 
     setIsSaving(true);
     try {
-      await ref.current.submit();
+      const saved = await ref.current.submit();
+      if (!saved) {
+        closeBar();
+        scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+      }
     } catch (err) {
       console.error('[QuickAdd] Save error:', err);
     } finally {
@@ -318,6 +322,7 @@ function QuickAddBottomSheetContent() {
     >
       {/* The body scrolls in the space left after the header and fixed Save footer. */}
       <ScrollView
+        key={`${activeAddType}-${isAddSheetOpen}-${editingEvent?.id ?? editingTask?.id ?? editingTransaction?.id ?? editingNote?.id ?? 'new'}`}
         ref={scrollViewRef}
         style={{ flex: 1, paddingHorizontal: layout.sheetHorizontalPadding }}
         showsVerticalScrollIndicator={false}

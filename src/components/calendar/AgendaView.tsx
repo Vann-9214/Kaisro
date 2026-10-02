@@ -187,12 +187,12 @@ export function AgendaView({
                 {/* Row Content Pressable: taps title, time, bar to open edit sheet */}
                 <Pressable
                   onPress={() => handlePressRow(rowItem)}
-                  style={({ pressed }) => ({
+                  className="active:opacity-70"
+                  style={{
                     flex: 1,
                     flexDirection: 'row',
                     alignItems: 'center',
-                    opacity: pressed ? 0.7 : 1,
-                  })}
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`${rowItem.title}, ${rowItem.timeLabel}`}
                 >
@@ -326,11 +326,11 @@ export function AgendaView({
             onPress={loadMore}
             disabled={isLoadingMore}
             hitSlop={8}
-            style={({ pressed }) => ({
+            className="active:opacity-70"
+            style={{
               paddingVertical: 4,
               paddingHorizontal: 12,
-              opacity: pressed ? 0.7 : 1,
-            })}
+            }}
             accessibilityRole="button"
             accessibilityLabel="Load more"
           >

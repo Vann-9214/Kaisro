@@ -103,7 +103,8 @@ export function EmptyState({
             onPress={onAction}
             accessibilityRole="button"
             accessibilityLabel={actionLabel}
-            style={({ pressed }) => ({
+            className="active:opacity-85"
+            style={{
               minHeight: 44,
               paddingHorizontal: 12,
               borderRadius: 9999,
@@ -111,8 +112,7 @@ export function EmptyState({
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
-              opacity: pressed ? 0.85 : 1,
-            })}
+            }}
           >
             <Plus size={13} color={colors['on-primary']} strokeWidth={2.2} />
             <Text
@@ -201,7 +201,8 @@ export function EmptyState({
           onPress={onAction}
           accessibilityRole="button"
           accessibilityLabel={actionLabel}
-          style={({ pressed }) => ({
+          className="active:opacity-85"
+          style={{
             minHeight: 44,
             paddingHorizontal: 20,
             borderRadius: 9999,
@@ -209,8 +210,7 @@ export function EmptyState({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'center',
-            opacity: pressed ? 0.85 : 1,
-          })}
+          }}
         >
           <Plus size={15} color={colors[actionModule === 'tasks' ? 'on-tasks' : actionModule === 'money' ? 'on-money' : 'on-primary']} strokeWidth={2.2} />
           <Text

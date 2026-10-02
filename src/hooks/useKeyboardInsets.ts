@@ -115,7 +115,9 @@ export function useKeyboardInsets(): KeyboardInsetsState {
     };
   }, []);
 
-  return state;
+  // Dimensions can change after the keyboard event (especially Android modals).
+  // Never freeze the viewport at the size captured by that event.
+  return { ...state, currentWindowHeight: windowHeight };
 }
 
 export default useKeyboardInsets;

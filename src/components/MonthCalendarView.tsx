@@ -379,7 +379,8 @@ export function MonthCalendarView({
           {/* Open day button switches to Day view on that date */}
           <Pressable
             onPress={() => onOpenDay(selectedDate)}
-            style={({ pressed }) => ({
+            className="active:opacity-80"
+            style={{
               flexDirection: 'row',
               alignItems: 'center',
               paddingHorizontal: 10,
@@ -389,8 +390,7 @@ export function MonthCalendarView({
               backgroundColor: colors.surface,
               borderWidth: 1,
               borderColor: colors.border,
-              opacity: pressed ? 0.8 : 1,
-            })}
+            }}
             accessibilityRole="button"
             accessibilityLabel={`Open day view for ${selectedDate}`}
           >
@@ -427,7 +427,8 @@ export function MonthCalendarView({
               <Pressable
                 key={`event-${ev.id}`}
                 onPress={() => openAddSheet('event', ev, selectedDate)}
-                style={({ pressed }) => ({
+                className="active:opacity-85"
+                style={{
                   backgroundColor: colors.surface,
                   borderWidth: 1,
                   borderColor: colors.border,
@@ -441,8 +442,7 @@ export function MonthCalendarView({
                   flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  opacity: pressed ? 0.85 : 1,
-                })}
+                }}
                 accessibilityRole="button"
                 accessibilityLabel={`Edit event: ${ev.title}`}
               >
@@ -580,7 +580,8 @@ export function MonthCalendarView({
                       },
                     })
                   }
-                  style={({ pressed }) => ({
+                  className="active:opacity-85"
+                  style={{
                     backgroundColor: colors.surface,
                     borderWidth: 1,
                     borderColor: colors.border,
@@ -594,8 +595,7 @@ export function MonthCalendarView({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    opacity: pressed ? 0.85 : 1,
-                  })}
+                  }}
                   accessibilityRole="button"
                   accessibilityLabel={`Expense: ${formatCurrency(tx.amount)}`}
                 >

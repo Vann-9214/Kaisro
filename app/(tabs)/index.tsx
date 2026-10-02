@@ -417,7 +417,7 @@ export default function CalendarScreen() {
     setViewedDate(todayStr);
 
     if (activeView === 'Day') {
-      const now = parseISODate(todayStr);
+      const now = new Date();
       const nowMinutes = now.getHours() * 60 + now.getMinutes();
       const targetY = calculateTimelineScrollTarget({
         dateStr: todayStr,
@@ -462,7 +462,8 @@ export default function CalendarScreen() {
 
   const isJumpToTodayDisabled = useMemo(() => {
     if (activeView === 'Day') {
-      return isViewingToday;
+      // Keep Today available as a way back to the current time after scrolling.
+      return false;
     }
     if (activeView === 'Week') {
       return viewedDate.slice(0, 7) === todayStr.slice(0, 7);
@@ -554,7 +555,8 @@ export default function CalendarScreen() {
   const totalTimelineHeight = (END_HOUR - START_HOUR) * HOUR_HEIGHT + 14;
 
   // Minimal bottom padding so scrolling stops cleanly on the 12:00 AM closing line without empty white space
-  const bottomScrollPadding = layout.tabContentBottomPadding + insets.bottom;
+  // The tab navigator already reserves the bottom safe area; leave room for +.
+  const bottomScrollPadding = layout.tabContentBottomPadding;
 
   return (
     <View className="flex-1 bg-background">

@@ -24,3 +24,15 @@ files. Then open and inspect each image and the design-system definition before
 implementation. Do not use `urls.md` or download Stitch source.
 
 Phases 5 and 6 remain outside this run by user instruction.
+
+## UI repair visual verification — 2026-10-02
+
+The four user-provided phone screenshots were readable and inspected. They
+support repairing the broken existing layouts. Matching local Stitch images
+and `.stitch-reference/design-system.md` are still absent, so comparison against
+the intended original designs remains blocked. Existing semantic tokens and
+shared components were retained. See `ui-repair-verification.md` for judgments.
+
+ADB found no connected phone or emulator. The Android bundle and automated
+checks pass, but keyboard positioning and final visual appearance still need
+the phone checklist. No iOS runtime verification was possible in this session.

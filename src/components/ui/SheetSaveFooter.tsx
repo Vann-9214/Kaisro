@@ -10,9 +10,9 @@ export function SheetSaveFooter({ label = 'Save', onPress, saving = false, compa
   const insets = useSafeAreaInsets();
   return <View style={{
     paddingTop: compact ? spacing.sm : layout.footerTopPadding,
-    paddingHorizontal: layout.sheetHorizontalPadding,
+    paddingHorizontal: compact ? layout.cardPaddingHorizontal : layout.sheetHorizontalPadding,
     paddingBottom: compact ? spacing.sm : insets.bottom + layout.footerBottomExtraPadding,
-    borderTopWidth: layout.cardBorderWidth,
+    borderTopWidth: compact ? 0 : layout.cardBorderWidth,
     borderTopColor: colors.border,
     backgroundColor: colors['surface-raised'],
   }}>
