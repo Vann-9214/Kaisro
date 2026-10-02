@@ -108,3 +108,16 @@ export. Native phone verification remains pending; ADB found no connected device
 See [UI repair verification](ui-repair-verification.md) for screenshot findings,
 visual judgments, and the phone checklist. Original Stitch comparisons remain
 blocked because `.stitch-reference/` and its design-system file are absent.
+
+## Event typing and Android bundle follow-up — 2026-10-02
+
+The Event lifted input now shows Done without the duplicate Save Event button.
+It clears the keyboard by 8 dp. Save Event remains in the sheet footer for use
+after Done. This follows the user's latest instruction for Event input and is
+an explicit exception to the earlier keyboard-visible Save convention.
+
+The Expo Router bundle reported a missing `expo-glass-effect`. Added Expo's
+SDK-compatible `expo-glass-effect` 57.0.4 as a direct dependency. A clean-cache
+Android export succeeds, and TypeScript, UI rules, the isolated SQLite script,
+the Quick Add button check, and `expo install --check` all pass. A running Metro
+server must be restarted with a cleared cache to load the new dependency.

@@ -14,7 +14,7 @@ import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { calculateLiftedBarPosition, getFieldNavigation } from '@/utils/keyboardLayout';
 import { colors, spacing, layout } from '@/constants/theme';
 
-export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
+export function LiftedInputHost({ footer, keyboardGap = 0 }: { footer?: React.ReactNode; keyboardGap?: number }) {
   const insets = useSafeAreaInsets();
   const { activeField, closeBar, handleNextOrDone, isReduceMotion } = useLiftedInput();
   const {
@@ -58,7 +58,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
     return null;
   }
 
-  // Base position from keyboard height: docks flush directly on top of keyboard with no gap
+  // Base position comes from the actual modal and keyboard bounds.
   const { bottomOffset } = calculateLiftedBarPosition({
     initialWindowHeight,
     currentWindowHeight,
@@ -74,7 +74,8 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
   const isLast = activeField.actionLabel === 'Done' || nav.isLastField;
   const actionButtonText = activeField.actionLabel || (isLast ? 'Done' : 'Next');
   const dockOffset = isKeyboardVisible ? bottomOffset : insets.bottom;
-  const availableHeight = (viewport?.height ?? currentWindowHeight) - dockOffset - insets.top - spacing.sm;
+  const keyboardClearance = isKeyboardVisible ? keyboardGap : 0;
+  const availableHeight = (viewport?.height ?? currentWindowHeight) - dockOffset - keyboardClearance - insets.top - spacing.sm;
   const inputMaxHeight = Math.max(44, Math.min(110, availableHeight - 164));
 
   return (
@@ -96,7 +97,7 @@ export function LiftedInputHost({ footer }: { footer?: React.ReactNode }) {
           position: 'absolute',
           left: layout.sheetHorizontalPadding,
           right: layout.sheetHorizontalPadding,
-          bottom: dockOffset,
+          bottom: dockOffset + keyboardClearance,
           maxHeight: Math.max(160, availableHeight),
           opacity: entrance,
           transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [spacing.sm, 0] }) }],

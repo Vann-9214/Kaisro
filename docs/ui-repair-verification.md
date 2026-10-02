@@ -11,7 +11,7 @@ repairs, not a claim of verified after-screenshots.
 | --- | --- | --- |
 | 162800 | Task date/time cards lose their borders and labels, with a large gap before Priority | Replace FormCard's Pressable style callback with static styles so NativeWind preserves padding, border, and equal flex widths |
 | 162739 | Expense opens partway through Category; date/time rows have the same collapsed layout | Restore shared card styles and remount the form scroll container on tab, open/close, or edited-item changes |
-| 162754 | Event input is partly behind the keyboard; Save and input appear as disconnected blocks | Compute docking from the measured modal viewport and keyboard top; group Save/input in one bordered surface with aligned padding |
+| 162754 | Event input is partly behind the keyboard; Save and input appear as disconnected blocks | Compute docking from the measured modal viewport and keyboard top; the follow-up leaves Done in the input bar with 8 dp keyboard clearance |
 | 162749 | Day view is scrolled to evening, Today is disabled, and there is excess bottom clearance | Keep Today available on today's date, use the real current time when jumping, and avoid adding a safe-area inset already reserved by the tab navigator |
 
 The Day screenshot alone does not establish why it was scrolled to evening.
@@ -25,14 +25,15 @@ current-time scroll calculations passed checks.
   Month, Agenda, and shared empty-state actions; their existing dimensions and
   colors were retained. Added a source rule against callback styles there.
 - Retained side-by-side date/time cards, existing semantic colors and spacing,
-  and the lifted-field interaction. The keyboard dock uses one rounded surface
-  for Save and the field. This grouping is a visual judgment without Stitch.
+  and the lifted-field interaction. Task, Expense, and Note group Save with the
+  input in one rounded surface. This is a visual judgment without Stitch.
 - The input dock measures the modal rather than assuming its height matches the
   underlying app window. This covers modal-only resize, app-only resize, both
   resizing, and full-height overlays in the positioning checks.
 - Opening a sheet does not focus an input. Field taps retain Next/Done behavior;
   the entrance animation respects Reduce Motion. Multiline input gets the full
-  available row width. Save remains in the sheet footer and the keyboard dock.
+  available row width. Save remains in the sheet footer. Task, Expense, and Note
+  retain Save in the keyboard dock; Event shows Done there.
 - Invalid Quick Add submissions dismiss the dock and scroll to show errors.
 - No migrations or sample-data changes were needed. The tests used only a new
   in-memory SQLite database and the existing production migrations.
@@ -80,8 +81,9 @@ Stop the existing Metro server with Ctrl+C, then run
   cards have readable labels and values and the Save button stays visible.
 - [ ] Scroll Expense to the bottom, switch to Task and back. Each tab begins at
   the top without carrying over the previous tab's scroll position.
-- [ ] Tap Event title and Task title. The full input sits above the keyboard,
-  with Save and Done visible. Try a tall keyboard and Android navigation buttons.
+- [ ] Tap Event title and Task title. The full input sits above the keyboard.
+  Event shows Done with an 8 dp gap; Task retains Save. Try a tall keyboard and
+  Android navigation buttons.
 - [ ] Enter an expense amount, use Next for Description, then Done. Verify Save
   works both while typing and after dismissing the keyboard.
 - [ ] Try Save with an empty title/invalid amount. The form error is visible.
@@ -93,3 +95,19 @@ Stop the existing Metro server with Ctrl+C, then run
   padding, labels, and touch targets.
 - [ ] Repeat keyboard, safe-area, picker, and enlarged-text checks on iOS when
   available. No native device was connected during this verification.
+
+## Follow-up: Event input and Router dependency
+
+The Event input now shows Done without a keyboard-level Save Event button and
+sits 8 dp above the keyboard. The Event sheet still offers Save after Done.
+Task, Expense, and Note retain their existing keyboard-level Save buttons.
+This is the user's requested exception to the earlier general Save convention.
+
+The user reported an Android Metro error resolving `expo-glass-effect` from
+Expo Router. The package was already in the lockfile as a Router dependency,
+but a running Metro server can retain an older package graph. Installed the
+Expo-compatible package as a direct dependency and ran a fresh Android export
+with `--clear`; 4,143 modules bundled successfully. `expo install --check`,
+TypeScript, UI rules, the temporary SQLite verification script, and the Quick
+Add button check passed. Restart the existing Metro server, then use the
+command in the phone checklist to load the new package graph.
