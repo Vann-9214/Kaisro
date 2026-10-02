@@ -28,9 +28,8 @@ export function DateTimeField({ value, onChange, optional = false, fallbackDate 
       {hasTime && <Pressable onPress={() => onChange(formatDateToISO(date))} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Clear time</Text></Pressable>}
     </View>}
     {mode && <FormCard>
-      <DateTimePicker value={date} mode={mode} display={Platform.OS === 'ios' ? 'spinner' : 'default'} onChange={(event, picked) => {
+      <DateTimePicker value={date} mode={mode} display={Platform.OS === 'ios' ? 'spinner' : 'default'} onDismiss={() => setMode(null)} onValueChange={(_event, picked) => {
         if (Platform.OS === 'android') setMode(null);
-        if (event.type === 'dismissed' || !picked) return;
         const next = new Date(date);
         if (mode === 'date') next.setFullYear(picked.getFullYear(), picked.getMonth(), picked.getDate());
         else next.setHours(picked.getHours(), picked.getMinutes(), 0, 0);

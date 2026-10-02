@@ -1,8 +1,9 @@
 import '../global.css';
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator, AppState, Alert } from 'react-native';
+import { View, ActivityIndicator, AppState, Alert, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts,
@@ -25,6 +26,12 @@ export default function RootLayout() {
   });
 
   const [dbReady, setDbReady] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    NavigationBar.setHidden(true);
+    return () => NavigationBar.setHidden(false);
+  }, []);
 
   useEffect(() => {
     async function prepare() {

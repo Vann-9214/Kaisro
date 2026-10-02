@@ -121,3 +121,24 @@ SDK-compatible `expo-glass-effect` 57.0.4 as a direct dependency. A clean-cache
 Android export succeeds, and TypeScript, UI rules, the isolated SQLite script,
 the Quick Add button check, and `expo install --check` all pass. A running Metro
 server must be restarted with a cleared cache to load the new dependency.
+
+## Event render loop, picker callbacks, and Android system buttons — 2026-10-02
+
+Fixed the Event title render loop: lifted field registration only updates the
+field registry. Typing calls the latest registered callback and updates the
+visible input value once. Inline Event callbacks can change between renders
+without retriggering registration state updates.
+
+Replaced deprecated DateTimePicker `onChange` callbacks with `onValueChange`
+and `onDismiss` in EventForm and the shared task/expense DateTimeField. Date
+selection, time selection, and dismissal preserve their prior behavior.
+
+Added Expo NavigationBar 57.0.3. Android hides the system navigation buttons
+while Kaisro is open and restores them on unmount; the native module allows a
+temporary swipe reveal. iOS does not run this control. Expo SDK 57 includes
+the module in Expo Go. Actual button and keyboard behavior needs a phone check.
+
+Checks passed: `tsc --noEmit`, UI rules, Expo dependency check, isolated SQLite
+UI and Event CRUD scripts, and a clean Android export (4,147 modules). No device
+was connected for runtime verification. See the phone checklist in
+`ui-repair-verification.md`.

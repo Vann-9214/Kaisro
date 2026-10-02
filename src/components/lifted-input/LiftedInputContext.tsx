@@ -21,6 +21,7 @@ interface LiftedInputContextType {
   activeField: LiftedFieldConfig | null;
   openField: (config: LiftedFieldConfig) => void;
   closeBar: () => void;
+  changeActiveFieldText: (text: string) => void;
   handleNextOrDone: () => void;
   registerField: (config: LiftedFieldConfig) => void;
   unregisterField: (id: string) => void;
@@ -45,22 +46,8 @@ export function LiftedInputProvider({ children }: { children: React.ReactNode })
 
   const registerField = useCallback((config: LiftedFieldConfig) => {
     registeredFieldsRef.current.set(config.id, config);
-    // If this registered field is currently active, update references without unnecessary churn
-    setActiveField((current) => {
-      if (!current || current.id !== config.id) {
-        return current;
-      }
-      if (
-        current.value === config.value &&
-        current.label === config.label &&
-        current.placeholder === config.placeholder &&
-        current.prefix === config.prefix &&
-        current.onChangeText === config.onChangeText
-      ) {
-        return current;
-      }
-      return { ...config, fieldOrder: config.fieldOrder ?? current.fieldOrder };
-    });
+    // Registration runs after renders and callbacks can change identity every
+    // render. It must never schedule another render of this provider.
   }, []);
 
   const unregisterField = useCallback((id: string) => {
@@ -71,6 +58,15 @@ export function LiftedInputProvider({ children }: { children: React.ReactNode })
     registeredFieldsRef.current.set(config.id, config);
     setActiveField(config);
   }, []);
+
+  const changeActiveFieldText = useCallback((text: string) => {
+    if (!activeField) return;
+    const latest = registeredFieldsRef.current.get(activeField.id) ?? activeField;
+    latest.onChangeText(text);
+    setActiveField(current => current?.id === latest.id && current.value !== text
+      ? { ...current, value: text }
+      : current);
+  }, [activeField?.id]);
 
   const closeBar = useCallback(() => {
     Keyboard.dismiss();
@@ -121,6 +117,7 @@ export function LiftedInputProvider({ children }: { children: React.ReactNode })
         activeField,
         openField,
         closeBar,
+        changeActiveFieldText,
         handleNextOrDone,
         registerField,
         unregisterField,

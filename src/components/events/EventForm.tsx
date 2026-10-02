@@ -9,9 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from '@react-native-community/datetimepicker';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import {
   MapPin,
   Clock,
@@ -157,14 +155,13 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     setTempDate(null);
   };
 
-  const onDateChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (event.type === 'dismissed' || !selected) {
-      setActivePickerTarget(null);
-      setPickerStep(null);
-      setTempDate(null);
-      return;
-    }
+  const dismissDatePicker = () => {
+    setActivePickerTarget(null);
+    setPickerStep(null);
+    setTempDate(null);
+  };
 
+  const onDateChange = (selected: Date) => {
     const currentBase = activePickerTarget === 'start' ? startDate : endDate;
     const updated = new Date(selected);
     updated.setHours(currentBase.getHours(), currentBase.getMinutes(), 0, 0);
@@ -192,8 +189,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     setPickerStep('time');
   };
 
-  const onTimeChange = (event: DateTimePickerEvent, selected?: Date) => {
-    if (event.type === 'dismissed' || !selected) {
+  const onTimeChange = (selected?: Date) => {
+    if (!selected) {
       if (tempDate) {
         if (activePickerTarget === 'start') {
           const shifted = shiftEndDatePreservingDuration(startDate, tempDate, endDate);
@@ -669,7 +666,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           value={activePickerTarget === 'start' ? startDate : endDate}
           mode="date"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onDateChange}
+          onValueChange={(_event, selected) => onDateChange(selected)}
+          onDismiss={dismissDatePicker}
         />
       )}
 
@@ -681,7 +679,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           }
           mode="time"
           display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-          onChange={onTimeChange}
+          onValueChange={(_event, selected) => onTimeChange(selected)}
+          onDismiss={() => onTimeChange()}
         />
       )}
 

@@ -111,3 +111,34 @@ with `--clear`; 4,143 modules bundled successfully. `expo install --check`,
 TypeScript, UI rules, the temporary SQLite verification script, and the Quick
 Add button check passed. Restart the existing Metro server, then use the
 command in the phone checklist to load the new package graph.
+
+## Follow-up: Event render loop and Android system navigation
+
+The Event title registration effect previously set active-field state on every
+render when its inline callback changed identity. Registration now updates a
+ref only. Typing uses the current callback from that ref and updates the input
+value. Event, Task, Expense, and Note retain their lifted-field interaction.
+
+The two date picker owners now use `onValueChange` and `onDismiss`, which removes
+the deprecated `onChange` warning while preserving selection and cancellation.
+
+Installed `expo-navigation-bar` 57.0.3 to hide the Android system navigation
+buttons while Kaisro is open. The module is included in Expo Go and Android
+uses transient swipe reveal for hidden bars. The app restores the buttons when
+the root unmounts. No native device was connected, so the system behavior still
+needs phone verification.
+
+TypeScript, UI rules, Expo compatibility check, the isolated SQLite UI script,
+the Event CRUD script, and clean Android export passed. The export bundled
+4,147 modules.
+
+### Phone checks for this follow-up
+
+- [ ] Open Event Quick Add, tap its title, type several characters, press Done,
+  reopen the title, then save the event. Check that no maximum-depth error or
+  picker warning appears in Metro.
+- [ ] Pick and cancel Event start/end dates and times. Repeat with Task due date
+  and Expense date; verify saved dates after reopening.
+- [ ] Check that Android's three system buttons hide in Kaisro, swipe up from
+  the bottom to reveal them temporarily, then return to Expo Go and confirm
+  they are visible there. Check the sheet footer and keyboard safe areas.

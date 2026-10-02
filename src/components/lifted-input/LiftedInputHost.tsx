@@ -16,7 +16,7 @@ import { colors, spacing, layout } from '@/constants/theme';
 
 export function LiftedInputHost({ footer, keyboardGap = 0 }: { footer?: React.ReactNode; keyboardGap?: number }) {
   const insets = useSafeAreaInsets();
-  const { activeField, closeBar, handleNextOrDone, isReduceMotion } = useLiftedInput();
+  const { activeField, closeBar, handleNextOrDone, changeActiveFieldText, isReduceMotion } = useLiftedInput();
   const {
     keyboardScreenY,
     keyboardHeight,
@@ -167,7 +167,7 @@ export function LiftedInputHost({ footer, keyboardGap = 0 }: { footer?: React.Re
                 <TextInput
                   ref={inputRef}
                   value={activeField.value}
-                  onChangeText={activeField.onChangeText}
+                  onChangeText={changeActiveFieldText}
                   placeholder={activeField.placeholder}
                   placeholderTextColor={colors['text-muted']}
                   keyboardType={activeField.keyboardType || 'default'}
@@ -185,7 +185,7 @@ export function LiftedInputHost({ footer, keyboardGap = 0 }: { footer?: React.Re
               <TextInput
                 ref={inputRef}
                 value={activeField.value}
-                onChangeText={activeField.onChangeText}
+                onChangeText={changeActiveFieldText}
                 placeholder={activeField.placeholder}
                 placeholderTextColor={colors['text-muted']}
                 keyboardType={activeField.keyboardType || 'default'}
