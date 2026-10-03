@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
-import { Tabs, usePathname } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/ui/TabBar';
 import { FloatingAddButton } from '@/components/ui/FloatingAddButton';
@@ -12,6 +12,19 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleFabPress = () => {
+    if (pathname === '/notes') {
+      router.push('/note');
+    } else if (pathname === '/tasks') {
+      openAddSheet('task');
+    } else if (pathname === '/budget') {
+      openAddSheet('transaction');
+    } else {
+      openAddSheet('event');
+    }
+  };
 
   // Tab bar base dock height is 56px, plus insets.bottom.
   // FAB sits cleanly 16px above the tab bar top edge.
@@ -65,7 +78,7 @@ export default function TabLayout() {
       <View
         style={[styles.fabContainer, { bottom: fabBottomOffset, pointerEvents: 'box-none' }]}
       >
-        <FloatingAddButton onPress={() => openAddSheet(pathname === '/tasks' ? 'task' : pathname === '/budget' ? 'transaction' : 'event')} />
+        <FloatingAddButton onPress={handleFabPress} />
       </View>
     </View>
   );

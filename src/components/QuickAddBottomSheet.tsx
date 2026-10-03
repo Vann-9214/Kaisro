@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react-native';
 import { BottomSheet } from '@/components/ui/BottomSheet';
+import { useRouter } from 'expo-router';
 import { useUIStore, QuickAddType } from '@/store/useUIStore';
 import { EventForm } from '@/components/events/EventForm';
 import { TaskForm } from '@/components/tasks/TaskForm';
@@ -39,6 +40,7 @@ const TABS: {
 ];
 
 function QuickAddBottomSheetContent() {
+  const router = useRouter();
   const { closeBar } = useLiftedInput();
   const {
     isAddSheetOpen,
@@ -119,8 +121,21 @@ function QuickAddBottomSheetContent() {
 
   const handleTabPress = useCallback((type: QuickAddType) => {
     closeBar();
+    if (type === 'note') {
+      closeAddSheet();
+      router.push('/note');
+      return;
+    }
     setActiveAddType(type);
-  }, [closeBar, setActiveAddType]);
+  }, [closeBar, closeAddSheet, router, setActiveAddType]);
+
+  useEffect(() => {
+    if (isAddSheetOpen && activeAddType === 'note') {
+      closeBar();
+      closeAddSheet();
+      router.push('/note');
+    }
+  }, [isAddSheetOpen, activeAddType, closeBar, closeAddSheet, router]);
 
   // Ensure bar is closed whenever sheet becomes hidden
   useEffect(() => {
