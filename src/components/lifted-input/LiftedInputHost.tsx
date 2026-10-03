@@ -14,7 +14,7 @@ import { useKeyboardInsets } from '@/hooks/useKeyboardInsets';
 import { calculateLiftedBarPosition, getFieldNavigation } from '@/utils/keyboardLayout';
 import { colors, spacing, layout } from '@/constants/theme';
 
-export function LiftedInputHost({ footer, keyboardGap = 0 }: { footer?: React.ReactNode; keyboardGap?: number }) {
+export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?: React.ReactNode; keyboardGap?: number }) {
   const insets = useSafeAreaInsets();
   const { activeField, closeBar, handleNextOrDone, changeActiveFieldText, isReduceMotion } = useLiftedInput();
   const {

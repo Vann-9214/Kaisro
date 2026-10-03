@@ -29,7 +29,7 @@ Drizzle ORM, and React Hook Form.
   the keyboard, animated in, with Next/Done chaining. Do not introduce another
   keyboard-avoidance approach.
 - Every quick-add tab and edit sheet always shows a fixed, visible Save button
-  in a footer above the keyboard and bottom safe-area inset. Never hide it conditionally.
+  in the sheet footer above the bottom safe-area inset; the lifted typing bar contains only Next/Done navigation without duplicate Save buttons.
 - Follow space-xs 4, space-sm 8, space-md 14, space-lg 20, space-xl 32, and card
   gap 12 via shared SheetSection/FormCard/FormRow components. Do not hand-set spacing.
 - Respect safe areas: headers clear the status bar; content clears the tab bar

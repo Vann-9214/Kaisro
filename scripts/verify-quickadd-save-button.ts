@@ -10,9 +10,8 @@ const bottomSheetContent = fs.readFileSync(bottomSheetPath, 'utf8');
 
 assert(bottomSheetContent.includes('footer={fixedFooter}'), 'QuickAddBottomSheet must pass footer={fixedFooter} to BottomSheet');
 assert(bottomSheetContent.includes('<SheetSaveFooter'), 'QuickAddBottomSheet must render the shared Save footer');
-assert(bottomSheetContent.includes("activeAddType === 'event'\n    ? undefined"), 'Event typing bar must only show Done');
-assert(bottomSheetContent.includes('footer={overlayFooter}'), 'Other lifted inputs must retain the shared Save footer above the keyboard');
-assert(bottomSheetContent.includes("keyboardGap={activeAddType === 'event' ? spacing.sm : 0}"), 'Event typing bar must clear the keyboard by one small spacing unit');
+assert(!bottomSheetContent.includes('overlayFooter'), 'QuickAdd typing bar must not render an in-typing Save button');
+assert(bottomSheetContent.includes('<LiftedInputHost'), 'QuickAddBottomSheet must render LiftedInputHost');
 const footerContent = fs.readFileSync(path.resolve(__dirname, '../src/components/ui/SheetSaveFooter.tsx'), 'utf8');
 assert(footerContent.includes('minHeight: layout.footerButtonHeight'), 'Footer button must use layout.footerButtonHeight');
 assert(footerContent.includes('backgroundColor: colors.primary'), 'Footer button must use semantic token colors.primary');

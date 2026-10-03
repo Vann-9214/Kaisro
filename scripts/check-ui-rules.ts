@@ -82,16 +82,15 @@ for (const file of uiRoots.flatMap(dir => listFiles(path.join(root, dir)))) {
       if (!code.includes(`<${tab}`)) report(file, source, source, `quick-add tab ${tab} is missing`);
     }
     if (!code.includes('<SheetSaveFooter') || !code.includes('footer={fixedFooter}') ||
-        !code.includes('<LiftedInputHost footer={overlayFooter}') ||
-        !code.includes("activeAddType === 'event'\n    ? undefined")) {
-      report(file, source, source, 'quick-add must keep its sheet Save footer, with Done only in the Event typing bar');
+        !code.includes('<LiftedInputHost')) {
+      report(file, source, source, 'quick-add must keep its sheet Save footer, with Next/Done in the typing bar');
     }
   }
   if (relative === 'src/components/ui/EditorSheet.tsx') {
     const code = source.getFullText();
     if (!code.includes('<SheetSaveFooter') || !code.includes('footer={footer}') ||
-        !code.includes('<LiftedInputHost footer={overlayFooter}')) {
-      report(file, source, source, 'edit sheet must render the shared Save footer, including with the keyboard');
+        !code.includes('<LiftedInputHost')) {
+      report(file, source, source, 'edit sheet must render the shared Save footer and lifted input host');
     }
   }
 }

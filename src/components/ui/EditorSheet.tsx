@@ -13,8 +13,7 @@ function Body({ visible, title, onClose, onSave, children }: {
   const save = async () => { if (saving) return; setSaving(true); try { await onSave(); } finally { setSaving(false); } };
   const close = () => { closeBar(); onClose(); };
   const footer = <SheetSaveFooter onPress={save} saving={saving} />;
-  const overlayFooter = <SheetSaveFooter onPress={save} saving={saving} compact />;
-  return <BottomSheet visible={visible} onClose={close} hideDragHandle overlay={<LiftedInputHost footer={overlayFooter} />}
+  return <BottomSheet visible={visible} onClose={close} hideDragHandle overlay={<LiftedInputHost />}
     header={<View style={{ padding: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: colors['surface-raised'] }}>
       <Text numberOfLines={1} maxFontSizeMultiplier={layout.maxFontScale} style={{ color: colors.text, fontSize: 18, flex: 1 }}>{title}</Text>
       <Pressable onPress={close} accessibilityRole="button" accessibilityLabel="Close editor" style={{ minHeight: 44, minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Close</Text></Pressable>

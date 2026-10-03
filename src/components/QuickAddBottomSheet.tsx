@@ -309,11 +309,6 @@ function QuickAddBottomSheetContent() {
   );
 
   const fixedFooter = <SheetSaveFooter label={buttonLabel} onPress={handleSave} saving={isSaving} />;
-  // Event fields already have Done in the lifted input; keep Save Event in the
-  // sheet footer for when the keyboard is dismissed.
-  const overlayFooter = activeAddType === 'event'
-    ? undefined
-    : <SheetSaveFooter label={buttonLabel} onPress={handleSave} saving={isSaving} compact />;
 
   return (
     <BottomSheet
@@ -322,7 +317,7 @@ function QuickAddBottomSheetContent() {
       header={fixedHeader}
       footer={fixedFooter}
       hideDragHandle
-      overlay={<LiftedInputHost footer={overlayFooter} keyboardGap={activeAddType === 'event' ? spacing.sm : 0} />}
+      overlay={<LiftedInputHost />}
     >
       {/* The body scrolls in the space left after the header and fixed Save footer. */}
       <ScrollView
