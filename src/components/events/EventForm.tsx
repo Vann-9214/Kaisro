@@ -134,6 +134,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const recurrence = watch('recurrence');
+  const isRepeating = recurrence !== 'none';
   const hasReminder = watch('hasReminder');
   const reminderMinutes = watch('reminderMinutes');
 
@@ -153,6 +154,19 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     setActivePickerTarget(target);
     setPickerStep('date');
     setTempDate(null);
+  };
+
+  const handleOpenEndPicker = () => {
+    closeBar();
+    if (recurrence !== 'none') {
+      if (!allDay) {
+        setActivePickerTarget('end');
+        setTempDate(null);
+        setPickerStep('time');
+      }
+    } else {
+      handleOpenPicker('end');
+    }
   };
 
   const dismissDatePicker = () => {
@@ -198,10 +212,20 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           setValue('endDate', shifted);
           clearErrors('endDate');
         } else {
-          if (tempDate.getTime() < startDate.getTime()) {
-            setError('endDate', { message: 'End time must be after start time' });
+          if (recurrence !== 'none') {
+            const startMin = startDate.getHours() * 60 + startDate.getMinutes();
+            const endMin = tempDate.getHours() * 60 + tempDate.getMinutes();
+            if (endMin <= startMin) {
+              setError('endDate', { message: 'End time must be after start time' });
+            } else {
+              clearErrors('endDate');
+            }
           } else {
-            clearErrors('endDate');
+            if (tempDate.getTime() < startDate.getTime()) {
+              setError('endDate', { message: 'End time must be after start time' });
+            } else {
+              clearErrors('endDate');
+            }
           }
           setValue('endDate', tempDate);
         }
@@ -222,10 +246,20 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       setValue('endDate', shifted);
       clearErrors('endDate');
     } else {
-      if (updated.getTime() < startDate.getTime()) {
-        setError('endDate', { message: 'End time must be after start time' });
+      if (recurrence !== 'none') {
+        const startMin = startDate.getHours() * 60 + startDate.getMinutes();
+        const endMin = updated.getHours() * 60 + updated.getMinutes();
+        if (endMin <= startMin) {
+          setError('endDate', { message: 'End time must be after start time' });
+        } else {
+          clearErrors('endDate');
+        }
       } else {
-        clearErrors('endDate');
+        if (updated.getTime() < startDate.getTime()) {
+          setError('endDate', { message: 'End time must be after start time' });
+        } else {
+          clearErrors('endDate');
+        }
       }
       setValue('endDate', updated);
     }
@@ -247,16 +281,40 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     return formatTimeDisplay(d.getHours(), d.getMinutes());
   };
 
+  const validateDates = (data: FormValues): boolean => {
+    if (data.recurrence !== 'none') {
+      if (!data.allDay) {
+        const startMin = data.startDate.getHours() * 60 + data.startDate.getMinutes();
+        const endMin = data.endDate.getHours() * 60 + data.endDate.getMinutes();
+        if (endMin <= startMin) {
+          setError('endDate', { message: 'End time must be after start time' });
+          return false;
+        }
+      }
+      clearErrors('endDate');
+      return true;
+    }
+
+    if (data.endDate.getTime() < data.startDate.getTime()) {
+      setError('endDate', {
+        message: data.allDay ? 'End date cannot be before start date' : 'End time must be after start time',
+      });
+      return false;
+    }
+    clearErrors('endDate');
+    return true;
+  };
+
   // Submit Handler
   const onSubmit = async (data: FormValues) => {
-    if (data.endDate.getTime() < data.startDate.getTime()) {
-      setError('endDate', { message: 'End time must be after start time' });
+    if (!validateDates(data)) {
       return;
     }
 
     try {
       let startStr: string;
       let endStr: string | null = null;
+      const isRepeating = data.recurrence !== 'none';
 
       if (data.allDay) {
         const sy = data.startDate.getFullYear();
@@ -264,10 +322,14 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         const sd = data.startDate.getDate().toString().padStart(2, '0');
         startStr = `${sy}-${sm}-${sd}`;
 
-        const ey = data.endDate.getFullYear();
-        const em = (data.endDate.getMonth() + 1).toString().padStart(2, '0');
-        const ed = data.endDate.getDate().toString().padStart(2, '0');
-        endStr = `${ey}-${em}-${ed}`;
+        if (isRepeating) {
+          endStr = startStr;
+        } else {
+          const ey = data.endDate.getFullYear();
+          const em = (data.endDate.getMonth() + 1).toString().padStart(2, '0');
+          const ed = data.endDate.getDate().toString().padStart(2, '0');
+          endStr = `${ey}-${em}-${ed}`;
+        }
       } else {
         const formatLocalIso = (d: Date) => {
           const yr = d.getFullYear();
@@ -279,7 +341,14 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           return `${yr}-${mo}-${da}T${hr}:${mi}:${se}`;
         };
         startStr = formatLocalIso(data.startDate);
-        endStr = formatLocalIso(data.endDate);
+
+        if (isRepeating) {
+          const alignedEnd = new Date(data.startDate);
+          alignedEnd.setHours(data.endDate.getHours(), data.endDate.getMinutes(), 0, 0);
+          endStr = formatLocalIso(alignedEnd);
+        } else {
+          endStr = formatLocalIso(data.endDate);
+        }
       }
 
       const recurrenceVal = data.recurrence === 'none' ? null : data.recurrence;
@@ -320,8 +389,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       let success = false;
       await handleSubmit(
         async (data) => {
-          if (data.endDate.getTime() < data.startDate.getTime()) {
-            setError('endDate', { message: 'End time must be after start time' });
+          if (!validateDates(data)) {
             scrollViewRef?.current?.scrollTo({ y: 150, animated: true });
             success = false;
             return;
@@ -474,9 +542,15 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           {/* ENDS Card */}
           <FormCard
             style={{ flex: 1 }}
-            onPress={() => handleOpenPicker('end')}
+            onPress={isRepeating && allDay ? undefined : handleOpenEndPicker}
             accessibilityRole="button"
-            accessibilityLabel="Select end date and time"
+            accessibilityLabel={
+              isRepeating
+                ? allDay
+                  ? 'Repeats indefinitely'
+                  : 'Select end time'
+                : 'Select end date and time'
+            }
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
               <Clock size={12} color={colors['text-muted']} style={{ marginRight: spacing.xs }} />
@@ -493,24 +567,61 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 ENDS
               </Text>
             </View>
-            <Text
-              maxFontSizeMultiplier={layout.maxFontScale}
-              style={{ fontSize: 13, fontWeight: '500', color: colors.text }}
-            >
-              {formatCardDate(endDate)}
-            </Text>
-            {!allDay && (
-              <Text
-                maxFontSizeMultiplier={layout.maxFontScale}
-                style={{
-                  fontSize: 12,
-                  color: colors['text-muted'],
-                    marginTop: spacing.xs,
-                  fontVariant: ['tabular-nums'],
-                }}
-              >
-                {formatCardTime(endDate)}
-              </Text>
+            {isRepeating ? (
+              allDay ? (
+                <Text
+                  maxFontSizeMultiplier={layout.maxFontScale}
+                  style={{ fontSize: 13, fontWeight: '500', color: colors['text-muted'] }}
+                >
+                  Does not end
+                </Text>
+              ) : (
+                <>
+                  <Text
+                    maxFontSizeMultiplier={layout.maxFontScale}
+                    style={{
+                      fontSize: 13,
+                      fontWeight: '500',
+                      color: colors.text,
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
+                    {formatCardTime(endDate)}
+                  </Text>
+                  <Text
+                    maxFontSizeMultiplier={layout.maxFontScale}
+                    style={{
+                      fontSize: 12,
+                      color: colors['text-muted'],
+                      marginTop: spacing.xs,
+                    }}
+                  >
+                    End time
+                  </Text>
+                </>
+              )
+            ) : (
+              <>
+                <Text
+                  maxFontSizeMultiplier={layout.maxFontScale}
+                  style={{ fontSize: 13, fontWeight: '500', color: colors.text }}
+                >
+                  {formatCardDate(endDate)}
+                </Text>
+                {!allDay && (
+                  <Text
+                    maxFontSizeMultiplier={layout.maxFontScale}
+                    style={{
+                      fontSize: 12,
+                      color: colors['text-muted'],
+                      marginTop: spacing.xs,
+                      fontVariant: ['tabular-nums'],
+                    }}
+                  >
+                    {formatCardTime(endDate)}
+                  </Text>
+                )}
+              </>
             )}
           </FormCard>
         </FormCardRow>
@@ -741,6 +852,15 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                   key={opt.value}
                   onPress={() => {
                     setValue('recurrence', opt.value);
+                    if (opt.value !== 'none') {
+                      const alignedEnd = new Date(startDate);
+                      alignedEnd.setHours(endDate.getHours(), endDate.getMinutes(), 0, 0);
+                      if (alignedEnd.getTime() <= startDate.getTime()) {
+                        alignedEnd.setTime(startDate.getTime() + 60 * 60 * 1000);
+                      }
+                      setValue('endDate', alignedEnd);
+                      clearErrors('endDate');
+                    }
                     setIsRecurrenceModalOpen(false);
                   }}
                   style={{

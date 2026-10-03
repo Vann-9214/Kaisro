@@ -1,12 +1,13 @@
 import { Event } from '@/db/schema';
 
-export type RecurrenceFrequency = 'none' | 'DAILY' | 'WEEKLY' | 'MONTHLY';
+export type RecurrenceFrequency = 'none' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
 export const RECURRENCE_OPTIONS: { value: RecurrenceFrequency; label: string }[] = [
   { value: 'none', label: 'Does not repeat' },
   { value: 'DAILY', label: 'Daily' },
   { value: 'WEEKLY', label: 'Weekly' },
   { value: 'MONTHLY', label: 'Monthly' },
+  { value: 'YEARLY', label: 'Yearly' },
 ];
 
 export const REMINDER_OPTIONS: { value: number; label: string }[] = [
@@ -106,6 +107,28 @@ export function expandEventForDate(event: Event, targetDateStr: string): Event |
 
     if (targetDayNum === effectiveDayNum) {
       return projectEventOntoDate(event, targetDateStr);
+    }
+    return null;
+  }
+
+  // 5. YEARLY
+  if (recurrence === 'YEARLY') {
+    const startParts = eventStartDateStr.split('-');
+    const startMonth = parseInt(startParts[1] || '1', 10);
+    const startDay = parseInt(startParts[2] || '1', 10);
+
+    const targetParts = targetDateStr.split('-');
+    const targetYear = parseInt(targetParts[0] || '2026', 10);
+    const targetMonth = parseInt(targetParts[1] || '1', 10);
+    const targetDay = parseInt(targetParts[2] || '1', 10);
+
+    if (startMonth === targetMonth) {
+      // Days in the target month (handles leap year when Feb 29 clamps to Feb 28 on non-leap years)
+      const daysInTargetMonth = new Date(targetYear, targetMonth, 0).getDate();
+      const effectiveDay = Math.min(startDay, daysInTargetMonth);
+      if (targetDay === effectiveDay) {
+        return projectEventOntoDate(event, targetDateStr);
+      }
     }
     return null;
   }
