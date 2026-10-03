@@ -7,6 +7,8 @@ import {
   StyleSheet,
   ScrollView,
   Animated,
+  Easing,
+  Keyboard,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLiftedInput } from './LiftedInputContext';
@@ -16,10 +18,19 @@ import { colors, spacing, layout } from '@/constants/theme';
 
 export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?: React.ReactNode; keyboardGap?: number }) {
   const insets = useSafeAreaInsets();
-  const { activeField, closeBar, handleNextOrDone, changeActiveFieldText, isReduceMotion } = useLiftedInput();
+  const {
+    activeField,
+    closeBar,
+    forceClose,
+    registerCloser,
+    handleNextOrDone,
+    changeActiveFieldText,
+    isReduceMotion,
+  } = useLiftedInput();
   const {
     keyboardScreenY,
     keyboardHeight,
+    duration: keyboardDuration,
     initialWindowHeight,
     currentWindowHeight,
     isKeyboardVisible,
@@ -34,15 +45,20 @@ export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?:
         previous?.screenY === screenY && previous.height === height ? previous : { screenY, height });
     });
   }, []);
+
   useEffect(() => {
     const frame = requestAnimationFrame(measureViewport);
     return () => cancelAnimationFrame(frame);
-  }, [activeField?.id, keyboardScreenY, currentWindowHeight, measureViewport]);
-  const entrance = useRef(new Animated.Value(0)).current;
-  useEffect(() => {
-    entrance.setValue(0);
-    if (activeField) Animated.timing(entrance, { toValue: 1, duration: isReduceMotion ? 0 : 160, useNativeDriver: true }).start();
-  }, [activeField?.id, entrance, isReduceMotion]);
+  }, [activeField?.id, currentWindowHeight, measureViewport]);
+
+  const scrimOpacity = useRef(new Animated.Value(0)).current;
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const cardEntranceY = useRef(new Animated.Value(spacing.md)).current;
+  const animatedDock = useRef(new Animated.Value(insets.bottom)).current;
+  const contentOpacity = useRef(new Animated.Value(1)).current;
+
+  const prevFieldIdRef = useRef<string | null>(null);
+  const isClosingRef = useRef(false);
 
   // Focus input on active field change
   useEffect(() => {
@@ -54,10 +70,6 @@ export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?:
     }
   }, [activeField?.id]);
 
-  if (!activeField) {
-    return null;
-  }
-
   // Base position comes from the actual modal and keyboard bounds.
   const { bottomOffset } = calculateLiftedBarPosition({
     initialWindowHeight,
@@ -68,28 +80,149 @@ export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?:
     viewport,
   });
 
+  const targetDock = isKeyboardVisible ? bottomOffset + keyboardGap : insets.bottom;
+
+  // Smoothly track keyboard movement on the native thread
+  useEffect(() => {
+    Animated.timing(animatedDock, {
+      toValue: targetDock,
+      duration: isReduceMotion ? 0 : (keyboardDuration && keyboardDuration > 0 ? keyboardDuration : 200),
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [targetDock, keyboardDuration, isReduceMotion, animatedDock]);
+
+  // Coordinated entrance and field navigation
+  useEffect(() => {
+    if (!activeField) {
+      prevFieldIdRef.current = null;
+      isClosingRef.current = false;
+      return;
+    }
+
+    if (prevFieldIdRef.current === null) {
+      // Initial opening of lifted input
+      prevFieldIdRef.current = activeField.id;
+      isClosingRef.current = false;
+      scrimOpacity.setValue(0);
+      cardOpacity.setValue(0);
+      cardEntranceY.setValue(spacing.md);
+      contentOpacity.setValue(1);
+
+      Animated.parallel([
+        Animated.timing(scrimOpacity, {
+          toValue: 1,
+          duration: isReduceMotion ? 0 : 180,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.timing(cardOpacity, {
+          toValue: 1,
+          duration: isReduceMotion ? 0 : 180,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }),
+        Animated.spring(cardEntranceY, {
+          toValue: 0,
+          tension: 70,
+          friction: 9,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else if (prevFieldIdRef.current !== activeField.id) {
+      // Navigating to next field (Next button pressed)
+      prevFieldIdRef.current = activeField.id;
+      contentOpacity.setValue(0.4);
+      Animated.timing(contentOpacity, {
+        toValue: 1,
+        duration: isReduceMotion ? 0 : 120,
+        easing: Easing.out(Easing.ease),
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [activeField?.id, isReduceMotion, scrimOpacity, cardOpacity, cardEntranceY, contentOpacity]);
+
+  // Coordinated exit transition
+  const handleClose = useCallback(() => {
+    if (isClosingRef.current) return;
+    isClosingRef.current = true;
+    Keyboard.dismiss();
+
+    Animated.parallel([
+      Animated.timing(scrimOpacity, {
+        toValue: 0,
+        duration: isReduceMotion ? 0 : 140,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardOpacity, {
+        toValue: 0,
+        duration: isReduceMotion ? 0 : 140,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(cardEntranceY, {
+        toValue: spacing.md,
+        duration: isReduceMotion ? 0 : 140,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+      Animated.timing(animatedDock, {
+        toValue: insets.bottom,
+        duration: isReduceMotion ? 0 : 140,
+        easing: Easing.in(Easing.ease),
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      isClosingRef.current = false;
+      prevFieldIdRef.current = null;
+      forceClose();
+    });
+  }, [isReduceMotion, insets.bottom, scrimOpacity, cardOpacity, cardEntranceY, animatedDock, forceClose]);
+
+  useEffect(() => {
+    registerCloser(handleClose);
+    return () => registerCloser(null);
+  }, [handleClose, registerCloser]);
+
+  if (!activeField) {
+    return null;
+  }
+
   // Navigation order
   const order = activeField.fieldOrder || [];
   const nav = getFieldNavigation(order, activeField.id);
   const isLast = activeField.actionLabel === 'Done' || nav.isLastField;
   const actionButtonText = activeField.actionLabel || (isLast ? 'Done' : 'Next');
-  const dockOffset = isKeyboardVisible ? bottomOffset : insets.bottom;
-  const keyboardClearance = isKeyboardVisible ? keyboardGap : 0;
-  const availableHeight = (viewport?.height ?? currentWindowHeight) - dockOffset - keyboardClearance - insets.top - spacing.sm;
+
+  const dockTranslateY = animatedDock.interpolate({
+    inputRange: [0, 1000],
+    outputRange: [0, -1000],
+  });
+  const combinedTranslateY = Animated.add(dockTranslateY, cardEntranceY);
+
+  const availableHeight = (viewport?.height ?? currentWindowHeight) - targetDock - insets.top - spacing.sm;
   const inputMaxHeight = Math.max(44, Math.min(110, availableHeight - 164));
 
   return (
     <View ref={viewportRef} collapsable={false} onLayout={measureViewport} style={StyleSheet.absoluteFill} pointerEvents="box-none">
-      {/* Dimmed scrim overlay over the rest of the sheet - instant, no animation */}
-      <Pressable
-        onPress={closeBar}
+      {/* Dimmed scrim overlay over the rest of the sheet - smooth native fade */}
+      <Animated.View
         style={[
           StyleSheet.absoluteFill,
           {
             backgroundColor: colors.overlay,
+            opacity: scrimOpacity,
           },
         ]}
-      />
+      >
+        <Pressable
+          onPress={closeBar}
+          style={StyleSheet.absoluteFill}
+          accessibilityRole="button"
+          accessibilityLabel="Dismiss input"
+        />
+      </Animated.View>
 
       {/* Floating lifted input card above the keyboard */}
       <Animated.View
@@ -97,10 +230,10 @@ export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?:
           position: 'absolute',
           left: layout.sheetHorizontalPadding,
           right: layout.sheetHorizontalPadding,
-          bottom: dockOffset + keyboardClearance,
+          bottom: 0,
           maxHeight: Math.max(160, availableHeight),
-          opacity: entrance,
-          transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [spacing.sm, 0] }) }],
+          opacity: cardOpacity,
+          transform: [{ translateY: combinedTranslateY }],
           backgroundColor: colors['surface-raised'],
           borderRadius: layout.cardBorderRadius,
           borderWidth: layout.cardBorderWidth,
@@ -109,8 +242,9 @@ export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?:
         }}
       >
         {footer}
-        <View
+        <Animated.View
           style={{
+            opacity: contentOpacity,
             backgroundColor: colors['surface-raised'],
             paddingHorizontal: spacing.base, // 16dp horizontal
             paddingVertical: spacing.cardGap, // 12dp vertical
@@ -202,7 +336,7 @@ export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?:
               />
             )}
           </View>
-        </View>
+        </Animated.View>
       </Animated.View>
     </View>
   );

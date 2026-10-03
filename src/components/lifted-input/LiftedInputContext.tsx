@@ -21,6 +21,8 @@ interface LiftedInputContextType {
   activeField: LiftedFieldConfig | null;
   openField: (config: LiftedFieldConfig) => void;
   closeBar: () => void;
+  forceClose: () => void;
+  registerCloser: (fn: (() => void) | null) => void;
   changeActiveFieldText: (text: string) => void;
   handleNextOrDone: () => void;
   registerField: (config: LiftedFieldConfig) => void;
@@ -68,10 +70,24 @@ export function LiftedInputProvider({ children }: { children: React.ReactNode })
       : current);
   }, [activeField?.id]);
 
-  const closeBar = useCallback(() => {
+  const animatedCloserRef = useRef<(() => void) | null>(null);
+
+  const registerCloser = useCallback((fn: (() => void) | null) => {
+    animatedCloserRef.current = fn;
+  }, []);
+
+  const forceClose = useCallback(() => {
     Keyboard.dismiss();
     setActiveField(null);
   }, []);
+
+  const closeBar = useCallback(() => {
+    if (animatedCloserRef.current) {
+      animatedCloserRef.current();
+    } else {
+      forceClose();
+    }
+  }, [forceClose]);
 
   const handleNextOrDone = useCallback(() => {
     if (!activeField) return;
@@ -117,6 +133,8 @@ export function LiftedInputProvider({ children }: { children: React.ReactNode })
         activeField,
         openField,
         closeBar,
+        forceClose,
+        registerCloser,
         changeActiveFieldText,
         handleNextOrDone,
         registerField,
