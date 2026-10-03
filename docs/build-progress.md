@@ -13,8 +13,8 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 | 2b | Done with judgment calls | tsc + verify-transactions.ts; `2234aa0` |
 | 2c | Done with judgment calls | tsc + verify-categories.ts; `bd6c6ed` |
 | 2d | Blocked | Local alert screenshot missing; see BLOCKERS.md |
-| 3a | Blocked | Local Notes screenshot missing; see BLOCKERS.md |
-| 3b | Blocked | Local quick-add Note screenshot missing; see BLOCKERS.md |
+| 3a | Done per user instruction | tsc + check-ui + verify-note-experience.ts; Samsung Notes-style list with search |
+| 3b | Done per user instruction | tsc + check-ui + verify-note-experience.ts; full-screen note editor with auto-save |
 | 4 | Blocked | Local linking screenshots missing; see BLOCKERS.md |
 | 7 | Blocked | Local dark screenshots and design system missing; see BLOCKERS.md |
 
