@@ -87,6 +87,7 @@ export default function RootLayout() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="detail" options={{ headerShown: false }} />
         <Stack.Screen name="categories" options={{ headerShown: false }} />
+        <Stack.Screen name="note" options={{ headerShown: false, animation: 'slide_from_right' }} />
       </Stack>
       <QuickAddBottomSheet />
     </SafeAreaProvider>
