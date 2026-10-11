@@ -1,5 +1,19 @@
 # Build blockers
 
+## PROJECT.MD exact-match gaps - 2026-10-11
+
+The project document describes a larger roadmap than the completed build steps.
+See [project-alignment.md](project-alignment.md) for source-backed gaps and the
+phone checklist. Full parity cannot be claimed: notifications/native builds are
+explicitly deferred, and `.stitch-reference/` including design-system.md remains
+absent. Calendar/task feature extensions also lack their local references.
+No design was downloaded and phases 5/6 were not started.
+
+Basic Notes list/search/edit/autosave/delete already exist under the later user
+instruction recorded in build-progress.md. The older missing-reference table
+below is historical for 3a/3b; it does not mean all notes functionality is absent.
+Tagging, pinning, formatting, linking and dark mode remain unfinished.
+
 ## Modal bottom-gap and typing-shift correction — 2026-10-06
 
 The user observed that the previous keyboard fix still shifted and introduced a

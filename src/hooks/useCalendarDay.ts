@@ -4,6 +4,8 @@ import { create } from 'zustand';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
 import { expandEventForDate } from '@/utils/recurrence';
+import { formatDateToISO } from '@/utils/dateUtils';
+import { deleteEventAndUnlinkNotes } from '@/db/eventActions';
 
 export interface CalendarDaySummary {
   eventsCount: number;
@@ -61,7 +63,7 @@ export async function updateEvent(
 
 export async function deleteEvent(id: number): Promise<void> {
   const db = getDb();
-  await db.delete(schema.events).where(eq(schema.events.id, id));
+  deleteEventAndUnlinkNotes(db, id);
   useCalendarSync.getState().triggerRefresh();
 }
 
@@ -92,7 +94,7 @@ export function useCalendarDay(selectedDateStr: string | null) {
       const db = getDb();
 
       // Today's ISO date string (YYYY-MM-DD)
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = formatDateToISO(new Date());
       const isViewingToday = selectedDateStr === todayStr;
 
       // 1. Fetch Categories for transaction enrichment

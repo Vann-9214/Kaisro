@@ -5,6 +5,28 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 
 ## Status
 
+### Project document alignment - 2026-10-11
+
+Committed the new PROJECT.MD and pending app work as `28a152c` on kaisro-build.
+Compared source against the complete roadmap; see [project-alignment.md](project-alignment.md).
+The app is partially implemented, not feature-complete against PROJECT.MD.
+Existing basic notes (3a/3b) are present; tagging/linking/formatting/pinning are not.
+Notifications and native dev builds remain excluded; missing local references
+still block visual work for 2d, 4, and 7 and calendar/task form extensions.
+
+Fixed event deletion to remove matching event note links atomically while keeping
+notes and unrelated links. Calendar Today now uses the local date instead of UTC,
+preserving undated-task visibility during Manila's midnight boundary. README's
+automatic-seeding claim was corrected. No app data or schema was changed.
+
+Validation passed: `npx.cmd tsc --noEmit`, UI source rules, and 15 verification
+scripts: event CRUD, week data, lifted bar, Save-footer architecture, UI repairs,
+project alignment, task CRUD/list, budget, transactions, categories, notes,
+empty/clear, month dots, and day view. Database checks used only isolated SQLite.
+These are logic/source checks, not device or pixel verification. Phone checklist
+is in project-alignment.md; visual comparison is blocked by absent references.
+
+
 Event reminder Done-only typing (2026-10-06): Hours and Minutes lifted inputs
 both use Done, as requested; Hours no longer advances to Minutes. TypeScript
 passed. Phone check: tap either number and confirm Done dismisses its keyboard.

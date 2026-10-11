@@ -40,4 +40,6 @@ Metro is configured in [`metro.config.js`](file:///metro.config.js) to recognize
 
 ## Development Seed Data
 
-In development builds (`__DEV__`), sample data for the current month is seeded automatically on initial app launch. The seed script is strictly idempotent and will only execute when the database contains no existing records. A manual reset and re-seed button is available in the **Settings** tab exclusively during development.
+The app starts with no events, tasks, transactions, or notes. Default categories are initialized without sample entries. In development builds (`__DEV__`), **Settings > Load sample data** explicitly loads the existing sample dataset, with confirmation before replacing records. **Clear all data** removes user records and restores default categories. Neither tool runs automatically.
+
+`PROJECT.MD` describes the target roadmap, including future releases. See [the current implementation comparison](docs/project-alignment.md) for implemented features, gaps, and deferred work.
