@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { layout } from '@/constants/theme';
@@ -20,6 +21,7 @@ export function SegmentedControl<T extends string = string>({
   onChange,
   style,
 }: SegmentedControlProps<T>) {
+  useThemeRefresh();
   return (
     <View
       className="flex-row bg-background border border-border rounded-full p-1 items-center"

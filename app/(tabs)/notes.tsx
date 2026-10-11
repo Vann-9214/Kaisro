@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
@@ -20,8 +21,9 @@ import { FileText, Search, X } from 'lucide-react-native';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
-import { filterNotes } from '@/db/noteActions';
-import { colors, spacing, layout } from '@/constants/theme';
+import { filterNotes, readNoteTags } from '@/db/noteActions';
+import { Chip } from '@/components/ui';
+import { colors, spacing, layout, createThemedStyles } from '@/constants/theme';
 
 function formatNoteDate(dateStr?: string | null): string {
   if (!dateStr) return '';
@@ -43,11 +45,12 @@ function formatNoteDate(dateStr?: string | null): string {
 }
 
 export default function NotesScreen() {
+  useThemeRefresh();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const refreshCounter = useCalendarSync((s) => s.refreshCounter);
 
-  const [notesList, setNotesList] = useState<schema.Note[]>([]);
+  const [notesList, setNotesList] = useState<(schema.Note & { tagNames: string[] })[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(true);
 
@@ -61,8 +64,8 @@ export default function NotesScreen() {
       const rows = await db
         .select()
         .from(schema.notes)
-        .orderBy(sql`${schema.notes.updatedAt} DESC`);
-      setNotesList(rows);
+        .orderBy(sql`${schema.notes.pinned} DESC`, sql`${schema.notes.favorite} DESC`, sql`${schema.notes.updatedAt} DESC`);
+      setNotesList(rows.map(note => ({ ...note, tagNames: readNoteTags(db, note.id) })));
     } catch (e) {
       console.error('[NotesScreen Error]', e);
     } finally {
@@ -182,6 +185,10 @@ export default function NotesScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Open note: ${note.title}`}
               >
+                {(note.pinned || note.favorite || note.tagNames.length > 0) && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+                  {note.pinned && <Chip label="Pinned" size="sm" />}{note.favorite && <Chip label="Favorite" size="sm" />}
+                  {note.tagNames.map(tag => <Chip key={tag} label={tag} size="sm" />)}
+                </View>}
                 <View style={styles.cardHeader}>
                   <Text
                     numberOfLines={2}
@@ -228,7 +235,7 @@ export default function NotesScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(() => StyleSheet.create({
   container: {
     flex: 1,
   },
@@ -314,4 +321,4 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '400',
   },
-});
+}));

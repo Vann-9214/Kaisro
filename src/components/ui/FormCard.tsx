@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import {
   View,
@@ -37,6 +38,7 @@ export function FormCard({
   accessibilityState,
   ...rest
 }: FormCardProps) {
+  useThemeRefresh();
   const cardStyle: ViewStyle = {
     backgroundColor: colors.surface,
     borderColor: colors.border,
@@ -83,6 +85,7 @@ export interface FormCardRowProps extends ViewProps {
  * Side-by-side cards row with equal-width children and standardized 12dp gap.
  */
 export function FormCardRow({ children, style, ...rest }: FormCardRowProps) {
+  useThemeRefresh();
   return (
     <View
       style={[

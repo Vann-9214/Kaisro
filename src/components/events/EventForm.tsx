@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useEffect, useImperativeHandle } from 'react';
 import {
   View,
@@ -49,6 +50,8 @@ import { getDb } from '@/db';
 import { saveScopedEvent, deleteScopedEvent, duplicateEvent, type EventScope } from '@/db/eventActions';
 import { reminderOffsets } from '@/utils/recurrence';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
+import { linkedNoteIds } from '@/db/linkActions';
+import { EntityNotePicker } from '@/components/notes/LinkPicker';
 import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { useLiftedInput } from '@/components/lifted-input/LiftedInputContext';
 import { LiftedInputProvider, LiftedInputHost } from '@/components/lifted-input';
@@ -100,10 +103,12 @@ function getDefaultDates(dateContext?: string) {
 
 export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   function EventForm({ onClose, scrollViewRef }, ref) {
+  useThemeRefresh();
     const { editingEvent, selectedDateContext } = useUIStore();
     const { closeBar } = useLiftedInput();
     const insets = useSafeAreaInsets();
     const isEditMode = Boolean(editingEvent);
+    const [noteIds, setNoteIds] = useState(() => linkedNoteIds(getDb(), editingEvent ? { targetType: 'event', targetId: editingEvent.id } : undefined));
 
   // Initialize dates
   const defaultDates = getDefaultDates(selectedDateContext);
@@ -155,7 +160,6 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const recurrence = watch('recurrence');
-  const isRepeating = recurrence !== 'none';
   const hasReminder = watch('hasReminder');
   const [scope, setScope] = useState<EventScope>('this');
   const [extraReminders, setExtraReminders] = useState<number[]>(() => editingEvent ? reminderOffsets(editingEvent).filter(offset => offset !== editingEvent.reminderMinutes) : []);
@@ -199,16 +203,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   };
 
   const handleOpenEndPicker = () => {
-    closeBar();
-    if (recurrence !== 'none') {
-      if (!allDay) {
-        setActivePickerTarget('end');
-        setTempDate(null);
-        setPickerStep('time');
-      }
-    } else {
-      handleOpenPicker('end');
-    }
+    handleOpenPicker('end');
   };
 
   const dismissDatePicker = () => {
@@ -254,15 +249,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           setValue('endDate', shifted);
           clearErrors('endDate');
         } else {
-          if (recurrence !== 'none') {
-            const startMin = startDate.getHours() * 60 + startDate.getMinutes();
-            const endMin = tempDate.getHours() * 60 + tempDate.getMinutes();
-            if (endMin <= startMin) {
-              setError('endDate', { message: 'End time must be after start time' });
-            } else {
-              clearErrors('endDate');
-            }
-          } else {
+          {
             if (tempDate.getTime() < startDate.getTime()) {
               setError('endDate', { message: 'End time must be after start time' });
             } else {
@@ -288,15 +275,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       setValue('endDate', shifted);
       clearErrors('endDate');
     } else {
-      if (recurrence !== 'none') {
-        const startMin = startDate.getHours() * 60 + startDate.getMinutes();
-        const endMin = updated.getHours() * 60 + updated.getMinutes();
-        if (endMin <= startMin) {
-          setError('endDate', { message: 'End time must be after start time' });
-        } else {
-          clearErrors('endDate');
-        }
-      } else {
+      {
         if (updated.getTime() < startDate.getTime()) {
           setError('endDate', { message: 'End time must be after start time' });
         } else {
@@ -324,20 +303,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   };
 
   const validateDates = (data: FormValues): boolean => {
-    if (data.recurrence !== 'none') {
-      if (!data.allDay) {
-        const startMin = data.startDate.getHours() * 60 + data.startDate.getMinutes();
-        const endMin = data.endDate.getHours() * 60 + data.endDate.getMinutes();
-        if (endMin <= startMin) {
-          setError('endDate', { message: 'End time must be after start time' });
-          return false;
-        }
-      }
-      clearErrors('endDate');
-      return true;
-    }
-
-    if (data.endDate.getTime() < data.startDate.getTime()) {
+    if (data.endDate.getTime() < data.startDate.getTime() || (!data.allDay && data.endDate.getTime() === data.startDate.getTime())) {
       setError('endDate', {
         message: data.allDay ? 'End date cannot be before start date' : 'End time must be after start time',
       });
@@ -356,7 +322,6 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     try {
       let startStr: string;
       let endStr: string | null = null;
-      const isRepeating = data.recurrence !== 'none';
 
       if (data.allDay) {
         const sy = data.startDate.getFullYear();
@@ -364,9 +329,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         const sd = data.startDate.getDate().toString().padStart(2, '0');
         startStr = `${sy}-${sm}-${sd}`;
 
-        if (isRepeating) {
-          endStr = startStr;
-        } else {
+        {
           const ey = data.endDate.getFullYear();
           const em = (data.endDate.getMonth() + 1).toString().padStart(2, '0');
           const ed = data.endDate.getDate().toString().padStart(2, '0');
@@ -384,11 +347,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         };
         startStr = formatLocalIso(data.startDate);
 
-        if (isRepeating) {
-          const alignedEnd = new Date(data.startDate);
-          alignedEnd.setHours(data.endDate.getHours(), data.endDate.getMinutes(), 0, 0);
-          endStr = formatLocalIso(alignedEnd);
-        } else {
+        {
           endStr = formatLocalIso(data.endDate);
         }
       }
@@ -410,7 +369,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           recurrence: recurrenceVal,
           reminderMinutes: reminderVal,
           ...metadata,
-        }, scope);
+        }, scope, noteIds);
         useCalendarSync.getState().triggerRefresh();
       } else {
         await createEvent({
@@ -422,7 +381,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           recurrence: recurrenceVal,
           reminderMinutes: reminderVal,
           ...metadata,
-        });
+        }, noteIds);
       }
 
       onClose();
@@ -487,6 +446,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     <>
       {/* Stacked Cards Container with standardized 12dp card gap */}
       <SheetSection fill>
+        <EntityNotePicker selected={noteIds} onChange={setNoteIds} />
         {editingEvent?.recurrence && editingEvent.recurrence !== 'none' && <FormCard compact><SheetSection gap="sm">
           <Text style={{ color: colors.text }}>Apply changes or deletion to</Text>
           <SegmentedControl options={[{ value: 'this', label: 'This event' }, { value: 'future', label: 'Future' }, { value: 'all', label: 'All' }]}
@@ -633,15 +593,9 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           <FormCard
             compact
             style={{ flex: 1 }}
-            onPress={isRepeating && allDay ? undefined : handleOpenEndPicker}
+            onPress={handleOpenEndPicker}
             accessibilityRole="button"
-            accessibilityLabel={
-              isRepeating
-                ? allDay
-                  ? 'Repeats indefinitely'
-                  : 'Select end time'
-                : 'Select end date and time'
-            }
+            accessibilityLabel="Select end date and time"
           >
             <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: spacing.xs }}>
               <Clock size={12} color={colors['text-muted']} style={{ marginRight: spacing.xs }} />
@@ -658,40 +612,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 ENDS
               </Text>
             </View>
-            {isRepeating ? (
-              allDay ? (
-                <Text
-                  maxFontSizeMultiplier={layout.maxFontScale}
-                  style={{ fontSize: 13, fontWeight: '500', color: colors['text-muted'] }}
-                >
-                  Does not end
-                </Text>
-              ) : (
-                <>
-                  <Text
-                    maxFontSizeMultiplier={layout.maxFontScale}
-                    style={{
-                      fontSize: 13,
-                      fontWeight: '500',
-                      color: colors.text,
-                      fontVariant: ['tabular-nums'],
-                    }}
-                  >
-                    {formatCardTime(endDate)}
-                  </Text>
-                  <Text
-                    maxFontSizeMultiplier={layout.maxFontScale}
-                    style={{
-                      fontSize: 12,
-                      color: colors['text-muted'],
-                      marginTop: spacing.xs,
-                    }}
-                  >
-                    End time
-                  </Text>
-                </>
-              )
-            ) : (
+            {(
               <>
                 <Text
                   maxFontSizeMultiplier={layout.maxFontScale}

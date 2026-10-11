@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useMemo, useCallback } from 'react';
 import {
   View,
@@ -74,6 +75,7 @@ export function MonthCalendarView({
   todayStr,
   onOpenDay,
 }: MonthCalendarViewProps) {
+  useThemeRefresh();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const openAddSheet = useUIStore((s) => s.openAddSheet);
@@ -425,7 +427,7 @@ export function MonthCalendarView({
             {/* Events */}
             {events.map((ev) => (
               <Pressable
-                key={`event-${ev.id}`}
+                key={`event-${ev.id}-${ev.start}`}
                 onPress={() => openAddSheet('event', ev, selectedDate)}
                 className="active:opacity-85"
                 style={{
@@ -433,7 +435,7 @@ export function MonthCalendarView({
                   borderWidth: 1,
                   borderColor: colors.border,
                   borderLeftWidth: 1,
-                  borderLeftColor: colors.primary,
+                  borderLeftColor: colors[ev.colorToken ?? 'primary'],
                   borderRadius: layout.cardBorderRadius,
                   minHeight: 44,
                   paddingVertical: 8,

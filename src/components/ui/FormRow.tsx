@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, StyleProp, ViewStyle } from 'react-native';
 import { colors, layout } from '@/constants/theme';
@@ -30,6 +31,7 @@ export function FormRow({
   children,
   style,
 }: FormRowProps) {
+  useThemeRefresh();
   return (
     <View
       style={[

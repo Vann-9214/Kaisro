@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, StyleSheet, useWindowDimensions } from 'react-native';
 import { Tabs, usePathname, useRouter } from 'expo-router';
@@ -5,9 +6,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/ui/TabBar';
 import { FloatingAddButton } from '@/components/ui/FloatingAddButton';
 import { useUIStore } from '@/store/useUIStore';
-import { colors, tabDockHeight } from '@/constants/theme';
+import { colors, tabDockHeight, createThemedStyles } from '@/constants/theme';
 
 export default function TabLayout() {
+  useThemeRefresh();
   const openAddSheet = useUIStore((s) => s.openAddSheet);
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
@@ -84,7 +86,7 @@ export default function TabLayout() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(() => StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
@@ -94,4 +96,4 @@ const styles = StyleSheet.create({
     right: 20,
     zIndex: 50,
   },
-});
+}));

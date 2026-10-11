@@ -43,3 +43,16 @@ Metro is configured in [`metro.config.js`](file:///metro.config.js) to recognize
 The app starts with no events, tasks, transactions, or notes. Default categories are initialized without sample entries. In development builds (`__DEV__`), **Settings > Load sample data** explicitly loads the existing sample dataset, with confirmation before replacing records. **Clear all data** removes user records and restores default categories. Neither tool runs automatically.
 
 `PROJECT.MD` describes the target roadmap, including future releases. See [the current implementation comparison](docs/project-alignment.md) for implemented features, gaps, and deferred work.
+
+## Native development build
+
+Notifications use Notifee and require a development client. Expo Go can open the
+planner and shows a native-build requirement for notification support.
+Run `npm run android` for a local Android build, then
+`npx expo start --dev-client` to serve JavaScript. EAS profiles live in eas.json;
+no cloud build starts automatically. iOS requires macOS or EAS.
+
+Enable notifications in Settings, then choose reminder/digest/budget preferences.
+Android offers exact-time/battery settings and an optional quiet tasks-left
+notification with Stop. Scheduling limits, evidence and the phone checklist are
+in [build progress](docs/build-progress.md) and [project alignment](docs/project-alignment.md).

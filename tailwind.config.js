@@ -1,4 +1,4 @@
-/** @type {import('tailwindcss').Config} */
+﻿/** @type {import('tailwindcss').Config} */
 module.exports = {
   // Configured with 'class' dark mode to support manual switching (System / Light / Dark)
   darkMode: "class",
@@ -10,22 +10,22 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: "#FAF7F2",
-        surface: "#FFFFFF",
-        "surface-raised": "#FFFFFF",
-        overlay: "rgba(51, 49, 46, 0.4)",
-        text: "#33312E",
-        "text-muted": "#7A756D",
-        border: "#E2DED7",
-        primary: "#3A4A7A",
-        tasks: "#6FA8A0",
-        money: "#E8C99B",
-        "on-primary": "#FFFFFF",
-        "on-tasks": "#FFFFFF",
-        "on-money": "#785B28",
-        error: "#BA1A1A",
-        "on-error": "#FFFFFF",
-      },
+        "background": "rgb(var(--color-background) / <alpha-value>)",
+        "surface": "rgb(var(--color-surface) / <alpha-value>)",
+        "surface-raised": "rgb(var(--color-surface-raised) / <alpha-value>)",
+        "overlay": "var(--color-overlay)",
+        "text": "rgb(var(--color-text) / <alpha-value>)",
+        "text-muted": "rgb(var(--color-text-muted) / <alpha-value>)",
+        "border": "rgb(var(--color-border) / <alpha-value>)",
+        "primary": "rgb(var(--color-primary) / <alpha-value>)",
+        "tasks": "rgb(var(--color-tasks) / <alpha-value>)",
+        "money": "rgb(var(--color-money) / <alpha-value>)",
+        "on-primary": "rgb(var(--color-on-primary) / <alpha-value>)",
+        "on-tasks": "rgb(var(--color-on-tasks) / <alpha-value>)",
+        "on-money": "rgb(var(--color-on-money) / <alpha-value>)",
+        "error": "rgb(var(--color-error) / <alpha-value>)",
+        "on-error": "rgb(var(--color-on-error) / <alpha-value>)"
+},
       fontFamily: {
         sans: ["Inter_400Regular", "Inter", "sans-serif"],
         medium: ["Inter_500Medium", "Inter", "sans-serif"],

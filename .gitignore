@@ -145,6 +145,11 @@ vite.config.ts.timestamp-*
 # Expo & Mobile
 .stitch-reference/
 .expo/
+android/
+ios/
+artifacts/
+android-build.log
+.cxx/
 *.jks
 *.p8
 *.p12

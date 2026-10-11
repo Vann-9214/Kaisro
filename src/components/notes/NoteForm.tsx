@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useEffect, useImperativeHandle } from 'react';
 import {
   View,
@@ -29,6 +30,7 @@ const NOTE_FIELD_ORDER = ['title', 'body', 'tag'];
 
 export const NoteForm = React.forwardRef<QuickAddFormHandle, NoteFormProps>(
   function NoteForm({ onClose, scrollViewRef }, ref) {
+  useThemeRefresh();
     const { editingNote } = useUIStore();
     const isEditMode = Boolean(editingNote);
 

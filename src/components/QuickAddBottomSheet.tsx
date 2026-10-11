@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useRef, useCallback, useEffect, useState } from 'react';
 import {
   View,
@@ -40,6 +41,7 @@ const TABS: {
 ];
 
 function QuickAddBottomSheetContent() {
+  useThemeRefresh();
   const router = useRouter();
   const { closeBar } = useLiftedInput();
   const {
@@ -386,6 +388,7 @@ function QuickAddBottomSheetContent() {
 }
 
 export function QuickAddBottomSheet() {
+  useThemeRefresh();
   return (
     <LiftedInputProvider>
       <QuickAddBottomSheetContent />

@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState } from 'react';
 import { View, Pressable, Text, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -14,6 +15,7 @@ export function DateTimeField({ value, onChange, optional = false, fallbackDate,
   value: string | null; onChange: (value: string | null) => void; optional?: boolean; fallbackDate: string;
   compact?: boolean;
 }) {
+  useThemeRefresh();
   const [mode, setMode] = useState<'date' | 'time' | null>(null);
   const { closeBar } = useLiftedInput();
   const hasTime = Boolean(value?.includes('T'));

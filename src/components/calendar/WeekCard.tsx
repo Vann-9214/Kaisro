@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { ChevronDown, ChevronUp, MapPin } from 'lucide-react-native';
@@ -63,6 +64,7 @@ export function WeekCard({
   onPressTask,
   onPressExpense,
 }: WeekCardProps) {
+  useThemeRefresh();
   const [showAllItems, setShowAllItems] = useState<boolean>(false);
 
   const { info, eventsCount, tasksDoneCount, tasksTotalCount, totalSpentCentavos, items } = week;
@@ -449,7 +451,7 @@ export function WeekCard({
                               borderColor: colors.border,
                               borderWidth: 1,
                               borderLeftWidth: 4,
-                              borderLeftColor: colors.primary,
+                              borderLeftColor: colors[ev.colorToken ?? 'primary'],
                               borderRadius: 8,
                               paddingHorizontal: 10,
                               paddingVertical: 8,

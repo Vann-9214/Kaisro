@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, StyleProp, ViewStyle, TextStyle } from 'react-native';
 import { colors } from '@/constants/theme';
@@ -38,6 +39,7 @@ export const DayNumber: React.FC<DayNumberProps> = ({
   style,
   textStyle,
 }) => {
+  useThemeRefresh();
   let backgroundColor: string = 'transparent';
   let borderWidth: number = 0;
   let borderColor: string = 'transparent';

@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -16,6 +17,7 @@ import { saveCategory, deleteCategory, categoryUsage } from '@/db/categoryAction
 
 const read = () => getDb().select().from(categories).all();
 export default function CategoriesScreen() {
+  useThemeRefresh();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { data, error, refresh } = useLocalData(read);
@@ -47,7 +49,7 @@ export default function CategoriesScreen() {
   const requestDelete = (category: Category) => {
     try {
       if (categoryUsage(getDb(), category.id) > 0) {
-        setMoving(category); setMoveTo(data?.find(row => row.name.toLowerCase() === 'other')?.id ?? null);
+        confirmDelete(category, data?.find(row => row.name.toLowerCase() === 'other')?.id);
       } else confirmDelete(category);
     } catch { Alert.alert('Could not check category', 'Please try again.'); }
   };

@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, ScrollView, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -14,6 +15,7 @@ import { eq } from 'drizzle-orm';
 import { useUIStore } from '@/store/useUIStore';
 
 export default function DetailScreen() {
+  useThemeRefresh();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const openAddSheet = useUIStore((s) => s.openAddSheet);

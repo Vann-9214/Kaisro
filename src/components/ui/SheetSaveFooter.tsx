@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -7,6 +8,7 @@ import { colors, layout, spacing } from '@/constants/theme';
 export function SheetSaveFooter({ label = 'Save', onPress, saving = false, compact = false }: {
   label?: string; onPress: () => void | Promise<void>; saving?: boolean; compact?: boolean;
 }) {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   return <View style={{
     paddingTop: compact ? spacing.sm : layout.footerTopPadding,

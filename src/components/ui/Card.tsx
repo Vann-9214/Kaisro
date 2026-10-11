@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Pressable, ViewProps, StyleProp, ViewStyle } from 'react-native';
 import { colors, layout } from '@/constants/theme';
@@ -22,6 +23,7 @@ export function Card({
   className = '',
   ...rest
 }: CardProps) {
+  useThemeRefresh();
   let cardClasses = `bg-surface border border-border p-3.5 ${
     elevated ? 'bg-surface-raised' : ''
   }`;

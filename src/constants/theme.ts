@@ -80,7 +80,7 @@ export const lightTokens: ThemeColorTokens = {
  * Currently falls back to light tokens as requested, with candidate dark hex values
  * preserved from the Stitch "Nocturne Focus" design system for future activation.
  */
-const ENABLE_DARK_MODE_VALUES = false; // Flag to enable candidate dark values once ready
+const ENABLE_DARK_MODE_VALUES = true;
 
 export const darkTokens: ThemeColorTokens = ENABLE_DARK_MODE_VALUES
   ? {
@@ -89,7 +89,7 @@ export const darkTokens: ThemeColorTokens = ENABLE_DARK_MODE_VALUES
       'surface-raised': '#2B3444',
       overlay: 'rgba(0, 0, 0, 0.65)',
       text: '#EDECE8',
-      'text-muted': '#707987',
+      'text-muted': '#A6ADB7',
       border: '#27303E',
       primary: '#7F92C9',
       tasks: '#8FC4BC',
@@ -122,7 +122,25 @@ export const darkTokens: ThemeColorTokens = ENABLE_DARK_MODE_VALUES
 /**
  * Default active theme token set
  */
-export const colors = lightTokens;
+export const colors = { ...lightTokens };
+let themeVersion = 0;
+export function applyTheme(dark: boolean) {
+  Object.assign(colors, dark ? darkTokens : lightTokens);
+  themeVersion++;
+}
+export function themeVariables() {
+  return Object.fromEntries(Object.entries(colors).map(([key, value]) => [`--color-${key}`,
+    value.startsWith('#') ? [1, 3, 5].map(offset => parseInt(value.slice(offset, offset + 2), 16)).join(' ') : value]));
+}
+/** Rebuild cached native styles when their semantic palette changes. */
+export function createThemedStyles<T extends object>(factory: () => T): T {
+  let version = -1;
+  let styles: T;
+  return new Proxy({} as T, { get(_target, key) {
+    if (version !== themeVersion) { styles = factory(); version = themeVersion; }
+    return Reflect.get(styles, key);
+  } });
+}
 
 /**
  * Kaisro Spacing Scale (dp)
@@ -193,20 +211,20 @@ export const tabDockHeight = (fontScale: number) => Math.max(56, Math.ceil(56 * 
  */
 export const moduleColors = {
   calendar: {
-    base: colors.primary,
-    onBase: colors['on-primary'],
+    get base() { return colors.primary; },
+    get onBase() { return colors['on-primary']; },
   },
   events: {
-    base: colors.primary,
-    onBase: colors['on-primary'],
+    get base() { return colors.primary; },
+    get onBase() { return colors['on-primary']; },
   },
   tasks: {
-    base: colors.tasks,
-    onBase: colors['on-tasks'],
+    get base() { return colors.tasks; },
+    get onBase() { return colors['on-tasks']; },
   },
   money: {
-    base: colors.money,
-    onBase: colors['on-money'],
+    get base() { return colors.money; },
+    get onBase() { return colors['on-money']; },
   },
 } as const;
 

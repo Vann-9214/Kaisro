@@ -1,381 +1,118 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  Pressable,
-  Alert,
-  StyleSheet,
-  BackHandler,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, TextInput, Pressable, Alert, AppState } from 'react-native';
+import { useLocalSearchParams, useRouter, useNavigation } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Trash2 } from 'lucide-react-native';
 import { eq } from 'drizzle-orm';
-import { getDb } from '@/db';
-import { notes, type Note } from '@/db/schema';
-import { saveNote, deleteNote } from '@/db/noteActions';
+import { ArrowLeft, Trash2 } from 'lucide-react-native';
+import { getDb, notes, events, tasks, transactions } from '@/db';
+import { useUIStore } from '@/store/useUIStore';
+import { saveNote, deleteNote, readNoteTags, type NoteDraft } from '@/db/noteActions';
+import { readNoteTargets } from '@/db/linkActions';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { KeyboardSafeScrollView } from '@/components/ui/KeyboardSafeScrollView';
-import { colors, spacing, layout } from '@/constants/theme';
+import { FormCard, FormRow, SheetSection, Chip } from '@/components/ui';
+import { NoteTargetPicker } from '@/components/notes/LinkPicker';
+import { FormattedNote } from '@/components/notes/FormattedNote';
+import { formatNoteSelection, type NoteFormat } from '@/utils/noteFormatting';
+import { colors, spacing } from '@/constants/theme';
 
+type Draft = Required<Pick<NoteDraft, 'title' | 'body' | 'pinned' | 'favorite' | 'tags' | 'links'>>;
+const blank = (): Draft => ({ title: '', body: '', pinned: false, favorite: false, tags: [], links: [] });
 export default function NoteEditorScreen() {
+  useThemeRefresh();
   const router = useRouter();
+  const navigation = useNavigation();
   const insets = useSafeAreaInsets();
   const params = useLocalSearchParams<{ id?: string }>();
-  const initialId = params.id ? parseInt(params.id, 10) : undefined;
-
-  const [noteId, setNoteId] = useState<number | undefined>(
-    Number.isNaN(initialId) ? undefined : initialId
-  );
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'ready'>('ready');
-  const [timestampLabel, setTimestampLabel] = useState<string>('');
-
-  const noteIdRef = useRef<number | undefined>(noteId);
-  const titleRef = useRef(title);
-  const bodyRef = useRef(body);
-  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isDirtyRef = useRef(false);
-
-  noteIdRef.current = noteId;
-  titleRef.current = title;
-  bodyRef.current = body;
-
-  const formatTimestamp = (dateStr?: string | null) => {
-    const d = dateStr ? new Date(dateStr) : new Date();
+  const [draft, setDraft] = useState<Draft>(blank);
+  const [status, setStatus] = useState('');
+  const [loaded, setLoaded] = useState(false);
+  const [preview, setPreview] = useState(false);
+  const [tagText, setTagText] = useState('');
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const draftRef = useRef(draft);
+  const idRef = useRef<number | undefined>(undefined);
+  const dirtyRef = useRef(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flush = useCallback(() => {
+    if (timer.current) { clearTimeout(timer.current); timer.current = null; }
+    if (!dirtyRef.current) return true;
+    const current = draftRef.current;
+    if (idRef.current === undefined && !current.title.trim() && !current.body.trim() && !current.links.length && !current.tags.some(tag => tag.trim())) { dirtyRef.current = false; setStatus(''); return true; }
     try {
-      return d.toLocaleDateString(undefined, {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      });
-    } catch {
-      return '';
-    }
-  };
-
-  // Load existing note on mount
-  useEffect(() => {
-    if (initialId && !Number.isNaN(initialId)) {
-      try {
-        const db = getDb();
-        const row = db.select().from(notes).where(eq(notes.id, initialId)).get();
-        if (row) {
-          setTitle(row.title === 'Untitled Note' ? '' : row.title);
-          setBody(row.body || '');
-          titleRef.current = row.title === 'Untitled Note' ? '' : row.title;
-          bodyRef.current = row.body || '';
-          setTimestampLabel(formatTimestamp(row.updatedAt));
-          setSaveStatus('saved');
-        }
-      } catch (err) {
-        console.error('[NoteEditor] Failed to load note:', err);
-      }
-    } else {
-      setTimestampLabel(formatTimestamp());
-    }
-  }, [initialId]);
-
-  // Save current content immediately
-  const flushSave = useCallback(() => {
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-
-    if (!isDirtyRef.current) return;
-
-    const curTitle = titleRef.current.trim();
-    const curBody = bodyRef.current.trim();
-    const curId = noteIdRef.current;
-
-    // Don't create an empty note if user didn't write anything
-    if (!curTitle && !curBody && curId === undefined) {
-      return;
-    }
-
-    try {
-      const db = getDb();
-      const saved = saveNote(
-        db,
-        { title: titleRef.current, body: bodyRef.current },
-        curId
-      );
-      if (curId === undefined && saved?.id) {
-        setNoteId(saved.id);
-        noteIdRef.current = saved.id;
-      }
-      isDirtyRef.current = false;
-      setSaveStatus('saved');
-      setTimestampLabel(formatTimestamp(saved.updatedAt));
+      const note = saveNote(getDb(), current, idRef.current);
+      idRef.current = note.id; dirtyRef.current = false; setStatus('Saved');
       useCalendarSync.getState().triggerRefresh();
-    } catch (err) {
-      console.error('[NoteEditor] Auto-save error:', err);
-    }
-  }, []);
-
-  // Debounced auto-save trigger
-  const scheduleAutoSave = useCallback(() => {
-    isDirtyRef.current = true;
-    setSaveStatus('saving');
-
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    debounceTimerRef.current = setTimeout(() => {
-      flushSave();
-    }, 600);
-  }, [flushSave]);
-
-  // Clean up and flush on unmount
-  useEffect(() => {
-    return () => {
-      flushSave();
-    };
-  }, [flushSave]);
-
-  // Intercept back button to flush before pop
-  const handleBack = useCallback(() => {
-    flushSave();
-    router.back();
-  }, [flushSave, router]);
-
-  // Android hardware back button handler
-  useEffect(() => {
-    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      handleBack();
       return true;
-    });
-    return () => subscription.remove();
-  }, [handleBack]);
-
-  const handleTitleChange = (val: string) => {
-    setTitle(val);
-    titleRef.current = val;
-    scheduleAutoSave();
-  };
-
-  const handleBodyChange = (val: string) => {
-    setBody(val);
-    bodyRef.current = val;
-    scheduleAutoSave();
-  };
-
-  const handleDelete = () => {
-    const curId = noteIdRef.current;
-    if (curId === undefined) {
-      // Discard draft without saving
-      isDirtyRef.current = false;
-      router.back();
-      return;
+    } catch { setStatus('Save failed — your draft is still here'); return false; }
+  }, []);
+  useEffect(() => {
+    const id = params.id ? Number(params.id) : undefined;
+    if (!flush()) return;
+    let next = blank();
+    idRef.current = id;
+    if (id !== undefined) {
+      const note = Number.isSafeInteger(id) ? getDb().select().from(notes).where(eq(notes.id, id)).get() : undefined;
+      if (!note) { setLoaded(false); Alert.alert('Note unavailable', 'This note no longer exists.', [{ text: 'Back', onPress: () => router.back() }]); return; }
+      next = { title: note.title, body: note.body, pinned: note.pinned, favorite: note.favorite, tags: readNoteTags(getDb(), id), links: readNoteTargets(getDb(), id) };
     }
-
-    Alert.alert('Delete note?', 'This note will be permanently deleted.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: () => {
-          try {
-            isDirtyRef.current = false;
-            if (debounceTimerRef.current) {
-              clearTimeout(debounceTimerRef.current);
-            }
-            deleteNote(getDb(), curId);
-            useCalendarSync.getState().triggerRefresh();
-            router.back();
-          } catch (err) {
-            console.error('[NoteEditor] Delete error:', err);
-            Alert.alert('Error', 'Could not delete note.');
-          }
-        },
-      },
-    ]);
+    draftRef.current = next; setDraft(next); setTagText(next.tags.join(', ')); setLoaded(true); setStatus(id ? 'Saved' : '');
+  }, [params.id, flush, router]);
+  useEffect(() => {
+    const remove = navigation.addListener('beforeRemove', event => {
+      if (!flush()) { event.preventDefault(); Alert.alert('Could not save note', 'Your draft is kept open. Try again before leaving.'); }
+    });
+    const lifecycle = AppState.addEventListener('change', state => { if (state !== 'active') flush(); });
+    return () => { remove(); lifecycle.remove(); flush(); };
+  }, [navigation, flush]);
+  const change = (patch: Partial<Draft>) => {
+    const next = { ...draftRef.current, ...patch }; draftRef.current = next; setDraft(next); dirtyRef.current = true; setStatus('Saving…');
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(flush, 600);
   };
-
-  const characterCount = body.length;
-
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
-      {/* Top Header Bar */}
-      <View
-        style={[
-          styles.headerBar,
-          {
-            paddingTop: insets.top + spacing.xs,
-            borderBottomColor: colors.border,
-          },
-        ]}
-      >
-        <Pressable
-          onPress={handleBack}
-          style={styles.iconButton}
-          accessibilityRole="button"
-          accessibilityLabel="Go back"
-        >
-          <ArrowLeft size={22} color={colors.text} />
-        </Pressable>
-
-        <View style={styles.statusContainer}>
-          <Text
-            maxFontSizeMultiplier={layout.maxFontScale}
-            style={[styles.statusText, { color: colors['text-muted'] }]}
-          >
-            {saveStatus === 'saving'
-              ? 'Saving...'
-              : saveStatus === 'saved'
-              ? 'Saved'
-              : ''}
-          </Text>
-        </View>
-
-        <Pressable
-          onPress={handleDelete}
-          style={styles.iconButton}
-          accessibilityRole="button"
-          accessibilityLabel="Delete note"
-        >
-          <Trash2 size={20} color={colors.error} />
-        </Pressable>
-      </View>
-
-      {/* Expansive Notepad Canvas */}
-      <KeyboardSafeScrollView
-        style={styles.scrollFlex}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: spacing.lg,
-            paddingBottom: insets.bottom + 60,
-          },
-        ]}
-      >
-        {/* Seamless Large Title */}
-        <TextInput
-          value={title}
-          onChangeText={handleTitleChange}
-          placeholder="Title"
-          placeholderTextColor={colors['text-muted']}
-          maxFontSizeMultiplier={layout.maxFontScale}
-          style={[
-            styles.titleInput,
-            {
-              color: colors.text,
-              marginTop: spacing.md,
-            },
-          ]}
-          returnKeyType="next"
-          autoCapitalize="sentences"
-        />
-
-        {/* Date & Stats info line */}
-        <View style={styles.metaRow}>
-          <Text
-            maxFontSizeMultiplier={layout.maxFontScale}
-            style={[styles.metaText, { color: colors['text-muted'] }]}
-          >
-            {timestampLabel}
-          </Text>
-          <Text
-            maxFontSizeMultiplier={layout.maxFontScale}
-            style={[styles.metaText, { color: colors['text-muted'] }]}
-          >
-            {characterCount} {characterCount === 1 ? 'character' : 'characters'}
-          </Text>
-        </View>
-
-        <View
-          style={[
-            styles.divider,
-            {
-              backgroundColor: colors.border,
-              marginVertical: spacing.md,
-            },
-          ]}
-        />
-
-        {/* Full-Height Body Text Canvas */}
-        <TextInput
-          value={body}
-          onChangeText={handleBodyChange}
-          placeholder="Start typing your note..."
-          placeholderTextColor={colors['text-muted']}
-          multiline
-          textAlignVertical="top"
-          maxFontSizeMultiplier={layout.maxFontScale}
-          style={[
-            styles.bodyInput,
-            {
-              color: colors.text,
-              minHeight: 380,
-            },
-          ]}
-          autoCapitalize="sentences"
-        />
-      </KeyboardSafeScrollView>
+  const applyFormat = (format: NoteFormat) => {
+    const result = formatNoteSelection(draft.body, selection, format); change({ body: result.body }); setSelection(result.selection);
+  };
+  const remove = () => Alert.alert('Delete note?', 'This removes the note and its links.', [
+    { text: 'Cancel', style: 'cancel' }, { text: 'Delete', onPress: () => {
+      try { if (idRef.current !== undefined) deleteNote(getDb(), idRef.current); dirtyRef.current = false; if (timer.current) clearTimeout(timer.current); useCalendarSync.getState().triggerRefresh(); router.back(); }
+      catch { Alert.alert('Could not delete note', 'Please try again.'); }
+    } },
+  ]);
+  return <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ paddingTop: insets.top + spacing.xs, paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => { if (flush()) router.back(); }} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><ArrowLeft color={colors.text} /></Pressable>
+      <Text style={{ color: colors['text-muted'], flex: 1 }}>{status}</Text>
+      <Pressable accessibilityRole="button" accessibilityLabel="Save note" onPress={flush} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.primary }}>Save</Text></Pressable>
+      <Pressable accessibilityRole="button" accessibilityLabel="Delete note" onPress={remove} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><Trash2 color={colors['text-muted']} size={20} /></Pressable>
     </View>
-  );
+    {loaded && <KeyboardSafeScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}>
+      <SheetSection>
+        <TextInput value={draft.title} onChangeText={title => change({ title })} placeholder="Title" placeholderTextColor={colors['text-muted']} style={{ color: colors.text, fontSize: 24 }} />
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
+          <Chip label="Pinned" selected={draft.pinned} onPress={() => change({ pinned: !draft.pinned })} />
+          <Chip label="Favorite" selected={draft.favorite} onPress={() => change({ favorite: !draft.favorite })} />
+          <Chip label={preview ? 'Edit text' : 'Preview'} selected={preview} onPress={() => setPreview(value => !value)} />
+        </View>
+        <FormCard compact><FormRow label="Tags (comma separated)" /><TextInput value={tagText} onChangeText={text => { setTagText(text); change({ tags: text.split(',') }); }} placeholder="Ideas, Personal" placeholderTextColor={colors['text-muted']} style={{ color: colors.text, minHeight: 44 }} /></FormCard>
+        <NoteTargetPicker selected={draft.links} onChange={links => change({ links })} />
+        {draft.links.length > 0 && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{draft.links.map(link => {
+          const db = getDb();
+          const item = link.targetType === 'event' ? db.select().from(events).where(eq(events.id, link.targetId)).get()
+            : link.targetType === 'task' ? db.select().from(tasks).where(eq(tasks.id, link.targetId)).get()
+            : db.select().from(transactions).where(eq(transactions.id, link.targetId)).get();
+          if (!item) return null;
+          return <Chip key={link.targetType + ':' + link.targetId} label={'Open ' + link.targetType + ': ' + ('title' in item ? item.title : item.note || 'Entry')} onPress={() => {
+            if (!flush()) return;
+            if (router.canGoBack()) router.back(); else router.replace('/(tabs)/notes');
+            useUIStore.getState().openAddSheet(link.targetType, item);
+          }} />;
+        })}</View>}
+        {!preview && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{(['bold', 'italic', 'heading', 'list'] as NoteFormat[]).map(format => <Chip key={format} label={format} onPress={() => applyFormat(format)} />)}</View>}
+        {preview ? <FormattedNote body={draft.body} /> : <TextInput value={draft.body} onChangeText={body => change({ body })} onSelectionChange={event => setSelection(event.nativeEvent.selection)}
+          placeholder="Write a note…" placeholderTextColor={colors['text-muted']} multiline textAlignVertical="top" style={{ color: colors.text, fontSize: 16, lineHeight: 24, minHeight: 260 }} />}
+      </SheetSection>
+    </KeyboardSafeScrollView>}
+  </View>;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  headerBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.md,
-    paddingBottom: spacing.sm,
-  },
-  iconButton: {
-    minWidth: 44,
-    minHeight: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statusText: {
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  scrollFlex: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  titleInput: {
-    fontSize: 24,
-    fontWeight: '700',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: 0,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: spacing.xs,
-  },
-  metaText: {
-    fontSize: 12,
-  },
-  divider: {
-    height: StyleSheet.hairlineWidth,
-  },
-  bodyInput: {
-    fontSize: 16,
-    lineHeight: 24,
-    paddingTop: spacing.xs,
-    paddingHorizontal: 0,
-    flex: 1,
-  },
-});

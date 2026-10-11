@@ -1,5 +1,15 @@
 # Build blockers
 
+## Current feature-completion verification - 2026-10-11
+
+The later user request authorizes simple UI, dark mode, native setup and
+notifications; earlier deferrals below are historical. Notes tags/pinning/
+formatting/linking, budget alerts and theme implementation are now present.
+Local Stitch references remain missing, so exact visual comparison is unavailable.
+ADB has no device; actual notification delivery, keyboard/safe areas and iOS
+compilation remain unverified. See build-progress.md for the phone checklist and
+project-alignment.md for scheduling limits and remaining roadmap items.
+
 ## PROJECT.MD exact-match gaps - 2026-10-11
 
 The project document describes a larger roadmap than the completed build steps.

@@ -1,9 +1,11 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import { Link, Stack } from 'expo-router';
 import { View, Text } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { colors, layout } from '@/constants/theme';
 
 export default function NotFoundScreen() {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   return (
     <>

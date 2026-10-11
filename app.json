@@ -16,9 +16,11 @@
       "backgroundColor": "#FAF7F2"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ivan.kaisro"
     },
     "android": {
+      "package": "com.ivan.kaisro",
       "adaptiveIcon": {
         "foregroundImage": "./assets/icon.png",
         "backgroundColor": "#FAF7F2"
@@ -35,7 +37,8 @@
         }
       ],
       "expo-sqlite",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "./plugins/with-local-notifications"
     ]
   }
 }

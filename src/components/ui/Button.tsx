@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import {
   Pressable,
@@ -36,6 +37,7 @@ export function Button({
   fullWidth = false,
   ...rest
 }: ButtonProps) {
+  useThemeRefresh();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {

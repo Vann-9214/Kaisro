@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { Pressable, View, Text, StyleProp, ViewStyle } from 'react-native';
 import { Check } from 'lucide-react-native';
@@ -22,6 +23,7 @@ export function Checkbox({
   accessibilityLabel,
   style,
 }: CheckboxProps) {
+  useThemeRefresh();
   const handleBoxPress = () => {
     if (!disabled) {
       onToggle(!checked);

@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import {
   View,
@@ -31,6 +32,7 @@ export interface TopBarProps {
  * - Background is solid colors.background and extends behind the status bar so scrolling content never shows through.
  */
 export function TopBar({ featureName, rightAction, style }: TopBarProps) {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   const topInset =
     insets.top > 0

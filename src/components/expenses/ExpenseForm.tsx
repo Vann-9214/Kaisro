@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useImperativeHandle, useState } from 'react';
 import { Text, Pressable, Switch, Alert, ScrollView } from 'react-native';
 import { Check, ChevronRight } from 'lucide-react-native';
@@ -15,28 +16,36 @@ import { DateTimeField } from '@/components/ui/DateTimeField';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
 import { LiftedField, useLiftedInput } from '@/components/lifted-input';
 import { QuickAddFormHandle, QuickAddFormProps } from '@/types/quickAdd';
+import { linkedNoteIds } from '@/db/linkActions';
+import { EntityNotePicker, EventLinkPicker } from '@/components/notes/LinkPicker';
+import { Chip } from '@/components/ui';
+import { View } from 'react-native';
 
 export const ExpenseForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
   function ExpenseForm({ onClose }, ref) {
+  useThemeRefresh();
     const { editingTransaction, transactionDate, setTransactionDate, selectedDate } = useUIStore();
     const { closeBar } = useLiftedInput();
+    const [noteIds, setNoteIds] = useState(() => linkedNoteIds(getDb(), editingTransaction ? { targetType: 'transaction', targetId: editingTransaction.id } : undefined));
     const insets = useSafeAreaInsets();
     const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
     const categoryRows = getDb().select().from(categories).all();
     const rule = editingTransaction?.recurringId ? getDb().select().from(recurringTransactions).where(eq(recurringTransactions.id, editingTransaction.recurringId)).get() : null;
     const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<{
-      amount: string; note: string; type: 'expense' | 'income'; categoryId: number | null; repeats: boolean;
+      amount: string; note: string; type: 'expense' | 'income'; categoryId: number | null; repeats: boolean; frequency: 'daily' | 'weekly' | 'monthly' | 'yearly'; updateFuture: boolean; eventId: number | null;
     }>({ defaultValues: {
       amount: editingTransaction ? (editingTransaction.amount / 100).toFixed(2) : '',
       note: editingTransaction?.note ?? '', type: editingTransaction?.type === 'income' ? 'income' : 'expense',
       categoryId: editingTransaction?.categoryId ?? categoryRows.find(category => category.name === 'Other')?.id ?? categoryRows[0]?.id ?? null,
       repeats: Boolean(rule && !rule.endDate),
+      frequency: rule?.frequency ?? 'monthly', updateFuture: false,
+      eventId: editingTransaction?.eventId ?? null,
     } });
     useImperativeHandle(ref, () => ({ submit: async () => {
       let success = false;
       await handleSubmit(values => {
         try {
-          saveTransaction(getDb(), { ...values, amount: parseToCentavos(values.amount), date: transactionDate }, editingTransaction?.id);
+          saveTransaction(getDb(), { ...values, noteIds, amount: parseToCentavos(values.amount), date: transactionDate }, editingTransaction?.id);
           catchUpMonthly(getDb());
           useCalendarSync.getState().triggerRefresh(); success = true; onClose();
         } catch (error) { Alert.alert('Could not save entry', error instanceof Error ? error.message : 'Please try again.'); }
@@ -55,6 +64,8 @@ export const ExpenseForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProp
     };
     const selectedCategory = categoryRows.find(category => category.id === watch('categoryId'));
     return <SheetSection fill>
+      <EntityNotePicker selected={noteIds} onChange={setNoteIds} />
+      <EventLinkPicker selected={watch('eventId')} onChange={eventId => setValue('eventId', eventId)} />
       <SegmentedControl options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
         selectedValue={watch('type')} onChange={value => setValue('type', value)} />
       <FormCard compact><Controller control={control} name="amount"
@@ -70,11 +81,17 @@ export const ExpenseForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProp
       <FormCard compact><Controller control={control} name="note" render={({ field }) => <LiftedField id="description" label="Description" placeholder="What was this for?"
         value={field.value} onChangeText={field.onChange} fieldOrder={['amount', 'description']} />} /></FormCard>
       <DateTimeField compact value={transactionDate} onChange={value => { if (value) setTransactionDate(value); }} fallbackDate={selectedDate} />
-      <FormCard compact><FormRow label="Repeats monthly"
+      <FormCard compact><FormRow label="Repeats"
         value={rule ? 'Off stops future entries.' : 'Last day if the month is shorter.'}
         right={<Switch accessibilityLabel="Repeats monthly"
           accessibilityHint={rule ? 'Edits apply to this entry. Turning this off stops future entries.' : 'Uses this date each month, or the last day of shorter months.'}
           value={watch('repeats')} onValueChange={value => setValue('repeats', value)} trackColor={{ true: colors.money, false: colors.border }} />} /></FormCard>
+      {watch('repeats') && <FormCard compact><SheetSection gap="sm">
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{(['daily', 'weekly', 'monthly', 'yearly'] as const).map(frequency =>
+          <Chip key={frequency} label={frequency} selected={watch('frequency') === frequency} onPress={() => setValue('frequency', frequency)} />)}</View>
+        {rule && <FormRow label="Update future entries too" value="Other past entries keep their original amounts."
+          right={<Switch value={watch('updateFuture')} onValueChange={value => setValue('updateFuture', value)} trackColor={{ true: colors.money, false: colors.border }} />} />}
+      </SheetSection></FormCard>}
       {editingTransaction && <Pressable onPress={remove} accessibilityRole="button" style={{ minHeight: 44, padding: spacing.md, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Delete entry</Text></Pressable>}
       <BottomSheet visible={categoryPickerOpen} onClose={() => setCategoryPickerOpen(false)}
         title={<FormRow label="Category" right={<Pressable onPress={() => setCategoryPickerOpen(false)}

@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Modal,
@@ -39,6 +40,7 @@ export function BottomSheet({
   overlay,
   heightRatio = 0.90,
 }: BottomSheetProps) {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   const { height: windowHeight, width: windowWidth } = useWindowDimensions();
   const windowHeightRef = useRef(windowHeight);

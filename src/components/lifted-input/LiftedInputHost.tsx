@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -17,6 +18,7 @@ import { calculateLiftedBarPosition, getFieldNavigation } from '@/utils/keyboard
 import { colors, spacing, layout } from '@/constants/theme';
 
 export function LiftedInputHost({ footer, keyboardGap = spacing.sm }: { footer?: React.ReactNode; keyboardGap?: number }) {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   const {
     activeField,

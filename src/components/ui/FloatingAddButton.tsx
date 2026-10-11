@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { Pressable, Animated, StyleProp, ViewStyle } from 'react-native';
 import { Plus } from 'lucide-react-native';
@@ -14,6 +15,7 @@ export function FloatingAddButton({
   style,
   size = 52,
 }: FloatingAddButtonProps) {
+  useThemeRefresh();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {

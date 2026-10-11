@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,9 +15,9 @@ import { ProgressBar } from '@/components/ui/ProgressBar';
 import { useUIStore } from '@/store/useUIStore';
 import { useTasksList } from '@/hooks/useTasksList';
 import { getDb } from '@/db';
-import { toggleTaskCompletion, toggleSubtaskCompletion } from '@/db/taskActions';
+import { toggleTaskCompletion, toggleSubtaskCompletion, reorderTasks } from '@/db/taskActions';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
-import { colors, layout, spacing } from '@/constants/theme';
+import { colors, layout, spacing, createThemedStyles } from '@/constants/theme';
 import { formatDateToISO } from '@/utils/dateUtils';
 import { buildTaskList, formatTaskDue, type TaskListFilter, type TaskListItem, type TaskGroup } from '@/utils/taskListUtils';
 
@@ -33,7 +34,8 @@ function toggle(id: number, subtask = false) {
   } catch { Alert.alert('Could not update task', 'Please try again.'); }
 }
 
-function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
+function TaskRow({ task, today, move }: { task: TaskListItem; today: string; move?: (direction: number) => void }) {
+  useThemeRefresh();
   const openAddSheet = useUIStore(s => s.openAddSheet);
   const [expanded, setExpanded] = useState(false);
   const hasSubtasks = task.subtasks.length > 0;
@@ -44,6 +46,7 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
       style={styles.card}
     >
       <SheetSection>
+        {move && <View style={styles.metadata}><Chip label="Move up" onPress={() => move(-1)} /><Chip label="Move down" onPress={() => move(1)} /></View>}
         <FormRow
           icon={<Checkbox checked={task.done} onToggle={() => toggle(task.id)} accessibilityLabel={task.title} />}
           label={<Pressable onPress={() => openAddSheet('task', task)} accessibilityRole="button" accessibilityLabel={'Edit ' + task.title} style={{ minHeight: 44, justifyContent: 'center' }}><Text numberOfLines={2} maxFontSizeMultiplier={layout.maxFontScale} style={[styles.body, task.done && styles.completed]}>{task.title}</Text></Pressable>}
@@ -51,6 +54,7 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
             <View style={styles.metadata}>
               <Chip label={formatTaskDue(task.dueAt, today)} size="sm" variant={expanded ? 'tasks' : 'default'} />
               <Chip label={priority} size="sm" icon={<Flag size={10} color={colors['text-muted']} />} />
+              <Chip label={task.listName ?? 'Inbox'} size="sm" />
               {hasSubtasks && <Chip label={completed + '/' + task.subtasks.length} size="sm" icon={<ListChecks size={12} color={colors['text-muted']} />} />}
             </View>
           }
@@ -72,15 +76,26 @@ function TaskRow({ task, today }: { task: TaskListItem; today: string }) {
 }
 
 export default function TasksScreen() {
+  useThemeRefresh();
   const [filter, setFilter] = useState<TaskListFilter>('today');
   const [showDone, setShowDone] = useState(false);
+  const [selectedList, setSelectedList] = useState<string | undefined>();
+  const [reordering, setReordering] = useState(false);
   const { tasks, subtasks, isLoading, error, refresh } = useTasksList();
   const openAddSheet = useUIStore(s => s.openAddSheet);
   const insets = useSafeAreaInsets();
   // Today follows the device clock; calendar selection remains solely in useUIStore.
   const now = new Date();
   const today = formatDateToISO(now);
-  const list = buildTaskList(tasks, subtasks, filter, now);
+  const list = buildTaskList(tasks, subtasks, filter, now, selectedList);
+  const listNames = [...new Set(tasks.map(task => task.listName ?? 'Inbox'))].sort();
+  const move = (ids: number[], id: number, direction: number) => {
+    const next = [...ids]; const index = next.indexOf(id); const destination = index + direction;
+    if (destination < 0 || destination >= next.length) return;
+    [next[index], next[destination]] = [next[destination], next[index]];
+    try { reorderTasks(getDb(), next); useCalendarSync.getState().triggerRefresh(); }
+    catch { Alert.alert('Could not reorder tasks', 'Refresh and try again.'); }
+  };
   const percent = Math.round(list.progress * 100);
   const title = FILTERS.find(option => option.value === filter)!.label;
   const addTask = () => openAddSheet('task', null, today);
@@ -99,6 +114,9 @@ export default function TasksScreen() {
               <Text style={styles.caption}>{now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</Text>
             </View>
             <SegmentedControl options={FILTERS} selectedValue={filter} onChange={value => { setFilter(value); setShowDone(false); }} />
+            {filter !== 'today' && <View style={styles.metadata}><Chip label="All lists" selected={!selectedList} onPress={() => setSelectedList(undefined)} />{listNames.map(name => <Chip key={name} label={name} selected={selectedList === name} onPress={() => setSelectedList(name)} />)}</View>}
+            <View style={styles.metadata}><Chip label={reordering ? 'Finish reordering' : 'Reorder'} selected={reordering} onPress={() => setReordering(value => !value)} /></View>
+            {reordering && <Text style={styles.caption}>Manual order wins over priority within each time group.</Text>}
           </SheetSection>
 
           {isLoading ? <ActivityIndicator accessibilityLabel="Loading tasks" color={colors.tasks} /> : error ? (
@@ -151,7 +169,7 @@ export default function TasksScreen() {
                     <Text accessibilityRole="header" numberOfLines={2} style={[styles.eyebrow, group.title === 'Overdue' && styles.overdue, { flexShrink: 1 }]}>{group.title.toUpperCase()} ({group.data.length})</Text>
                     <Text numberOfLines={2} style={[styles.eyebrow, { flexShrink: 1, textAlign: 'right' }]}>{GROUP_HINTS[group.title]}</Text>
                   </View>
-                  <SheetSection>{group.data.map(task => <TaskRow key={task.id} task={task} today={today} />)}</SheetSection>
+                  <SheetSection>{group.data.map(task => <TaskRow key={task.id} task={task} today={today} move={reordering ? direction => move(group.data.map(item => item.id), task.id, direction) : undefined} />)}</SheetSection>
                 </SheetSection>
               ))}
 
@@ -174,7 +192,7 @@ export default function TasksScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+const styles = createThemedStyles(() => StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
   heading: { fontFamily: 'Inter_500Medium', fontSize: 24, lineHeight: 32, color: colors.text },
@@ -192,4 +210,4 @@ const styles = StyleSheet.create({
   empty: { paddingHorizontal: spacing.lg, paddingVertical: spacing['2xl'] },
   summaryRow: { gap: spacing.cardGap },
   summaryCard: { flex: 1 },
-});
+}));

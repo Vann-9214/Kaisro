@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, FlatList, ActivityIndicator } from 'react-native';
 import { router } from 'expo-router';
@@ -27,6 +28,7 @@ export function WeekView({
   onNavigateToDay,
   scrollTrigger = 0,
 }: WeekViewProps) {
+  useThemeRefresh();
   const flatListRef = useRef<FlatList<WeekData>>(null);
   const insets = useSafeAreaInsets();
   const openAddSheet = useUIStore((s) => s.openAddSheet);

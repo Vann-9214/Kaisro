@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import {
   View,
@@ -61,7 +62,7 @@ import {
 } from '@/utils/timelineLayout';
 import { useNowStore, useNowTimer } from '@/store/useNowStore';
 import { formatCurrency } from '@/constants/currency';
-import { colors, layout } from '@/constants/theme';
+import { colors, layout, spacing } from '@/constants/theme';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { calculateTimelineScrollTarget } from '@/utils/timelineLayout';
 
@@ -80,6 +81,7 @@ interface NowLineProps {
  * - Primary text on a quiet semantic surface, fully rounded.
  */
 const NowLine = React.memo(function NowLine({ isToday }: NowLineProps) {
+  useThemeRefresh();
   useNowTimer(isToday);
 
   const hours = useNowStore((s) => s.hours);
@@ -190,6 +192,7 @@ const TimelineHourRow = React.memo(function TimelineHourRow({
   slot,
   isToday,
 }: TimelineHourRowProps) {
+  useThemeRefresh();
   const isColliding = useNowStore(
     useCallback(
       (state) =>
@@ -299,6 +302,7 @@ function getTodayDateStr(): string {
 }
 
 export default function CalendarScreen() {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -924,6 +928,9 @@ export default function CalendarScreen() {
         )}
 
         {/* 4. Collapsible "All-day & untimed" Section (shown when day has items) */}
+        {allDayEvents.length + timedEvents.length + untimedTasks.length + timedTasks.length + timedTransactions.length >= 10 && (
+          <View style={{ marginBottom: spacing.sm }}><Chip label="Busy day - open Agenda" onPress={() => setActiveView('Agenda')} /></View>
+        )}
         {activeDateStr !== null && !isDayEmpty && (
           <View className="mb-4">
             <Pressable
@@ -960,7 +967,7 @@ export default function CalendarScreen() {
                 {/* All-Day Events */}
                 {allDayEvents.map((ev) => (
                   <Pressable
-                    key={`allday-${ev.id}`}
+                    key={`allday-${ev.id}-${ev.start}`}
                     onPress={() => openAddSheet('event', ev, activeDateStr)}
                     className="bg-surface border border-border border-l-primary rounded-xl p-2.5 mb-1.5 flex-row items-center justify-between"
                     style={{ minHeight: 44 }}
@@ -1096,6 +1103,7 @@ export default function CalendarScreen() {
                           position: 'absolute',
                           top: item.top,
                           height: item.height,
+                          borderLeftColor: colors[ev.colorToken ?? 'primary'],
                           left: `${leftPercent}%`,
                           width: `${widthPercent - 1.5}%`,
                         }}

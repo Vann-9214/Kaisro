@@ -7,6 +7,7 @@ import { eventsForDate } from '@/utils/recurrence';
 import { toggleTaskCompletion } from '@/db/taskActions';
 import { formatDateToISO } from '@/utils/dateUtils';
 import { deleteEventAndUnlinkNotes } from '@/db/eventActions';
+import { replaceTargetNotes } from '@/db/linkActions';
 
 export interface CalendarDaySummary {
   eventsCount: number;
@@ -29,20 +30,21 @@ export const useCalendarSync = create<CalendarSyncState>((set) => ({
   triggerRefresh: () => set((s) => ({ refreshCounter: s.refreshCounter + 1 })),
 }));
 
-export async function createEvent(data: schema.NewEvent): Promise<schema.Event> {
+export async function createEvent(data: schema.NewEvent, noteIds?: number[]): Promise<schema.Event> {
+  if (!data.title.trim()) throw new Error('Event title is required.');
+  if (!Number.isFinite(new Date(data.start).getTime()) || (data.end && (!Number.isFinite(new Date(data.end).getTime()) || new Date(data.end) < new Date(data.start)))) throw new Error('Choose a valid event time range.');
   const db = getDb();
   const now = new Date().toISOString();
-  await db.insert(schema.events).values({
+  const created = db.transaction(tx => {
+    const row = tx.insert(schema.events).values({
     ...data,
     createdAt: now,
     updatedAt: now,
+    }).returning().get();
+    if (noteIds) replaceTargetNotes(tx, { targetType: 'event', targetId: row.id }, noteIds);
+    return row;
   });
   useCalendarSync.getState().triggerRefresh();
-  const [created] = await db
-    .select()
-    .from(schema.events)
-    .orderBy(sql`${schema.events.id} DESC`)
-    .limit(1);
   return created;
 }
 

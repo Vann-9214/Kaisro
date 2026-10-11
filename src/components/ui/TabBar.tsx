@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, Pressable, useWindowDimensions } from 'react-native';
 import {
@@ -52,6 +53,7 @@ export interface CustomTabBarProps {
 }
 
 export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTabBarProps) {
+  useThemeRefresh();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
   const baseDockHeight = tabDockHeight(fontScale);

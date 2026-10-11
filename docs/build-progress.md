@@ -1,9 +1,61 @@
 # Kaisro build progress
 
 Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
-2d, 3a, 3b, 4, 7. Phases 5 and 6 are explicitly excluded.
+2d, 3a, 3b, 4, 7. The later feature-completion request also authorizes native
+setup/notifications (5/6); earlier exclusions below are historical.
 
 ## Status
+
+### Integrated feature completion - 2026-10-11
+
+Added tagged/formatted/pinned/favorite notes and validated links with navigation;
+task lists/manual ordering; all-frequency recurring budget entries, future-price
+editing, cancellation and threshold alerts; persisted theme/notification settings;
+Notifee scheduling/actions/digests/escalation and optional Android task status;
+development-client/native configuration. See project-alignment.md for policies
+and operational limits. Simple shared controls are authorized despite missing
+Stitch images; no design sources were fetched.
+
+Generated migrations 0002-0004. Production-dialect upgrade transaction tests
+confirm amounts, repeat associations and notes survive. Foreign keys are disabled
+before the migration transaction and restored afterward; one migration promise
+protects simultaneous startup/background initialization. Stale notification
+actions preserve replacement triggers. Reactivating repeat spending rules keeps
+the current-month future scheduled date.
+
+Data/migrations committed as `d030722` after checks passed. The actual database
+initialization test also confirms shared concurrent upgrades, cached success,
+constraint restoration on failure and safe retry.
+
+TypeScript and UI rules pass. Feature/regression scripts cover upgrade
+preservation; events/tasks/notes/budget CRUD; task lists; recurrence/DST;
+notification planning and actual service with a fake native driver; week/agenda/
+month calendar data; Save footer; lifted input; and empty/clear behavior.
+No tests use real app data. Android prebuild, Metro/Hermes export and native
+Gradle `:app:assembleDebug -PreactNativeArchitectures=arm64-v8a` passed. The Windows
+path-limit failure was corrected using shorter CMake staging and object-path
+hashing. Development APK: artifacts/kaisro-development.apk (arm64, requires Metro
+via `npx expo start --dev-client`). No cloud build or installation was attempted.
+
+Phone checklist (development build, disposable test data):
+
+1. Fresh install stays empty; dev Settings sample/clear tools still work.
+2. Event This/Future/All edits/deletes, duplicate metadata, multi-day boundaries,
+   multiple reminders and 09:00 repeats through daylight-saving transitions.
+3. Task lists/cross-list Today, reorder, early completion, undo/recomplete,
+   reset subtasks and month-end repeat anchors.
+4. Notes autosave on app switch/back, tags, formatting, pin/favorite, links/opening
+   targets and deleting targets while keeping notes.
+5. Budget centavos, all frequencies, future price, cancel/resume, used-category
+   deletion and near/reached/over-cap alerts.
+6. System/Light/Dark on every tab and open drafts; keyboard Next/Done, fixed Save,
+   large fonts and safe areas in longer forms.
+7. Notification grant/deny, rescheduling/stale actions, Done/Snooze/dismiss,
+   digest day boundary, quiet task count/Stop, exact-time permission, battery
+   restrictions and kill/reopen behavior.
+
+ADB has no connected device; iOS cannot be compiled on this Windows host.
+Device checks remain pending; automated checks do not establish zero bugs.
 
 ### Feature completion run - Events and tasks - 2026-10-11
 

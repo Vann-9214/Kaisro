@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import { BottomSheet } from './BottomSheet';
@@ -8,6 +9,7 @@ import { SheetSaveFooter } from './SheetSaveFooter';
 function Body({ visible, title, onClose, onSave, children }: {
   visible: boolean; title: string; onClose: () => void; onSave: () => void | Promise<void>; children: React.ReactNode;
 }) {
+  useThemeRefresh();
   const { closeBar } = useLiftedInput();
   const [saving, setSaving] = React.useState(false);
   const save = async () => { if (saving) return; setSaving(true); try { await onSave(); } finally { setSaving(false); } };
@@ -23,5 +25,6 @@ function Body({ visible, title, onClose, onSave, children }: {
   </BottomSheet>;
 }
 export function EditorSheet(props: React.ComponentProps<typeof Body>) {
+  useThemeRefresh();
   return <LiftedInputProvider><Body {...props} /></LiftedInputProvider>;
 }

@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useRef, useCallback, useEffect } from 'react';
 import {
   View,
@@ -35,6 +36,7 @@ export function AgendaView({
   onVisibleDateChange,
   sectionListRef: externalListRef,
 }: AgendaViewProps) {
+  useThemeRefresh();
   const internalListRef = useRef<SectionList<AgendaDayCardData, AgendaDaySection>>(null);
   const insets = useSafeAreaInsets();
   const listRef = externalListRef ?? internalListRef;
@@ -164,7 +166,7 @@ export function AgendaView({
             const isLast = idx === item.items.length - 1;
             const barColor =
               rowItem.itemType === 'event'
-                ? colors.primary
+                ? colors[rowItem.raw.colorToken ?? 'primary']
                 : rowItem.itemType === 'task'
                 ? colors.tasks
                 : colors.money;

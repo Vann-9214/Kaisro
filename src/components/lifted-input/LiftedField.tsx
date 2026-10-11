@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useEffect } from 'react';
 import { View, Text, Pressable, KeyboardTypeOptions, StyleProp, TextStyle } from 'react-native';
 import { useLiftedInput } from './LiftedInputContext';
@@ -42,6 +43,7 @@ export function LiftedField({
   containerClassName,
   displayTextStyle,
 }: LiftedFieldProps) {
+  useThemeRefresh();
   const { openField, registerField, unregisterField } = useLiftedInput();
 
   // Keep field registered with context so Next/Done can navigate to it

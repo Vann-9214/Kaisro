@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
 import { Clock, Plus } from 'lucide-react-native';
@@ -30,6 +31,7 @@ export function EmptyState({
   testID,
   actionModule = 'primary',
 }: EmptyStateProps) {
+  useThemeRefresh();
   if (variant === 'inline') {
     return (
       <View

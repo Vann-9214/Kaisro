@@ -210,7 +210,7 @@ export function useCalendarWeekView(
                 : '09:00:00';
 
               weekItems.push({
-                id: `event-${ev.id}-${dStr}`,
+                id: `event-${ev.id}-${ev.start}-${dStr}`,
                 type: 'event',
                 dayStr: dStr,
                 title: ev.title,

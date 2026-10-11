@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState, useImperativeHandle } from 'react';
 import { View, Text, Pressable, Switch, Alert } from 'react-native';
 import { useForm, Controller } from 'react-hook-form';
@@ -15,31 +16,36 @@ import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { useLiftedInput } from '@/components/lifted-input';
 import { QuickAddFormHandle, QuickAddFormProps } from '@/types/quickAdd';
 import { RECURRENCE_OPTIONS } from '@/utils/recurrence';
+import { linkedNoteIds } from '@/db/linkActions';
+import { EntityNotePicker } from '@/components/notes/LinkPicker';
 
 export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
   function TaskForm({ onClose }, ref) {
+  useThemeRefresh();
     const { editingTask, taskDueAt, setTaskDueAt, selectedDate } = useUIStore();
     const { closeBar } = useLiftedInput();
+    const [noteIds, setNoteIds] = useState(() => linkedNoteIds(getDb(), editingTask ? { targetType: 'task', targetId: editingTask.id } : undefined));
     const [children, setChildren] = useState<TaskDraft['subtasks']>(() => editingTask
       ? getDb().select().from(subtaskTable).where(eq(subtaskTable.taskId, editingTask.id)).orderBy(subtaskTable.sortOrder).all()
       : []);
     const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<{
-      title: string; priority: TaskDraft['priority']; reminder: number | null; recurrence: string;
+      title: string; priority: TaskDraft['priority']; reminder: number | null; recurrence: string; listName: string;
     }>({ defaultValues: {
       title: editingTask?.title ?? '',
       priority: editingTask?.priority === 'urgent' ? 'high' : editingTask?.priority ?? 'medium',
       reminder: editingTask?.reminderMinutes ?? null,
       recurrence: editingTask?.recurrence ?? 'none',
+      listName: editingTask?.listName ?? 'Inbox',
     } });
     const reminder = watch('reminder');
-    const order = ['task-title', ...children.map((_, index) => 'subtask-' + index)];
+    const order = ['task-title', 'task-list', ...children.map((_, index) => 'subtask-' + index)];
     useImperativeHandle(ref, () => ({
       submit: async () => {
         let success = false;
         await handleSubmit(values => {
           try {
             saveTask(getDb(), { title: values.title, priority: values.priority, dueAt: taskDueAt,
-              reminderMinutes: values.reminder, subtasks: children, recurrence: values.recurrence === 'none' ? null : values.recurrence }, editingTask?.id);
+              reminderMinutes: values.reminder, subtasks: children, recurrence: values.recurrence === 'none' ? null : values.recurrence, listName: values.listName, noteIds }, editingTask?.id);
             useCalendarSync.getState().triggerRefresh();
             success = true;
             onClose();
@@ -60,9 +66,11 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
       ]);
     };
     return <SheetSection fill>
+      <EntityNotePicker selected={noteIds} onChange={setNoteIds} />
       <FormCard compact><Controller control={control} name="title" rules={{ validate: value => Boolean(value.trim()) || 'Task title is required' }}
         render={({ field }) => <LiftedField id="task-title" label="Task title" placeholder="Task title" value={field.value} onChangeText={field.onChange} fieldOrder={order} error={errors.title?.message} />} /></FormCard>
       <DateTimeField compact value={taskDueAt} onChange={setTaskDueAt} optional fallbackDate={selectedDate} />
+      <FormCard compact><Controller control={control} name="listName" render={({ field }) => <LiftedField id="task-list" label="List" placeholder="Inbox, Work, Personal..." value={field.value} onChangeText={field.onChange} fieldOrder={order} />} /></FormCard>
       <FormCard compact><SheetSection gap="sm"><Text style={{ color: colors.text }}>Repeats</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{RECURRENCE_OPTIONS.map(option =>
           <Chip key={option.value} label={option.label} selected={watch('recurrence') === option.value} onPress={() => setValue('recurrence', option.value)} />)}</View>

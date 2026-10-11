@@ -1,3 +1,4 @@
+import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { colors } from '@/constants/theme';
@@ -12,6 +13,7 @@ const MAX_BAR_HEIGHT = 36;
 const MIN_BAR_HEIGHT = 8;
 
 export function WeekOverviewStrip({ weeks, onSelectWeek }: WeekOverviewStripProps) {
+  useThemeRefresh();
   if (!weeks || weeks.length === 0) return null;
 
   // Find maximum activity across all weeks for proportional bar calculation
