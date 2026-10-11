@@ -14,9 +14,9 @@ try {
   db.insert(transactions).values({ type: 'expense', amount: 500, date: '2026-09-28', categoryId: groceries.id }).run();
   db.insert(recurringTransactions).values({ type: 'expense', amount: 500, categoryId: groceries.id, startDate: '2026-09-28', nextDate: '2026-10-28' }).run();
   assert.equal(categoryUsage(db, groceries.id), 2);
-  assert.throws(() => deleteCategory(db, groceries.id));
+  assert.throws(() => deleteCategory(db, groceries.id, 999));
   assert.equal(db.select().from(transactions).get()!.categoryId, groceries.id);
-  deleteCategory(db, groceries.id, other.id);
+  deleteCategory(db, groceries.id);
   assert.equal(db.select().from(transactions).get()!.categoryId, other.id);
   assert.equal(db.select().from(recurringTransactions).get()!.categoryId, other.id);
   assert.equal(db.select().from(categories).all().length, 1);

@@ -253,7 +253,7 @@ export function transformDbItemsToAgendaItems(
     const isRecurring = Boolean(ev.recurrence && ev.recurrence !== 'none');
 
     items.push({
-      id: `event-${ev.id}-${dateStr}`,
+      id: `event-${ev.id}-${ev.start}-${dateStr}`,
       numericId: ev.id,
       itemType: 'event',
       dateStr,

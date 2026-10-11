@@ -17,6 +17,10 @@ export function taskDue(value: string | null) {
 const priorityOrder = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 function compareTasks(a: Task, b: Task) {
+  if (a.manualOrder != null || b.manualOrder != null) {
+    const order = (a.manualOrder ?? Number.MAX_SAFE_INTEGER) - (b.manualOrder ?? Number.MAX_SAFE_INTEGER);
+    if (order) return order;
+  }
   const ad = taskDue(a.dueAt);
   const bd = taskDue(b.dueAt);
   if (ad && !bd) return -1;
@@ -25,7 +29,9 @@ function compareTasks(a: Task, b: Task) {
     || priorityOrder[a.priority] - priorityOrder[b.priority] || a.id - b.id;
 }
 
-export function buildTaskList(tasks: Task[], subtasks: Subtask[], filter: TaskListFilter, now: Date) {
+export function buildTaskList(tasks: Task[], subtasks: Subtask[], filter: TaskListFilter, now: Date, listName?: string) {
+  // Today always aggregates all lists, including overdue and undated work.
+  if (filter !== 'today' && listName) tasks = tasks.filter(task => (task.listName ?? 'Inbox') === listName);
   const today = formatDateToISO(now);
   const children = new Map<number, Subtask[]>();
   for (const child of subtasks) {

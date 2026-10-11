@@ -255,3 +255,10 @@ export function nextRecurrenceDate(value: string, frequency: string, anchor = va
   } else throw new Error('Choose a supported repeat schedule.');
   return value.includes('T') ? formatLocalDateTime(next) : formatDateToISO(next);
 }
+
+/** Resume an existing rule on its anchored schedule, skipping its logged first entry. */
+export function recurrenceAfter(anchor: string, frequency: string, after: string): string {
+  let next = nextRecurrenceDate(anchor, frequency, anchor);
+  while (next.slice(0, 10) <= after.slice(0, 10)) next = nextRecurrenceDate(next, frequency, anchor);
+  return next;
+}

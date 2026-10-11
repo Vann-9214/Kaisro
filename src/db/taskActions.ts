@@ -2,6 +2,7 @@ import { and, eq, notInArray } from 'drizzle-orm';
 import type { AppDatabase } from './types';
 import { tasks, subtasks, noteLinks } from './schema';
 import { nextRecurrenceDate, RECURRENCE_OPTIONS } from '../utils/recurrence';
+import { replaceTargetNotes } from './linkActions';
 
 export interface TaskDraft {
   title: string;
@@ -10,6 +11,8 @@ export interface TaskDraft {
   reminderMinutes: number | null;
   subtasks: { id?: number; title: string; done: boolean }[];
   recurrence?: string | null;
+  noteIds?: number[];
+  listName?: string;
 }
 
 export function saveTask(db: AppDatabase, draft: TaskDraft, id?: number) {
@@ -17,8 +20,12 @@ export function saveTask(db: AppDatabase, draft: TaskDraft, id?: number) {
   if (draft.dueAt && Number.isNaN(new Date(draft.dueAt).getTime())) throw new Error('Choose a valid due date.');
   if (draft.recurrence && (!draft.dueAt || !RECURRENCE_OPTIONS.some(option => option.value === draft.recurrence && option.value !== 'none'))) throw new Error('Repeating tasks need a due date and valid schedule.');
   return db.transaction(tx => {
-    const values = { title: draft.title.trim(), dueAt: draft.dueAt, priority: draft.priority,
-      reminderMinutes: draft.reminderMinutes, ...(draft.recurrence !== undefined ? { recurrence: draft.recurrence, recurrenceAnchor: draft.dueAt } : {}), updatedAt: new Date().toISOString() };
+    const previous = id === undefined ? undefined : tx.select().from(tasks).where(eq(tasks.id, id)).get();
+    const requestedList = draft.listName === undefined ? previous?.listName ?? 'Inbox' : draft.listName.trim() || 'Inbox';
+    const listName = tx.select().from(tasks).all().find(task => task.listName.toLowerCase() === requestedList.toLowerCase())?.listName ?? requestedList;
+    const values = { title: draft.title.trim(), dueAt: draft.dueAt, priority: draft.priority, listName,
+      reminderMinutes: draft.reminderMinutes, ...(draft.recurrence !== undefined ? { recurrence: draft.recurrence,
+        recurrenceAnchor: previous?.dueAt === draft.dueAt && previous.recurrence === draft.recurrence ? previous.recurrenceAnchor ?? draft.dueAt : draft.dueAt } : {}), updatedAt: new Date().toISOString() };
     const row = id === undefined ? tx.insert(tasks).values(values).returning().get()
       : tx.update(tasks).set(values).where(eq(tasks.id, id)).returning().get();
     if (!row) throw new Error('This task no longer exists.');
@@ -32,6 +39,7 @@ export function saveTask(db: AppDatabase, draft: TaskDraft, id?: number) {
         if (!updated) throw new Error('A subtask changed. Reopen the task and try again.');
       } else tx.insert(subtasks).values({ ...data, taskId: row.id }).run();
     });
+    if (draft.noteIds) replaceTargetNotes(tx, { targetType: 'task', targetId: row.id }, draft.noteIds);
     return row;
   });
 }
@@ -45,7 +53,7 @@ export function toggleTaskCompletion(db: AppDatabase, id: number) {
     if (!task.done && task.recurrence && task.dueAt && !tx.select().from(tasks).where(eq(tasks.generatedFrom, id)).get()) {
       const next = tx.insert(tasks).values({ title: task.title, priority: task.priority, reminderMinutes: task.reminderMinutes,
         dueAt: nextRecurrenceDate(task.dueAt, task.recurrence, task.recurrenceAnchor ?? task.dueAt), recurrence: task.recurrence,
-        recurrenceAnchor: task.recurrenceAnchor ?? task.dueAt, generatedFrom: id }).returning().get();
+        recurrenceAnchor: task.recurrenceAnchor ?? task.dueAt, generatedFrom: id, listName: task.listName }).returning().get();
       for (const child of tx.select().from(subtasks).where(eq(subtasks.taskId, id)).all()) {
         tx.insert(subtasks).values({ taskId: next.id, title: child.title, done: false, sortOrder: child.sortOrder }).run();
       }
@@ -61,5 +69,15 @@ export function deleteTask(db: AppDatabase, id: number) {
   db.transaction(tx => {
     tx.delete(noteLinks).where(and(eq(noteLinks.targetType, 'task'), eq(noteLinks.targetId, id))).run();
     tx.delete(tasks).where(eq(tasks.id, id)).run();
+  });
+}
+
+/** Manual order applies within the existing date/time groups, ahead of priority. */
+export function reorderTasks(db: AppDatabase, orderedIds: number[]) {
+  if (new Set(orderedIds).size !== orderedIds.length) throw new Error('Duplicate task order.');
+  db.transaction(tx => {
+    orderedIds.forEach((id, manualOrder) => {
+      if (!tx.update(tasks).set({ manualOrder }).where(eq(tasks.id, id)).returning().get()) throw new Error('A task changed. Refresh before reordering.');
+    });
   });
 }

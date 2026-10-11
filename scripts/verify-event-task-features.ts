@@ -16,6 +16,8 @@ try {
   assert.equal(eventsForDate(updated, '2026-10-19').length, 1);
   assert.equal(detached.recurrence, null);
   assert.equal(detached.seriesId, original.id);
+  assert.equal(detached.occurrenceDate, '2026-10-12');
+  assert.throws(() => saveScopedEvent(db, original.id, '2026-10-12T09:00:00', original, 'this'), /already changed/);
   assert.deepEqual(reminderOffsets(detached), [30, 60]);
   const future = saveScopedEvent(db, original.id, '2026-10-19T09:00:00', { ...original, title: 'Future', start: '2026-10-19T11:00:00', end: '2026-10-19T12:00:00' }, 'future')!;
   assert.equal(eventsForDate(db.select().from(events).where(eq(events.id, original.id)).get()!, '2026-10-19').length, 0);
@@ -41,5 +43,13 @@ try {
   toggleTaskCompletion(db, next.id);
   assert.equal(db.select().from(tasks).where(eq(tasks.generatedFrom, next.id)).get()!.dueAt, '2026-03-31T09:00:00');
   assert.throws(() => saveTask(db, { title: 'No date', dueAt: null, priority: 'low', reminderMinutes: null, recurrence: 'DAILY', subtasks: [] }));
+  const timezone = process.env.TZ;
+  try {
+    process.env.TZ = 'America/New_York';
+    const dst = { ...original, start: '2026-03-07T09:00:00', end: '2026-03-07T10:00:00', recurrence: 'DAILY', excludedDates: null };
+    const projected = eventsForDate(dst, '2026-03-08')[0];
+    assert.equal(new Date(projected.start).getHours(), 9);
+    assert.equal(new Date(projected.end!).getHours(), 10);
+  } finally { if (timezone === undefined) delete process.env.TZ; else process.env.TZ = timezone; }
   console.log('PASS: event scope, exceptions, duplicate metadata, multi-day recurrence and idempotent recurring tasks (migrated SQLite).');
 } finally { close(); }

@@ -15,6 +15,27 @@
       "when": 1791708043080,
       "tag": "0001_sweet_fat_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791715507339,
+      "tag": "0002_aberrant_mister_fear",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791715926431,
+      "tag": "0003_whole_quasimodo",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1791718775896,
+      "tag": "0004_strange_anita_blake",
+      "breakpoints": true
     }
   ]
 }

@@ -29,7 +29,9 @@ export function deleteCategory(db: AppDatabase, id: number, moveTo?: number) {
     if (row.name.toLowerCase() === 'other') throw new Error('Other cannot be deleted.');
     const dependent = categoryUsage(db, id);
     if (dependent) {
-      const target = moveTo === undefined ? undefined : tx.select().from(categories).where(eq(categories.id, moveTo)).get();
+      const target = moveTo === undefined ? tx.select().from(categories).where(sql`lower(${categories.name}) = 'other'`).get()
+        ?? tx.insert(categories).values({ name: 'Other', icon: 'more-horizontal' }).returning().get()
+        : tx.select().from(categories).where(eq(categories.id, moveTo)).get();
       if (!target || target.id === id) throw new Error('Choose a different category to move these entries to.');
       tx.update(transactions).set({ categoryId: target.id }).where(eq(transactions.categoryId, id)).run();
       tx.update(recurringTransactions).set({ categoryId: target.id }).where(eq(recurringTransactions.categoryId, id)).run();

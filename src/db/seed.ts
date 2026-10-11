@@ -64,6 +64,7 @@ export async function seedDatabase(options: { forceReset?: boolean } = {}): Prom
       DELETE FROM transactions;
       DELETE FROM recurring_transactions;
       DELETE FROM categories;
+      DELETE FROM preferences WHERE key != 'planner';
     `);
   }
 

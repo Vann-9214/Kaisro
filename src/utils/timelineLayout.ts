@@ -209,7 +209,7 @@ export function computeUnifiedTimelineLayout(
     const visualDuration = durationMinutes;
 
     rawEntries.push({
-      id: `event-${ev.id}`,
+      id: `event-${ev.id}-${ev.start}`,
       type: 'event',
       event: ev,
       startMinutes,

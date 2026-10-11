@@ -69,6 +69,7 @@ export async function clearAllDataAndReset(
     DELETE FROM transactions;
     DELETE FROM recurring_transactions;
     DELETE FROM categories;
+    DELETE FROM preferences WHERE key != 'planner';
   `);
 
   // Re-insert default starter categories

@@ -25,9 +25,26 @@ export function buildBudget(month: string, categories: Category[], transactions:
     const day = localDay(entry.date);
     byDay.set(day, [...(byDay.get(day) ?? []), entry]);
   }
-  const recurring = rules.filter(rule => rule.frequency === 'monthly').map(rule => ({ ...rule, dueDate: monthlyDate(rule.startDate, month) }))
+  const recurring = rules.map(rule => {
+    let dueDate = monthlyDate(rule.startDate, month);
+    if (rule.frequency === 'yearly' && localDay(rule.startDate).slice(5, 7) !== month.slice(5, 7)) return { ...rule, dueDate: '' };
+    if (rule.frequency === 'daily' || rule.frequency === 'weekly') {
+      const first = parseISODate(month + '-01');
+      if (rule.frequency === 'weekly') first.setDate(first.getDate() + (parseISODate(localDay(rule.startDate)).getDay() - first.getDay() + 7) % 7);
+      dueDate = formatDateToISO(first);
+      if (localDay(rule.startDate).startsWith(month) && dueDate < localDay(rule.startDate)) dueDate = localDay(rule.startDate);
+    }
+    return { ...rule, dueDate };
+  })
     .filter(rule => rule.dueDate >= localDay(rule.startDate) && (!rule.endDate || rule.dueDate <= localDay(rule.endDate)))
     .sort((a, b) => a.dueDate.localeCompare(b.dueDate));
   return { income, expenses, remaining: income - expenses, entries, categoryRows, recurring,
     groups: [...byDay].sort(([a], [b]) => b.localeCompare(a)).map(([day, entries]) => ({ day, entries })) };
+}
+
+export function budgetAlert(spent: number, cap: number | null, thresholdPercent = 80): 'near' | 'reached' | 'over' | null {
+  if (!cap || cap <= 0) return null;
+  if (spent > cap) return 'over';
+  if (spent === cap) return 'reached';
+  return spent >= Math.ceil(cap * thresholdPercent / 100) ? 'near' : null;
 }

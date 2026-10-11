@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, primaryKey } from 'drizzle-orm/sqlite-core';
+import { sqliteTable, text, integer, primaryKey, foreignKey } from 'drizzle-orm/sqlite-core';
 import { relations, sql } from 'drizzle-orm';
 
 // ----------------------------------------------------------------------
@@ -19,6 +19,7 @@ export const events = sqliteTable('events', {
   excludedDates: text('excluded_dates'), // JSON occurrence start dates
   recurrenceUntil: text('recurrence_until'), // inclusive local date
   seriesId: integer('series_id'), // detached occurrence's original event
+  occurrenceDate: text('occurrence_date'), // original date before detaching or moving
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -32,7 +33,7 @@ export const eventsRelations = relations(events, ({ many }) => ({
 }));
 
 type EventRow = typeof events.$inferSelect;
-export type Event = Omit<EventRow, 'reminderOffsets' | 'note' | 'colorToken' | 'excludedDates' | 'recurrenceUntil' | 'seriesId'> & Partial<Pick<EventRow, 'reminderOffsets' | 'note' | 'colorToken' | 'excludedDates' | 'recurrenceUntil' | 'seriesId'>>;
+export type Event = Omit<EventRow, 'reminderOffsets' | 'note' | 'colorToken' | 'excludedDates' | 'recurrenceUntil' | 'seriesId' | 'occurrenceDate'> & Partial<Pick<EventRow, 'reminderOffsets' | 'note' | 'colorToken' | 'excludedDates' | 'recurrenceUntil' | 'seriesId' | 'occurrenceDate'>>;
 export type NewEvent = typeof events.$inferInsert;
 
 // ----------------------------------------------------------------------
@@ -51,6 +52,8 @@ export const tasks = sqliteTable('tasks', {
   recurrence: text('recurrence'),
   recurrenceAnchor: text('recurrence_anchor'),
   generatedFrom: integer('generated_from').unique(),
+  listName: text('list_name').notNull().default('Inbox'),
+  manualOrder: integer('manual_order'),
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -65,7 +68,7 @@ export const tasksRelations = relations(tasks, ({ many }) => ({
 }));
 
 type TaskRow = typeof tasks.$inferSelect;
-export type Task = Omit<TaskRow, 'recurrence' | 'recurrenceAnchor' | 'generatedFrom'> & Partial<Pick<TaskRow, 'recurrence' | 'recurrenceAnchor' | 'generatedFrom'>>;
+export type Task = Omit<TaskRow, 'recurrence' | 'recurrenceAnchor' | 'generatedFrom' | 'listName' | 'manualOrder'> & Partial<Pick<TaskRow, 'recurrence' | 'recurrenceAnchor' | 'generatedFrom' | 'listName' | 'manualOrder'>>;
 export type NewTask = typeof tasks.$inferInsert;
 
 // ----------------------------------------------------------------------
@@ -135,13 +138,14 @@ export const recurringTransactions = sqliteTable('recurring_transactions', {
   endDate: text('end_date'),             // Optional termination date
   nextDate: text('next_date').notNull(),  // Upcoming occurrence date
   note: text('note'),
+  eventId: integer('event_id'),
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
   updatedAt: text('updated_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-});
+}, table => [foreignKey({ columns: [table.eventId], foreignColumns: [events.id], name: 'recurring_event_link' }).onDelete('set null')]);
 
 export const recurringTransactionsRelations = relations(
   recurringTransactions,
@@ -154,7 +158,8 @@ export const recurringTransactionsRelations = relations(
   })
 );
 
-export type RecurringTransaction = typeof recurringTransactions.$inferSelect;
+type RecurringRow = typeof recurringTransactions.$inferSelect;
+export type RecurringTransaction = Omit<RecurringRow, 'eventId'> & Partial<Pick<RecurringRow, 'eventId'>>;
 export type NewRecurringTransaction = typeof recurringTransactions.$inferInsert;
 
 // ----------------------------------------------------------------------
@@ -171,6 +176,7 @@ export const transactions = sqliteTable('transactions', {
   }),
   date: text('date').notNull(), // ISO-8601 date or date-time string
   note: text('note'),
+  eventId: integer('event_id'),
   recurringId: integer('recurring_id').references(
     () => recurringTransactions.id,
     { onDelete: 'set null' }
@@ -181,7 +187,7 @@ export const transactions = sqliteTable('transactions', {
   updatedAt: text('updated_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
-});
+}, table => [foreignKey({ columns: [table.eventId], foreignColumns: [events.id], name: 'transaction_event_link' }).onDelete('set null')]);
 
 export const transactionsRelations = relations(transactions, ({ one, many }) => ({
   category: one(categories, {
@@ -195,7 +201,8 @@ export const transactionsRelations = relations(transactions, ({ one, many }) => 
   noteLinks: many(noteLinks),
 }));
 
-export type Transaction = typeof transactions.$inferSelect;
+type TransactionRow = typeof transactions.$inferSelect;
+export type Transaction = Omit<TransactionRow, 'eventId'> & Partial<Pick<TransactionRow, 'eventId'>>;
 export type NewTransaction = typeof transactions.$inferInsert;
 
 // ----------------------------------------------------------------------

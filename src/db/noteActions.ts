@@ -1,10 +1,15 @@
 import { eq } from 'drizzle-orm';
 import type { AppDatabase } from './types';
-import { notes, noteLinks, noteTags, type Note } from './schema';
+import { notes, noteLinks, noteTags, tags, type Note } from './schema';
+import { replaceNoteLinks, type NoteTarget } from './linkActions';
 
 export interface NoteDraft {
   title?: string;
   body?: string;
+  pinned?: boolean;
+  favorite?: boolean;
+  tags?: string[];
+  links?: NoteTarget[];
 }
 
 /**
@@ -13,6 +18,29 @@ export interface NoteDraft {
  * Defaults title to 'Untitled Note' if neither title nor first line exists.
  */
 export function saveNote(db: AppDatabase, draft: NoteDraft, id?: number): Note {
+  return db.transaction(tx => {
+    const note = saveNoteContent(tx, draft, id);
+    if (draft.tags !== undefined) {
+      const unique = new Map<string, string>();
+      for (const name of draft.tags.map(tag => tag.trim()).filter(Boolean)) if (!unique.has(name.toLocaleLowerCase())) unique.set(name.toLocaleLowerCase(), name);
+      const names = [...unique.values()];
+      tx.delete(noteTags).where(eq(noteTags.noteId, note.id)).run();
+      for (const name of names) {
+        let tag = tx.select().from(tags).all().find(row => row.name.toLocaleLowerCase() === name.toLocaleLowerCase());
+        if (!tag) tag = tx.insert(tags).values({ name }).returning().get();
+        tx.insert(noteTags).values({ noteId: note.id, tagId: tag.id }).run();
+      }
+    }
+    if (draft.links !== undefined) replaceNoteLinks(tx, note.id, draft.links);
+    return note;
+  });
+}
+
+export function readNoteTags(db: AppDatabase, id: number): string[] {
+  return db.select({ name: tags.name }).from(noteTags).innerJoin(tags, eq(tags.id, noteTags.tagId)).where(eq(noteTags.noteId, id)).all().map(row => row.name);
+}
+
+function saveNoteContent(db: AppDatabase, draft: NoteDraft, id?: number): Note {
   const trimmedBody = (draft.body ?? '').trim();
   let trimmedTitle = (draft.title ?? '').trim();
 
@@ -38,6 +66,8 @@ export function saveNote(db: AppDatabase, draft: NoteDraft, id?: number): Note {
         title: trimmedTitle,
         body: trimmedBody,
         updatedAt: now,
+        ...(draft.pinned !== undefined ? { pinned: draft.pinned } : {}),
+        ...(draft.favorite !== undefined ? { favorite: draft.favorite } : {}),
       })
       .where(eq(notes.id, id))
       .returning()
@@ -52,6 +82,8 @@ export function saveNote(db: AppDatabase, draft: NoteDraft, id?: number): Note {
       body: trimmedBody,
       createdAt: now,
       updatedAt: now,
+      pinned: draft.pinned ?? false,
+      favorite: draft.favorite ?? false,
     })
     .returning()
     .get();
@@ -73,12 +105,13 @@ export function deleteNote(db: AppDatabase, id: number): void {
 /**
  * Filters a list of notes matching a search query in either title or body (case-insensitive).
  */
-export function filterNotes(items: Note[], query: string): Note[] {
+export function filterNotes<T extends Note & { tagNames?: string[] }>(items: T[], query: string): T[] {
   const q = query.trim().toLowerCase();
   if (!q) return items;
   return items.filter(
     (item) =>
       item.title.toLowerCase().includes(q) ||
-      (item.body && item.body.toLowerCase().includes(q))
+      (item.body && item.body.toLowerCase().includes(q)) ||
+      item.tagNames?.some(tag => tag.toLowerCase().includes(q))
   );
 }
