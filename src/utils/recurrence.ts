@@ -1,4 +1,5 @@
 import { Event } from '@/db/schema';
+import { formatDateToISO, formatLocalDateTime, parseISODate, shiftDateByDays } from './dateUtils';
 
 export type RecurrenceFrequency = 'none' | 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
 
@@ -78,6 +79,8 @@ export function shiftEndDatePreservingDuration(
  *   with month-end clamping (days 29-31 clamp to the last day of shorter months).
  */
 export function expandEventForDate(event: Event, targetDateStr: string): Event | null {
+  if (event.recurrenceUntil && targetDateStr > event.recurrenceUntil) return null;
+  if (parseExcludedDates(event.excludedDates).includes(targetDateStr)) return null;
   const eventStartDateStr = event.start.split('T')[0];
 
   // A recurring event never appears on days before its start date
@@ -164,10 +167,11 @@ export function expandEventForDate(event: Event, targetDateStr: string): Event |
  */
 export function projectEventOntoDate(event: Event, targetDateStr: string): Event {
   if (event.allDay) {
+    const span = Math.max(0, Math.round((parseISODate(event.end?.slice(0, 10) ?? event.start.slice(0, 10)).getTime() - parseISODate(event.start.slice(0, 10)).getTime()) / 86400000));
     return {
       ...event,
       start: targetDateStr,
-      end: targetDateStr,
+      end: shiftDateByDays(targetDateStr, span),
     };
   }
 
@@ -206,4 +210,48 @@ export function projectEventOntoDate(event: Event, targetDateStr: string): Event
     start: newStartIso,
     end: newEndIso,
   };
+}
+
+export function parseExcludedDates(value?: string | null): string[] {
+  if (!value) return [];
+  try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed.filter((day): day is string => typeof day === 'string') : []; }
+  catch { return []; }
+}
+
+/** All overlapping occurrences, including the tail of a recurring multi-day event. */
+export function eventsForDate(event: Event, day: string): Event[] {
+  if (!event.recurrence || event.recurrence.toLowerCase() === 'none') {
+    const found = expandEventForDate(event, day);
+    return found ? [found] : [];
+  }
+  const span = Math.max(0, Math.round((parseISODate(event.end?.slice(0, 10) ?? event.start.slice(0, 10)).getTime() - parseISODate(event.start.slice(0, 10)).getTime()) / 86400000));
+  const result: Event[] = [];
+  for (let offset = Math.min(span, 3660); offset >= 0; offset--) {
+    const occurrence = expandEventForDate(event, shiftDateByDays(day, -offset));
+    if (occurrence && (occurrence.end?.slice(0, 10) ?? occurrence.start.slice(0, 10)) >= day) result.push(occurrence);
+  }
+  return result;
+}
+
+export function reminderOffsets(event: Event): number[] {
+  if (!event.reminderOffsets) return event.reminderMinutes == null ? [] : [event.reminderMinutes];
+  try { const values = JSON.parse(event.reminderOffsets); return Array.isArray(values) ? [...new Set(values.filter((v): v is number => Number.isSafeInteger(v) && v >= 0))].sort((a, b) => a - b) : []; }
+  catch { return event.reminderMinutes == null ? [] : [event.reminderMinutes]; }
+}
+
+/** Uses the original anchor to avoid month-end drift and preserves local clock time. */
+export function nextRecurrenceDate(value: string, frequency: string, anchor = value): string {
+  const current = value.includes('T') ? new Date(value) : parseISODate(value);
+  const original = anchor.includes('T') ? new Date(anchor) : parseISODate(anchor);
+  if (!Number.isFinite(current.getTime()) || !Number.isFinite(original.getTime())) throw new Error('Choose a valid recurring date.');
+  const next = new Date(current);
+  if (frequency === 'DAILY') next.setDate(next.getDate() + 1);
+  else if (frequency === 'WEEKLY') next.setDate(next.getDate() + 7);
+  else if (frequency === 'MONTHLY' || frequency === 'YEARLY') {
+    next.setDate(1);
+    if (frequency === 'MONTHLY') next.setMonth(next.getMonth() + 1);
+    else { next.setFullYear(next.getFullYear() + 1); next.setMonth(original.getMonth()); }
+    next.setDate(Math.min(original.getDate(), new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate()));
+  } else throw new Error('Choose a supported repeat schedule.');
+  return value.includes('T') ? formatLocalDateTime(next) : formatDateToISO(next);
 }

@@ -13,6 +13,12 @@ export const events = sqliteTable('events', {
   location: text('location'),
   recurrence: text('recurrence'), // e.g. 'DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY', 'RRULE:...'
   reminderMinutes: integer('reminder_minutes'), // e.g. 15, 30, 60
+  reminderOffsets: text('reminder_offsets'), // JSON integer minute offsets
+  note: text('note'),
+  colorToken: text('color_token', { enum: ['primary', 'tasks', 'money'] }).default('primary'),
+  excludedDates: text('excluded_dates'), // JSON occurrence start dates
+  recurrenceUntil: text('recurrence_until'), // inclusive local date
+  seriesId: integer('series_id'), // detached occurrence's original event
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -25,7 +31,8 @@ export const eventsRelations = relations(events, ({ many }) => ({
   noteLinks: many(noteLinks),
 }));
 
-export type Event = typeof events.$inferSelect;
+type EventRow = typeof events.$inferSelect;
+export type Event = Omit<EventRow, 'reminderOffsets' | 'note' | 'colorToken' | 'excludedDates' | 'recurrenceUntil' | 'seriesId'> & Partial<Pick<EventRow, 'reminderOffsets' | 'note' | 'colorToken' | 'excludedDates' | 'recurrenceUntil' | 'seriesId'>>;
 export type NewEvent = typeof events.$inferInsert;
 
 // ----------------------------------------------------------------------
@@ -41,6 +48,9 @@ export const tasks = sqliteTable('tasks', {
   done: integer('done', { mode: 'boolean' }).notNull().default(false),
   doneAt: text('done_at'), // ISO-8601 timestamp when marked done
   reminderMinutes: integer('reminder_minutes'),
+  recurrence: text('recurrence'),
+  recurrenceAnchor: text('recurrence_anchor'),
+  generatedFrom: integer('generated_from').unique(),
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -54,7 +64,8 @@ export const tasksRelations = relations(tasks, ({ many }) => ({
   noteLinks: many(noteLinks),
 }));
 
-export type Task = typeof tasks.$inferSelect;
+type TaskRow = typeof tasks.$inferSelect;
+export type Task = Omit<TaskRow, 'recurrence' | 'recurrenceAnchor' | 'generatedFrom'> & Partial<Pick<TaskRow, 'recurrence' | 'recurrenceAnchor' | 'generatedFrom'>>;
 export type NewTask = typeof tasks.$inferInsert;
 
 // ----------------------------------------------------------------------
@@ -194,6 +205,8 @@ export const notes = sqliteTable('notes', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   title: text('title').notNull(),
   body: text('body').notNull().default(''),
+  pinned: integer('pinned', { mode: 'boolean' }).notNull().default(false),
+  favorite: integer('favorite', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at')
     .notNull()
     .default(sql`CURRENT_TIMESTAMP`),
@@ -207,7 +220,8 @@ export const notesRelations = relations(notes, ({ many }) => ({
   noteTags: many(noteTags),
 }));
 
-export type Note = typeof notes.$inferSelect;
+type NoteRow = typeof notes.$inferSelect;
+export type Note = Omit<NoteRow, 'pinned' | 'favorite'> & Partial<Pick<NoteRow, 'pinned' | 'favorite'>>;
 export type NewNote = typeof notes.$inferInsert;
 
 // ----------------------------------------------------------------------
@@ -294,3 +308,8 @@ export const noteTagsRelations = relations(noteTags, ({ one }) => ({
 
 export type NoteTag = typeof noteTags.$inferSelect;
 export type NewNoteTag = typeof noteTags.$inferInsert;
+
+export const preferences = sqliteTable('preferences', {
+  key: text('key').primaryKey(),
+  value: text('value').notNull(),
+});

@@ -44,7 +44,11 @@ import {
 } from '@/utils/recurrence';
 import { formatTimeDisplay } from '@/utils/timelineLayout';
 import { colors, spacing, layout } from '@/constants/theme';
-import { FormCard, FormCardRow, FormRow, SheetSection } from '@/components/ui';
+import { FormCard, FormCardRow, FormRow, SheetSection, SegmentedControl, Chip } from '@/components/ui';
+import { getDb } from '@/db';
+import { saveScopedEvent, deleteScopedEvent, duplicateEvent, type EventScope } from '@/db/eventActions';
+import { reminderOffsets } from '@/utils/recurrence';
+import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { useLiftedInput } from '@/components/lifted-input/LiftedInputContext';
 import { LiftedInputProvider, LiftedInputHost } from '@/components/lifted-input';
@@ -58,6 +62,8 @@ interface FormValues {
   startDate: Date;
   endDate: Date;
   location: string;
+  note: string;
+  colorToken: 'primary' | 'tasks' | 'money';
   recurrence: RecurrenceFrequency;
   hasReminder: boolean;
   reminderMinutes: number;
@@ -134,6 +140,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       startDate: initialStartDate,
       endDate: initialEndDate,
       location: editingEvent?.location || '',
+      note: editingEvent?.note || '',
+      colorToken: editingEvent?.colorToken || 'primary',
       recurrence: ((editingEvent?.recurrence as RecurrenceFrequency) || 'none'),
       hasReminder: editingEvent
         ? editingEvent.reminderMinutes !== null && editingEvent.reminderMinutes !== undefined
@@ -149,6 +157,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   const recurrence = watch('recurrence');
   const isRepeating = recurrence !== 'none';
   const hasReminder = watch('hasReminder');
+  const [scope, setScope] = useState<EventScope>('this');
+  const [extraReminders, setExtraReminders] = useState<number[]>(() => editingEvent ? reminderOffsets(editingEvent).filter(offset => offset !== editingEvent.reminderMinutes) : []);
   const reminderMinutes = watch('reminderMinutes');
   const customReminderMinutes = watch('customReminderMinutes');
   const [customHoursText, setCustomHoursText] = useState(() => String(Math.floor(customReminderMinutes / 60)));
@@ -387,9 +397,11 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       const reminderVal = data.hasReminder
         ? isCustomReminder ? data.customReminderMinutes : data.reminderMinutes
         : null;
+      const metadata = { note: data.note.trim() || null, colorToken: data.colorToken,
+        reminderOffsets: JSON.stringify(data.hasReminder ? [...new Set([reminderVal!, ...extraReminders])] : []) };
 
       if (isEditMode && editingEvent) {
-        await updateEvent(editingEvent.id, {
+        saveScopedEvent(getDb(), editingEvent.id, editingEvent.start, {
           title: data.title.trim(),
           allDay: data.allDay,
           start: startStr,
@@ -397,7 +409,9 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           location: data.location.trim() || null,
           recurrence: recurrenceVal,
           reminderMinutes: reminderVal,
-        });
+          ...metadata,
+        }, scope);
+        useCalendarSync.getState().triggerRefresh();
       } else {
         await createEvent({
           title: data.title.trim(),
@@ -407,6 +421,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           location: data.location.trim() || null,
           recurrence: recurrenceVal,
           reminderMinutes: reminderVal,
+          ...metadata,
         });
       }
 
@@ -446,7 +461,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
 
     const isRecurring = Boolean(editingEvent.recurrence && editingEvent.recurrence !== 'none');
     const message = isRecurring
-      ? 'This deletes all repeats of this event.'
+      ? `Remove ${scope === 'this' ? 'this occurrence' : scope === 'future' ? 'this and future occurrences' : 'all occurrences'}?`
       : 'Are you sure you want to delete this event?';
 
     Alert.alert('Delete Event', message, [
@@ -456,7 +471,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         style: 'destructive',
         onPress: async () => {
           try {
-            await deleteEvent(editingEvent.id);
+            deleteScopedEvent(getDb(), editingEvent.id, editingEvent.start, scope);
+            useCalendarSync.getState().triggerRefresh();
             onClose();
           } catch (err) {
             console.error('[EventForm] Failed to delete event:', err);
@@ -471,6 +487,11 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
     <>
       {/* Stacked Cards Container with standardized 12dp card gap */}
       <SheetSection fill>
+        {editingEvent?.recurrence && editingEvent.recurrence !== 'none' && <FormCard compact><SheetSection gap="sm">
+          <Text style={{ color: colors.text }}>Apply changes or deletion to</Text>
+          <SegmentedControl options={[{ value: 'this', label: 'This event' }, { value: 'future', label: 'Future' }, { value: 'all', label: 'All' }]}
+            selectedValue={scope} onChange={setScope} />
+        </SheetSection></FormCard>}
         {/* 1. Title Lifted Field Card */}
         <FormCard compact>
           <Controller
@@ -525,6 +546,21 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           />
         </FormCard>
 
+        <FormCard compact><Controller control={control} name="note" render={({ field }) =>
+          <LiftedField id="event-note" label="Notes" placeholder="Add notes" value={field.value} onChangeText={field.onChange} multiline fieldOrder={['event-note']} />
+        } /></FormCard>
+        <FormCard compact><SheetSection gap="sm"><Text style={{ color: colors.text }}>Color category</Text>
+          <SegmentedControl options={[{ value: 'primary', label: 'Calendar' }, { value: 'tasks', label: 'Personal' }, { value: 'money', label: 'Money' }]}
+            selectedValue={watch('colorToken')} onChange={value => setValue('colorToken', value)} />
+        </SheetSection></FormCard>
+        {hasReminder && <FormCard compact><SheetSection gap="sm"><Text style={{ color: colors.text }}>Additional reminders</Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{REMINDER_OPTIONS.map(option => <Chip key={option.value}
+            label={formatReminderLabel(option.value)} selected={extraReminders.includes(option.value)}
+            onPress={() => setExtraReminders(values => values.includes(option.value) ? values.filter(value => value !== option.value) : [...values, option.value])} />)}</View>
+        </SheetSection></FormCard>}
+        {editingEvent && <FormCard compact onPress={() => { closeBar(); try { duplicateEvent(getDb(), editingEvent.id, editingEvent.start); useCalendarSync.getState().triggerRefresh(); onClose(); } catch { Alert.alert('Could not duplicate event', 'Please try again.'); } }}>
+          <FormRow label="Duplicate event" value="Copies dates, notes, color, repeats and reminders." />
+        </FormCard>}
         {/* 3. All-Day Toggle Row (56dp min height, vertically centered, no extra bottom space) */}
         <FormCard compact singleLine>
           <FormRow

@@ -14,6 +14,7 @@ import { DateTimeField } from '@/components/ui/DateTimeField';
 import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { useLiftedInput } from '@/components/lifted-input';
 import { QuickAddFormHandle, QuickAddFormProps } from '@/types/quickAdd';
+import { RECURRENCE_OPTIONS } from '@/utils/recurrence';
 
 export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
   function TaskForm({ onClose }, ref) {
@@ -23,11 +24,12 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
       ? getDb().select().from(subtaskTable).where(eq(subtaskTable.taskId, editingTask.id)).orderBy(subtaskTable.sortOrder).all()
       : []);
     const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<{
-      title: string; priority: TaskDraft['priority']; reminder: number | null;
+      title: string; priority: TaskDraft['priority']; reminder: number | null; recurrence: string;
     }>({ defaultValues: {
       title: editingTask?.title ?? '',
       priority: editingTask?.priority === 'urgent' ? 'high' : editingTask?.priority ?? 'medium',
       reminder: editingTask?.reminderMinutes ?? null,
+      recurrence: editingTask?.recurrence ?? 'none',
     } });
     const reminder = watch('reminder');
     const order = ['task-title', ...children.map((_, index) => 'subtask-' + index)];
@@ -37,7 +39,7 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
         await handleSubmit(values => {
           try {
             saveTask(getDb(), { title: values.title, priority: values.priority, dueAt: taskDueAt,
-              reminderMinutes: values.reminder, subtasks: children }, editingTask?.id);
+              reminderMinutes: values.reminder, subtasks: children, recurrence: values.recurrence === 'none' ? null : values.recurrence }, editingTask?.id);
             useCalendarSync.getState().triggerRefresh();
             success = true;
             onClose();
@@ -61,6 +63,11 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
       <FormCard compact><Controller control={control} name="title" rules={{ validate: value => Boolean(value.trim()) || 'Task title is required' }}
         render={({ field }) => <LiftedField id="task-title" label="Task title" placeholder="Task title" value={field.value} onChangeText={field.onChange} fieldOrder={order} error={errors.title?.message} />} /></FormCard>
       <DateTimeField compact value={taskDueAt} onChange={setTaskDueAt} optional fallbackDate={selectedDate} />
+      <FormCard compact><SheetSection gap="sm"><Text style={{ color: colors.text }}>Repeats</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{RECURRENCE_OPTIONS.map(option =>
+          <Chip key={option.value} label={option.label} selected={watch('recurrence') === option.value} onPress={() => setValue('recurrence', option.value)} />)}</View>
+        <Text style={{ color: colors['text-muted'] }}>Completion creates the next dated task. Reopening a completed task keeps that next task.</Text>
+      </SheetSection></FormCard>
       <FormCard compact><SheetSection gap="sm"><Text style={{ color: colors['text-muted'] }}>Priority</Text>
         <SegmentedControl options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }]}
           selectedValue={watch('priority')} onChange={value => setValue('priority', value)} />

@@ -3,7 +3,7 @@ import { eq, or, isNull, and, sql } from 'drizzle-orm';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
-import { expandEventForDate } from '@/utils/recurrence';
+import { eventsForDate } from '@/utils/recurrence';
 import {
   getVisibleWeeksForMonth,
   calculateBusiestDayIndex,
@@ -190,10 +190,7 @@ export function useCalendarWeekView(
           // B. Recurring events expanded onto dStr
           const dayRecurring: schema.Event[] = [];
           for (const cand of recurringCandidates) {
-            const expanded = expandEventForDate(cand, dStr);
-            if (expanded) {
-              dayRecurring.push(expanded);
-            }
+            dayRecurring.push(...eventsForDate(cand, dStr));
           }
 
           const dayEvents = [...dayNonRecurring, ...dayRecurring];

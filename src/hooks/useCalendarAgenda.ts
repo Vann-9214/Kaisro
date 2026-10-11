@@ -3,7 +3,8 @@ import { sql, eq } from 'drizzle-orm';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
 import { shiftDateByDays, formatDateToISO } from '@/utils/dateUtils';
-import { expandEventForDate } from '@/utils/recurrence';
+import { eventsForDate } from '@/utils/recurrence';
+import { toggleTaskCompletion } from '@/db/taskActions';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import {
   AgendaItem,
@@ -139,10 +140,7 @@ export function useCalendarAgenda(startDayStr: string, todayStr: string): UseCal
 
         // Expanded recurring
         for (const cand of recurringCandidates) {
-          const expanded = expandEventForDate(cand, d);
-          if (expanded) {
-            dayEvents.push(expanded);
-          }
+          dayEvents.push(...eventsForDate(cand, d));
         }
 
         // Collect tasks due on date d
@@ -326,14 +324,7 @@ export function useCalendarAgenda(startDayStr: string, todayStr: string): UseCal
 
       try {
         const db = getDb();
-        await db
-          .update(schema.tasks)
-          .set({
-            done: nextDone,
-            doneAt: nextDone ? nowIso : null,
-            updatedAt: nowIso,
-          })
-          .where(eq(schema.tasks.id, taskId));
+        toggleTaskCompletion(db, taskId);
 
         // Immediately notify all other tabs, views, and summaries
         useCalendarSync.getState().triggerRefresh();

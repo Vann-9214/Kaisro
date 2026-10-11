@@ -3,7 +3,8 @@ import { eq, like, or, isNull, and, sql } from 'drizzle-orm';
 import { create } from 'zustand';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
-import { expandEventForDate } from '@/utils/recurrence';
+import { eventsForDate } from '@/utils/recurrence';
+import { toggleTaskCompletion } from '@/db/taskActions';
 import { formatDateToISO } from '@/utils/dateUtils';
 import { deleteEventAndUnlinkNotes } from '@/db/eventActions';
 
@@ -141,10 +142,7 @@ export function useCalendarDay(selectedDateStr: string | null) {
 
       const expandedRecurring: schema.Event[] = [];
       for (const cand of recurringCandidates) {
-        const expanded = expandEventForDate(cand, selectedDateStr);
-        if (expanded) {
-          expandedRecurring.push(expanded);
-        }
+        expandedRecurring.push(...eventsForDate(cand, selectedDateStr));
       }
 
       // Merge and sort
@@ -216,14 +214,8 @@ export function useCalendarDay(selectedDateStr: string | null) {
 
       try {
         const db = getDb();
-        await db
-          .update(schema.tasks)
-          .set({
-            done: nextDone,
-            doneAt: nextDone ? nowIso : null,
-            updatedAt: nowIso,
-          })
-          .where(eq(schema.tasks.id, taskId));
+        toggleTaskCompletion(db, taskId);
+        useCalendarSync.getState().triggerRefresh();
       } catch (err) {
         console.error('[useCalendarDay] Failed to update task in SQLite:', err);
         // Rollback on failure

@@ -1,6 +1,7 @@
 import { and, eq, notInArray } from 'drizzle-orm';
 import type { AppDatabase } from './types';
 import { tasks, subtasks, noteLinks } from './schema';
+import { nextRecurrenceDate, RECURRENCE_OPTIONS } from '../utils/recurrence';
 
 export interface TaskDraft {
   title: string;
@@ -8,14 +9,16 @@ export interface TaskDraft {
   priority: 'low' | 'medium' | 'high';
   reminderMinutes: number | null;
   subtasks: { id?: number; title: string; done: boolean }[];
+  recurrence?: string | null;
 }
 
 export function saveTask(db: AppDatabase, draft: TaskDraft, id?: number) {
   if (!draft.title.trim()) throw new Error('Task title is required.');
   if (draft.dueAt && Number.isNaN(new Date(draft.dueAt).getTime())) throw new Error('Choose a valid due date.');
+  if (draft.recurrence && (!draft.dueAt || !RECURRENCE_OPTIONS.some(option => option.value === draft.recurrence && option.value !== 'none'))) throw new Error('Repeating tasks need a due date and valid schedule.');
   return db.transaction(tx => {
     const values = { title: draft.title.trim(), dueAt: draft.dueAt, priority: draft.priority,
-      reminderMinutes: draft.reminderMinutes, updatedAt: new Date().toISOString() };
+      reminderMinutes: draft.reminderMinutes, ...(draft.recurrence !== undefined ? { recurrence: draft.recurrence, recurrenceAnchor: draft.dueAt } : {}), updatedAt: new Date().toISOString() };
     const row = id === undefined ? tx.insert(tasks).values(values).returning().get()
       : tx.update(tasks).set(values).where(eq(tasks.id, id)).returning().get();
     if (!row) throw new Error('This task no longer exists.');
@@ -39,6 +42,14 @@ export function toggleTaskCompletion(db: AppDatabase, id: number) {
     if (!task) throw new Error('This task no longer exists.');
     const now = new Date().toISOString();
     tx.update(tasks).set({ done: !task.done, doneAt: task.done ? null : now, updatedAt: now }).where(eq(tasks.id, id)).run();
+    if (!task.done && task.recurrence && task.dueAt && !tx.select().from(tasks).where(eq(tasks.generatedFrom, id)).get()) {
+      const next = tx.insert(tasks).values({ title: task.title, priority: task.priority, reminderMinutes: task.reminderMinutes,
+        dueAt: nextRecurrenceDate(task.dueAt, task.recurrence, task.recurrenceAnchor ?? task.dueAt), recurrence: task.recurrence,
+        recurrenceAnchor: task.recurrenceAnchor ?? task.dueAt, generatedFrom: id }).returning().get();
+      for (const child of tx.select().from(subtasks).where(eq(subtasks.taskId, id)).all()) {
+        tx.insert(subtasks).values({ taskId: next.id, title: child.title, done: false, sortOrder: child.sortOrder }).run();
+      }
+    }
   });
 }
 export function toggleSubtaskCompletion(db: AppDatabase, id: number) {

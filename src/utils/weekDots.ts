@@ -1,5 +1,5 @@
 import { Event } from '@/db/schema';
-import { expandEventForDate } from '@/utils/recurrence';
+import { eventsForDate } from '@/utils/recurrence';
 
 export interface DayDots {
   hasEvents: boolean;
@@ -69,8 +69,8 @@ export function computeWeekDots(
 
     // Check recurring events
     for (const recEv of recurringEvents) {
-      const expanded = expandEventForDate(recEv, d);
-      if (expanded) {
+      const expanded = eventsForDate(recEv, d);
+      if (expanded.length) {
         dayDots.hasEvents = true;
         break;
       }

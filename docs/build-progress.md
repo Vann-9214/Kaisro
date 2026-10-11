@@ -5,6 +5,27 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 
 ## Status
 
+### Feature completion run - Events and tasks - 2026-10-11
+
+The latest user request authorizes all gaps listed in the prior response,
+including notifications/native setup and dark mode, with simple shared UI instead
+of blocking production on missing Stitch references. V2/icebox features remain
+outside this run. Branch remains kaisro-build; never push.
+
+Generated migration 0001 through Drizzle. Added event notes/color/multiple reminder
+storage, recurrence exclusions and end dates, plus task recurrence and a unique
+generation source. Existing data is preserved. Event form exposes This/Future/All
+scope, duplication, notes, semantic color choices and additional reminders.
+Multi-day recurring events now expand across their tail dates in every calendar
+data path. Task completion generates one next task with reset subtasks and an
+anchored date; reopening keeps that next task, and recompletion cannot duplicate it.
+
+Checks passed: TypeScript, UI source rules, verify-event-task-features.ts using
+migrated in-memory SQLite. Stitch screenshots/design-system remain absent;
+simple shared controls are the user-authorized visual judgment. Phone checklist:
+exercise all recurrence scopes, duplicate metadata, multi-day month boundaries,
+month-end tasks, and Save/typing with the longer forms. Native checks pending.
+
 ### Project document alignment - 2026-10-11
 
 Committed the new PROJECT.MD and pending app work as `28a152c` on kaisro-build.
