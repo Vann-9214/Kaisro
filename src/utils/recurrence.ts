@@ -10,15 +10,31 @@ export const RECURRENCE_OPTIONS: { value: RecurrenceFrequency; label: string }[]
   { value: 'YEARLY', label: 'Yearly' },
 ];
 
+export const DEFAULT_REMINDER_MINUTES = 30;
+
 export const REMINDER_OPTIONS: { value: number; label: string }[] = [
   { value: 0, label: 'At time of event' },
-  { value: 5, label: '5 minutes before' },
   { value: 10, label: '10 minutes before' },
-  { value: 15, label: '15 minutes before' },
   { value: 30, label: '30 minutes before' },
   { value: 60, label: '1 hour before' },
   { value: 1440, label: '1 day before' },
 ];
+
+export function adjustReminderDuration(totalMinutes: number, unit: 'hours' | 'minutes', delta: number): number {
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return unit === 'hours'
+    ? Math.max(0, Math.min(35791393, hours + delta)) * 60 + minutes
+    : hours * 60 + Math.max(0, Math.min(59, minutes + delta));
+}
+
+export function parseReminderDuration(hoursText: string, minutesText: string): number | null {
+  if (!/^\d+$/.test(hoursText.trim()) || !/^\d+$/.test(minutesText.trim())) return null;
+  const hours = Number(hoursText);
+  const minutes = Number(minutesText);
+  if (!Number.isSafeInteger(hours) || hours > 35791393 || !Number.isInteger(minutes) || minutes > 59) return null;
+  return hours * 60 + minutes;
+}
 
 /**
  * Formats a reminder minute offset into a human-readable string.
@@ -27,9 +43,15 @@ export function formatReminderLabel(minutes: number | null | undefined): string 
   if (minutes === null || minutes === undefined) return 'None';
   const found = REMINDER_OPTIONS.find((opt) => opt.value === minutes);
   if (found) return found.label;
-  if (minutes >= 1440) return `${Math.round(minutes / 1440)} day before`;
-  if (minutes >= 60) return `${Math.round(minutes / 60)} hr before`;
-  return `${minutes} min before`;
+  const days = Math.floor(minutes / 1440);
+  const hours = Math.floor((minutes % 1440) / 60);
+  const remainingMinutes = minutes % 60;
+  const parts = [
+    days ? `${days} ${days === 1 ? 'day' : 'days'}` : '',
+    hours ? `${hours} ${hours === 1 ? 'hour' : 'hours'}` : '',
+    remainingMinutes ? `${remainingMinutes} ${remainingMinutes === 1 ? 'minute' : 'minutes'}` : '',
+  ].filter(Boolean);
+  return `${parts.join(' ')} before`;
 }
 
 /**

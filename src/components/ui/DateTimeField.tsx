@@ -10,8 +10,9 @@ import { FormRow } from './FormRow';
 import { SheetSection } from './SheetSection';
 
 /** The date value is controlled by the existing UI store; only picker visibility is local. */
-export function DateTimeField({ value, onChange, optional = false, fallbackDate }: {
+export function DateTimeField({ value, onChange, optional = false, fallbackDate, compact = false }: {
   value: string | null; onChange: (value: string | null) => void; optional?: boolean; fallbackDate: string;
+  compact?: boolean;
 }) {
   const [mode, setMode] = useState<'date' | 'time' | null>(null);
   const { closeBar } = useLiftedInput();
@@ -20,8 +21,8 @@ export function DateTimeField({ value, onChange, optional = false, fallbackDate 
   const open = (next: 'date' | 'time') => { closeBar(); setMode(next); };
   return <SheetSection gap="sm">
     <FormCardRow style={{ gap: spacing.cardGap }}>
-      <FormCard style={{ flex: 1 }} onPress={() => open('date')}><FormRow icon={<Calendar color={colors['text-muted']} size={16} />} label={optional ? 'Due date' : 'Date'} value={value ? date.toLocaleDateString() : 'No date'} /></FormCard>
-      <FormCard style={{ flex: 1 }} onPress={() => open('time')}><FormRow icon={<Clock color={colors['text-muted']} size={16} />} label="Time" value={hasTime ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Anytime'} /></FormCard>
+      <FormCard compact={compact} style={{ flex: 1 }} onPress={() => open('date')}><FormRow icon={<Calendar color={colors['text-muted']} size={16} />} label={optional ? 'Due date' : 'Date'} value={value ? date.toLocaleDateString() : 'No date'} /></FormCard>
+      <FormCard compact={compact} style={{ flex: 1 }} onPress={() => open('time')}><FormRow icon={<Clock color={colors['text-muted']} size={16} />} label="Time" value={hasTime ? date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : 'Anytime'} /></FormCard>
     </FormCardRow>
     {optional && value && <View style={{ flexDirection: 'row', gap: spacing.md }}>
       <Pressable onPress={() => onChange(null)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Clear date</Text></Pressable>

@@ -82,7 +82,7 @@ export function WeekView({
     }
   }, [weeks.length]);
 
-  // Initial scroll position: lands on the current week's card (Week 38) when screen first opens
+  // Initial scroll position: lands on the current week's card when screen first opens
   const hasInitiallyScrolledRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -171,7 +171,7 @@ export function WeekView({
     <FlatList<WeekData>
       ref={flatListRef}
       data={weeks}
-      keyExtractor={(item) => `week-${item.info.isoWeekNumber}-${item.info.startDateStr}`}
+      keyExtractor={(item) => `week-${item.info.weekNumber}-${item.info.startDateStr}`}
       contentContainerStyle={{
         paddingHorizontal: 20,
         paddingTop: 12,
@@ -196,7 +196,7 @@ export function WeekView({
             <EmptyState
               variant="inline"
               title="Nothing planned this month"
-              description="Your schedule is completely clear for focused work."
+              description=""
               actionLabel="+ Add an event"
               onAction={() => openAddSheet('event', null, emptyMonthAddDateStr)}
               style={{ marginBottom: 12 }}

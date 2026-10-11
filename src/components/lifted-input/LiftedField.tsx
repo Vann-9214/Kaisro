@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { View, Text, Pressable, KeyboardTypeOptions } from 'react-native';
+import { View, Text, Pressable, KeyboardTypeOptions, StyleProp, TextStyle } from 'react-native';
 import { useLiftedInput } from './LiftedInputContext';
 import { colors, layout } from '@/constants/theme';
 
@@ -20,6 +20,7 @@ export interface LiftedFieldProps {
   fieldOrder?: string[];
   actionLabel?: 'Done' | 'Next';
   containerClassName?: string;
+  displayTextStyle?: StyleProp<TextStyle>;
 }
 
 export function LiftedField({
@@ -39,6 +40,7 @@ export function LiftedField({
   fieldOrder,
   actionLabel,
   containerClassName,
+  displayTextStyle,
 }: LiftedFieldProps) {
   const { openField, registerField, unregisterField } = useLiftedInput();
 
@@ -123,6 +125,7 @@ export function LiftedField({
             numberOfLines={multiline ? 2 : 1}
             ellipsizeMode="tail"
             maxFontSizeMultiplier={layout.maxFontScale}
+            style={displayTextStyle}
             className={`text-base font-medium ${
               hasValue ? 'text-text' : 'text-text-muted'
             } ${prefix ? 'text-xl font-bold' : ''}`}

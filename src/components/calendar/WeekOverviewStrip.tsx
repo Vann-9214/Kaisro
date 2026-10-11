@@ -40,11 +40,11 @@ export function WeekOverviewStrip({ weeks, onSelectWeek }: WeekOverviewStripProp
 
           return (
             <Pressable
-              key={`strip-${week.info.isoWeekNumber}-${idx}`}
+              key={`strip-${week.info.weekNumber}-${idx}`}
               onPress={() => onSelectWeek(idx)}
               className="flex-1 items-center justify-end px-1"
               accessibilityRole="button"
-              accessibilityLabel={`${week.info.shortWeekLabel}, ${totalActivity} items`}
+              accessibilityLabel={`${week.info.weekLabel}, ${totalActivity} items`}
               hitSlop={6}
             >
               {/* "Now" Marker for current week */}
@@ -107,7 +107,7 @@ export function WeekOverviewStrip({ weeks, onSelectWeek }: WeekOverviewStripProp
                 )}
               </View>
 
-              {/* Column label (W36, W37, ...) */}
+              {/* Column label (1st, 2nd, ...) */}
               <Text
                 style={{
                   fontSize: 11,

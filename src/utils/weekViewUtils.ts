@@ -1,7 +1,7 @@
 import {
   formatDateToISO,
   parseISODate,
-  getISOWeekNumber,
+  getOrdinalWeekLabel,
   WEEK_STARTS_ON_MONDAY,
   MONTH_NAMES,
 } from '@/utils/dateUtils';
@@ -17,9 +17,9 @@ export interface WeekDayMiniItem {
 
 export interface WeekRangeInfo {
   weekIndex: number; // 0 to N-1
-  isoWeekNumber: number; // e.g. 38
-  isoWeekLabel: string; // e.g. "Week 38"
-  shortWeekLabel: string; // e.g. "W38"
+  weekNumber: number; // 1-based week within the viewed month
+  weekLabel: string; // e.g. "1st week"
+  shortWeekLabel: string; // e.g. "1st"
   dateRangeLabel: string; // e.g. "Sep 14 – 20", "Aug 31 – Sep 6", "Dec 28, 2026 – Jan 3, 2027"
   startDate: Date; // Monday 00:00:00
   endDate: Date; // Sunday 23:59:59
@@ -120,17 +120,8 @@ export function getVisibleWeeksForMonth(
       999
     );
 
-    // Thursday of this week defines its ISO week number
-    const thursday = new Date(
-      currentMonday.getFullYear(),
-      currentMonday.getMonth(),
-      currentMonday.getDate() + 3,
-      0,
-      0,
-      0,
-      0
-    );
-    const isoWeekNumber = getISOWeekNumber(thursday);
+    const weekNumber = weekIndex + 1;
+    const weekLabel = getOrdinalWeekLabel(weekNumber).toLowerCase();
 
     const days: WeekDayMiniItem[] = [];
     let containsToday = false;
@@ -172,9 +163,9 @@ export function getVisibleWeeksForMonth(
 
     weeks.push({
       weekIndex,
-      isoWeekNumber,
-      isoWeekLabel: `Week ${isoWeekNumber}`,
-      shortWeekLabel: `W${isoWeekNumber}`,
+      weekNumber,
+      weekLabel,
+      shortWeekLabel: weekLabel.split(' ')[0],
       dateRangeLabel: formatWeekDateRange(monday, sunday),
       startDate: monday,
       endDate: sunday,

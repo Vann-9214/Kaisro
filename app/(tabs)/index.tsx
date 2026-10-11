@@ -1021,7 +1021,7 @@ export default function CalendarScreen() {
           <EmptyState
             variant="inline"
             title="Nothing planned today"
-            description="Your canvas is completely open for focused calm."
+            description=""
             actionLabel="+ Add an event"
             onAction={() => openAddSheet('event', null, activeDateStr)}
             style={{ marginBottom: 12 }}

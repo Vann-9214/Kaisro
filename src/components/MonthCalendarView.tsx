@@ -416,7 +416,7 @@ export function MonthCalendarView({
           <EmptyState
             variant="inline"
             title="Nothing planned"
-            description="Your canvas is completely open for focused calm."
+            description=""
             actionLabel="+ Add an event"
             onAction={() => openAddSheet('event', null, selectedDate)}
           />

@@ -172,7 +172,7 @@ function QuickAddBottomSheetContent() {
     <View
       style={{
         paddingHorizontal: layout.sheetHorizontalPadding, // 20dp
-        paddingTop: layout.headerTopPadding,               // 20dp above header content
+        paddingTop: spacing.sm,
       }}
     >
       {/* Drag handle */}
@@ -193,7 +193,7 @@ function QuickAddBottomSheetContent() {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          paddingBottom: spacing.md, // 14dp padding inside title bar
+          paddingBottom: spacing.sm,
           borderBottomWidth: 1,
           borderBottomColor: colors.border,
           ...(!isEditMode ? { marginBottom: 0 } : { marginBottom: layout.segmentedToCardGap }),
@@ -273,8 +273,8 @@ function QuickAddBottomSheetContent() {
             borderRadius: 9999,
             padding: spacing.xs,
             alignItems: 'center',
-            marginTop: layout.headerToSegmentedGap, // 16dp between header and segmented control
-            marginBottom: layout.segmentedToCardGap, // 16dp between segmented control and first card
+            marginTop: spacing.sm,
+            marginBottom: spacing.sm,
           }}
         >
           {TABS.map((tab) => {
@@ -287,11 +287,11 @@ function QuickAddBottomSheetContent() {
                 onPress={() => handleTabPress(tab.type)}
                 style={{
                   flex: 1,
-                  minHeight: 50,
+                  minHeight: 44,
                   paddingVertical: spacing.xs,
                   paddingHorizontal: spacing.xs,
                   borderRadius: 9999,
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: isSelected ? colors.primary : 'transparent',
@@ -305,9 +305,11 @@ function QuickAddBottomSheetContent() {
                   color={isSelected ? colors['on-primary'] : colors['text-muted']}
                 />
                 <Text
+                  numberOfLines={1}
                   maxFontSizeMultiplier={layout.maxFontScale}
                   style={{
-                    marginTop: spacing.xs,
+                    marginLeft: spacing.xs,
+                    flexShrink: 1,
                     fontSize: 12,
                     fontWeight: '500',
                     color: isSelected ? colors['on-primary'] : colors['text-muted'],
@@ -332,6 +334,7 @@ function QuickAddBottomSheetContent() {
       header={fixedHeader}
       footer={fixedFooter}
       hideDragHandle
+      heightRatio={0.80}
       overlay={<LiftedInputHost />}
     >
       {/* The body scrolls in the space left after the header and fixed Save footer. */}
@@ -343,8 +346,10 @@ function QuickAddBottomSheetContent() {
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         bounces={false}
+        overScrollMode="never"
         contentContainerStyle={{
-          paddingBottom: layout.bodyBottomPadding,
+          flexGrow: 1,
+          paddingBottom: spacing.sm,
         }}
       >
         {activeAddType === 'event' && (

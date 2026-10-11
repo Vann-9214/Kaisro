@@ -3,6 +3,14 @@ import { View, type ViewProps } from 'react-native';
 import { spacing } from '@/constants/theme';
 
 /** Shared vertical section rhythm for forms and lists. */
-export function SheetSection({ gap = 'cardGap', style, ...props }: ViewProps & { gap?: keyof typeof spacing }) {
-  return <View style={[{ gap: spacing[gap] }, style]} {...props} />;
+export function SheetSection({ gap = 'cardGap', fill = false, style, ...props }: ViewProps & {
+  gap?: keyof typeof spacing;
+  /** Distribute spare body space between sections while preserving card heights. */
+  fill?: boolean;
+}) {
+  return <View style={[
+    { gap: spacing[gap] },
+    fill ? { flexGrow: 1, justifyContent: 'space-between' } : undefined,
+    style,
+  ]} {...props} />;
 }

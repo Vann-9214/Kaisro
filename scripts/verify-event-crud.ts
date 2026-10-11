@@ -7,6 +7,9 @@ import {
   formatReminderLabel,
   RECURRENCE_OPTIONS,
   REMINDER_OPTIONS,
+  DEFAULT_REMINDER_MINUTES,
+  adjustReminderDuration,
+  parseReminderDuration,
 } from '../src/utils/recurrence';
 import { Event } from '../src/db/schema';
 
@@ -140,6 +143,35 @@ if (formatReminderLabel(60) !== '1 hour before') throw new Error('Expected 1 hou
 if (formatReminderLabel(1440) !== '1 day before') throw new Error('Expected 1 day before for 1440');
 console.log('  -> PASS: Reminder labels formatted correctly.');
 
+if (DEFAULT_REMINDER_MINUTES !== 30) throw new Error('Default reminder must be 30 minutes');
+if (!REMINDER_OPTIONS.some(option => option.value === 10) ||
+    REMINDER_OPTIONS.some(option => option.value === 5 || option.value === 15)) {
+  throw new Error('Presets must include 10 minutes and exclude 5/15 minutes');
+}
+for (const [total, unit, delta, expected] of [
+  [30, 'hours', 1, 90], [90, 'minutes', 1, 91],
+  [90, 'hours', -1, 30], [60, 'minutes', -1, 60],
+  [0, 'hours', -1, 0], [119, 'minutes', 1, 119],
+  [1440, 'hours', 1, 1500], [2147483639, 'hours', 1, 2147483639],
+] as const) {
+  if (adjustReminderDuration(total, unit, delta) !== expected) {
+    throw new Error(`Incorrect duration adjustment: ${total}, ${unit}, ${delta}`);
+  }
+}
+if (formatReminderLabel(90) !== '1 hour 30 minutes before') throw new Error('Custom offset was rounded');
+if (formatReminderLabel(1501) !== '1 day 1 hour 1 minute before') throw new Error('Custom day offset was rounded');
+for (const [hours, minutes, expected] of [
+  ['1', '30', 90], ['0', '0', 0], ['24', '01', 1441], [' 2 ', '45', 165],
+] as const) {
+  if (parseReminderDuration(hours, minutes) !== expected) throw new Error('Typed duration did not convert correctly');
+}
+for (const [hours, minutes] of [
+  ['', '30'], ['1', ''], ['-1', '30'], ['1', '60'], ['1.5', '0'], ['abc', '0'], ['35791394', '0'],
+]) {
+  if (parseReminderDuration(hours, minutes) !== null) throw new Error('Accepted invalid typed duration');
+}
+console.log('  -> PASS: 30-minute default, 10-minute preset, hour/minute controls and exact custom offsets.');
+
 // 6. Test SQLite Event CRUD Operations
 console.log('\n6. Testing SQLite Event CRUD operations:');
 const migrationSqlPath = path.join(__dirname, '../src/db/migrations/0000_amusing_santa_claus.sql');
@@ -186,5 +218,19 @@ if (deleted !== undefined) {
   throw new Error('Failed to delete event from SQLite!');
 }
 console.log('  -> PASS: Deleted event successfully from SQLite.');
+
+const insertCustom = sqlite.prepare(`
+  INSERT INTO events (title, start, reminder_minutes) VALUES (?, ?, ?)
+`);
+insertCustom.run('Custom reminder verification', '2026-10-06T12:00:00', parseReminderDuration('1', '30'));
+const custom = sqlite.prepare('SELECT id, reminder_minutes FROM events WHERE title = ?')
+  .get('Custom reminder verification') as { id: number; reminder_minutes: number };
+if (custom.reminder_minutes !== 90) throw new Error('Custom reminder did not persist');
+sqlite.prepare('UPDATE events SET reminder_minutes = ? WHERE id = ?').run(null, custom.id);
+const disabled = sqlite.prepare('SELECT reminder_minutes FROM events WHERE id = ?')
+  .get(custom.id) as { reminder_minutes: number | null };
+if (disabled.reminder_minutes !== null) throw new Error('Reminder could not be turned off');
+sqlite.close();
+console.log('  -> PASS: Custom reminder persisted and disabled in isolated SQLite.');
 
 console.log('\nAll recurrence, duration preservation, labels, and SQLite CRUD tests PASSED with 100% accuracy!\n');

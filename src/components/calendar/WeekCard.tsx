@@ -108,7 +108,7 @@ export function WeekCard({
         overflow: 'hidden',
       }}
       accessibilityRole="none"
-      accessibilityLabel={`${info.isoWeekLabel}, ${info.dateRangeLabel}`}
+      accessibilityLabel={`${info.weekLabel}, ${info.dateRangeLabel}`}
     >
       {/* 1. Week Card Header: week number, date range, "This week" badge, chevron */}
       <Pressable
@@ -122,7 +122,7 @@ export function WeekCard({
           paddingBottom: 8,
         }}
         accessibilityRole="button"
-        accessibilityLabel={`Toggle ${info.isoWeekLabel} expansion`}
+        accessibilityLabel={`Toggle ${info.weekLabel} expansion`}
       >
         <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', flex: 1, marginRight: 8 }}>
           <Text
@@ -133,7 +133,7 @@ export function WeekCard({
               marginRight: 6,
             }}
           >
-            {info.isoWeekLabel}
+            {info.weekLabel}
           </Text>
 
           <Text

@@ -5,6 +5,215 @@ Branch: `kaisro-build`. Never push or change main. Current run: 1b, 2a, 2b, 2c,
 
 ## Status
 
+Event reminder Done-only typing (2026-10-06): Hours and Minutes lifted inputs
+both use Done, as requested; Hours no longer advances to Minutes. TypeScript
+passed. Phone check: tap either number and confirm Done dismisses its keyboard.
+
+Quick-add remaining space distribution (2026-10-06): the Event, Task, and Expense
+root sections now fill the available scroll body and distribute spare height
+between sections. Reminder, Subtasks, and Repeats monthly finish near the Save
+footer rather than leaving all unused space below the final card. Individual
+cards retain their compact natural heights; shared card gap is the minimum.
+The shared SheetSection option is opt-in and does not affect nested sections.
+Modal height remains 80%; keyboard geometry, footer, and data logic are unchanged.
+
+TypeScript, UI rules, and Save-footer checks passed. Distribution is a visual
+judgment based on the user's request because local references remain missing.
+No device is connected. Phone checklist: switch Event/Task/Expense and confirm
+the lower blank area is distributed between rows without oversized cards; turn
+reminders on/off and add/remove a subtask, then verify typing and Save.
+
+Event reminder hint removal (2026-10-06): removed the visible Tap to type hints
+from Hours and Minutes at the user's request. Numbers remain tappable and +/-
+controls remain available. No logic changed. TypeScript passed. Phone check:
+open Custom time and confirm no hints appear beneath either number. Local
+Stitch comparison remains blocked by missing references.
+
+Event reminder typed numbers (2026-10-06): Hours and Minutes readouts now use
+the existing LiftedField and are tappable, with Tap to type hints. Preserved
+the large centered numbers and +/- controls. Typing uses the existing lifted
+input host within Reminder Time, with Hours Next -> Minutes Done and no
+auto-focus on modal open. Drafts permit clearing/replacing numbers; valid
+whole hours and minutes 0–59 update the saved duration. Invalid drafts disable
+modal Done and show guidance; +/- restores valid readouts. Selecting a preset
+resets both drafts. Default remains 30 minutes and the short preset is 10.
+TypeScript, UI checks, and the extended in-memory SQLite script passed, covering
+typed conversion, blank/negative/fractional/out-of-range values, and persistence.
+Local design comparisons remain blocked by missing references. Phone checklist:
+Custom time > tap Hours, type 1, Next, type 30, keyboard Done, modal Done,
+Save, reopen; check +/- afterward and confirm minutes 60 disables modal Done.
+
+Quick-add 80% height (2026-10-06): increased the constant sheet height from 70%
+to 80% per the user's latest request. Reduced the space below the tabs and the
+body's bottom padding using the existing small spacing token. Task cards/date
+fields now use the existing compact option, matching Event and Expense. Card
+gaps, touch targets, and the fixed Save footer remain. Disabled Android overscroll
+stretch/glow. No card stretching or tab-dependent modal sizing was reintroduced.
+TypeScript, UI rules, and Save-footer checks passed. No database logic changed.
+
+The standard forms have more room and smaller Task cards; actual fit still needs
+a phone check because no device is connected and Stitch references are missing.
+Scroll fallback remains for arbitrarily many subtasks, large accessibility text,
+validation errors, and expanded iOS pickers so controls cannot become unreachable.
+Phone checklist: reopen +; confirm 80% height, standard Event/Expense/Task fields
+visible without scrolling, fixed Save, stable tab switching, and keyboard opening.
+
+Balanced quick-add height (2026-10-06): per the user's latest correction, Quick
+Add now uses 70% of the measured modal height for Event, Task, and Expense.
+Removed the form/card growth added by the earlier fill request. Event and Expense
+cards keep their compact natural heights and shared gaps. All tabs use the same
+compact header, so switching tabs cannot change the sheet or header height.
+The fixed Save footer, opaque bottom coverage, and keyboard-stable bounds remain.
+This supersedes the earlier instruction to expand/fill the sheet. Scrolling
+remains available when fields exceed the smaller body, especially with large text.
+No persistence, recurrence, or unrelated screen code changed.
+
+TypeScript, UI rules, Save-footer checks, and an isolated 70%-height rendering
+regression passed (native/app height mismatch, tab switch, keyboard resize, bottom
+coverage). No phone is connected and local Stitch references remain missing.
+Phone checklist: reopen +; confirm about 70% height, normal card sizes, unchanged
+modal/header height across Event/Task/Expense, and no bottom gap while typing.
+
+Event reminder duration controls (2026-10-06): supersedes the custom textbox
+implementations below. Custom time expands within Reminder Time with separate
+Hours and Minutes cards, numeric readouts, and accessible +/- controls. No
+textbox or keyboard is involved. Minutes range from 0 to 59; hours can span
+multiple days, preserving saved offsets. A live label previews the exact lead
+time; modal Done applies it. Presets are at start, 10 minutes, 30 minutes,
+1 hour, and 1 day; default remains 30 minutes. Reused FormCard/FormCardRow and
+SheetSection spacing and semantic colors. Removed the modal lifted-input host.
+TypeScript, UI checks, and the updated Event verification script passed,
+including hour/minute adjustments, limits, labels, and storing/disabling the
+custom duration in isolated in-memory SQLite. Local reference images remain
+missing, so visual comparison is blocked; the +/- control layout is a judgment
+call. Phone checklist: open Reminder, confirm 10 minutes replaces 5 minutes;
+choose Custom time and adjust both controls without a keyboard; set 1 hour
+30 minutes, Done, Save, reopen and confirm it persists; check zero and scrolling.
+
+Modal gap and continued typing-shift correction (2026-10-06): the user reports
+that the prior window snapshot still shifted and exposed the underlying tabs.
+That earlier mock checked matching app/modal heights and did not establish a
+device fix. BottomSheet now measures its native modal root, anchors content to
+the measured opening bounds, and extends an opaque surface to the actual bottom.
+Its content receives captured safe-area insets so keyboard changes cannot reflow
+the footer; the lifted host remains outside that scope with live measurements.
+Only BottomSheet runtime code changed; unrelated pending work was preserved.
+
+TypeScript, UI rules, and existing keyboard docking/navigation checks passed.
+An isolated render regression now covers app/native height mismatches in both
+directions, three keyboard heights, bottom-inset changes, dismissal, reopening,
+and opaque bottom coverage. ADB reports no device; these checks do not prove
+phone appearance. Stitch references remain absent. Phone checklist: reopen + >
+Event; confirm no tabs show below Save, type in title/location, Done/Android Back,
+and repeat in Expense. Confirm the sheet top, cards, and footer do not reflow.
+
+Quick-add keyboard stability (2026-10-06): BottomSheet now captures its opening
+height and top inset and uses a fixed frame anchored at the modal's top. Android
+keyboard resizing no longer bottom-aligns the form to the shortened viewport or
+compresses its cards. A width change or reopening refreshes the captured bounds.
+The existing lifted overlay remains a separate sibling with live keyboard bounds.
+Only BottomSheet runtime code changed in this follow-up; other pending work was
+preserved. No database logic changed.
+
+Checks passed: TypeScript, UI rules, existing lifted-bar docking/Next/Done script,
+and an isolated rendering regression against the actual BottomSheet component
+with mocked native dimensions (keyboard resize/dismissal, width change, reopen,
+expanded/default height, and overlay placement). This is not device verification.
+Local Stitch references remain unavailable. Phone checklist: open +, tap Event
+title/location and Expense amount/description, type, Next/Done, and dismiss with
+Android Back; confirm the underlying sheet keeps its size and position and the
+typing bar stays above the keyboard. Save and reopen to confirm entered text.
+
+Event All day default (2026-10-06): new Add Event forms open with All day enabled.
+Editing preserves the event's saved All day setting, including timed events.
+TypeScript and existing Event CRUD checks with isolated in-memory SQLite passed.
+Local Stitch comparison remains blocked by absent references (see BLOCKERS.md).
+Phone checklist: open Add Event and confirm All day is on; turn it off to enter
+times; reopen Add Event to confirm it defaults on again; edit a timed event and
+confirm All day stays off.
+
+Quick-add fill and notification-shade follow-up (2026-10-06): Event and Expense
+form cards now grow into the remaining sheet body while retaining shared card
+gaps and the fixed Save footer. Android restores the existing hidden navigation
+bar setting on focus return and foreground resume. BottomSheet renders beneath
+both system bars and no longer restarts its entrance animation on window-height
+changes. Only the affected forms, sheet shell, and system-bar lifecycle were
+changed; other pending work was preserved.
+
+TypeScript, UI source rules, Save-footer architecture, and diff whitespace checks
+passed. ADB reports no connected phone. Local Stitch screenshots/design system
+remain absent, so card growth is a judgment based on the user's request.
+Phone checklist: inspect + > Event and Expense for unused space, type and save,
+then open/close the notification shade on Calendar and with each sheet open;
+confirm the layout returns to its prior size without a sheet entrance replay.
+
+Event custom reminder modal correction (2026-10-06): Custom time now expands
+inside Reminder Time, with its minutes field and Done button in that modal.
+Removed the extra custom field card from the main event sheet. The modal owns
+an instance of the existing lifted-input provider/host so keyboard input stays
+above the same native modal, with no auto-focus. Closing validates the minutes;
+invalid input keeps the modal open and displays the field error. Presets still
+select and close immediately. Added scrolling and safe-area clearance.
+TypeScript, UI rules, Event CRUD/custom-offset checks in in-memory SQLite, and
+diff whitespace checks passed. Visual comparison remains blocked by missing
+local references. Phone checklist: Reminder > Custom time stays in the modal;
+tap the minutes field, enter 90, keyboard Done, modal Done; verify the reminder
+summary and save/reopen. Check invalid input and small-screen scrolling.
+
+Event and Expense quick-add layout (2026-10-06): these tabs open at the available
+safe-area height, use a compact header and cards, and retain the fixed Save footer
+and existing lifted inputs. Expense category chips now open in a separate picker,
+so custom categories do not lengthen the main form. Event title/location helper
+lines were removed; monthly-repeat help was shortened. Scroll fallback remains for
+small displays, validation errors, custom reminders, and expanded iOS date pickers.
+Other in-progress changes were preserved. No database behavior changed.
+
+Validation: TypeScript, UI source rules, and existing quick-add Save architecture
+checks passed. Local design comparison is blocked and ADB reports no connected
+device. Phone checklist: open + > Event and Expense; confirm the default fields
+and Save fit, select a category, type via the lifted bar, use date/time pickers,
+and check an edit form and larger text size.
+
+Event reminder controls (2026-10-06): new events default to 30 minutes before.
+Removed the 10/15-minute presets; retained at start, 5 minutes, 30 minutes,
+1 hour, and 1 day. Custom time opens a minutes-before field in the existing
+sheet, using LiftedField without auto-focus and the existing Save footer.
+Accepts nonnegative whole minutes; invalid input blocks Save. Custom labels
+preserve exact days/hours/minutes. Editing retains saved offsets, including
+legacy 10/15-minute values as custom. Turning reminders off stores null.
+TypeScript, UI rules, and extended Event CRUD verification passed, including
+custom parsing, exact labels, and persistence/disabling in temporary in-memory
+SQLite. Notifications remain deferred. Missing local Stitch references block
+visual comparison; reusing the form card and adding Custom time are judgment
+calls. Phone checklist: confirm the 30-minute default and removed presets;
+choose Custom time, tap the field, enter 90, Done, Save, and reopen; try blank
+input and confirm Save validation; switch Reminder off and confirm Save works.
+
+Event quick-add field order (2026-10-06): Event title appears first, with Add
+location directly below it and a persistent muted Optional hint. The location
+input and accessibility label also identify it as optional. Reused FormCard
+spacing and the existing lifted fields; the shared edit form uses the same order.
+TypeScript, UI rules, and existing Event CRUD verification using in-memory SQLite
+passed. No database logic changed. Local Stitch comparison is blocked by missing
+references. Phone checklist: open + > Event, confirm title/location order and
+Optional hint; enter a location and confirm the hint remains; save another event
+without a location.
+
+Calendar month-relative week labels (2026-10-06): Week cards now show "1st week",
+"2nd week", etc.; the compact overview shows "1st", "2nd", etc. Labels reset for
+each viewed month. The partial week containing the 1st counts as its first week;
+months can have four, five, or six weeks. Existing layout and theme are retained.
+TypeScript and verify-week-view-data.ts passed, including month/year boundaries
+and isolated in-memory SQLite checks. Stitch comparison is blocked by missing
+local references. Phone checklist: open Calendar > Week, check both label sets,
+then change months and confirm numbering restarts at 1st.
+
+Calendar empty-state copy follow-up (2026-10-06): removed the supporting subtext
+from Week and Month as requested, retaining existing titles, icons, and actions.
+`npx.cmd tsc --noEmit` passed. No database logic changed. Local Stitch comparison
+remains blocked by missing references. Phone check: open empty Week and Month
+views and confirm the banners have no supporting subtext.
+
 | Step | Status | Verification / commit |
 | --- | --- | --- |
 | 1a | Done; phone check passed | `eb33758` baseline |
@@ -142,3 +351,15 @@ Checks passed: `tsc --noEmit`, UI rules, Expo dependency check, isolated SQLite
 UI and Event CRUD scripts, and a clean Android export (4,147 modules). No device
 was connected for runtime verification. See the phone checklist in
 `ui-repair-verification.md`.
+# Calendar Day empty-state copy — 2026-10-06
+
+Removed the truncated supporting sentence from the empty Calendar Day banner
+at the user's request. Visual judgment: retain the existing title, clock icon,
+and Add an event action, with no replacement sentence. Local Stitch comparison
+is blocked by missing reference files (see BLOCKERS.md).
+
+Validation: `npx.cmd tsc --noEmit` passed. This copy-only change does not alter
+database logic.
+
+Phone checklist: open Calendar > Day on an empty date; confirm the banner shows
+Nothing planned today and Add an event without the supporting sentence.

@@ -57,15 +57,15 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
         } },
       ]);
     };
-    return <SheetSection>
-      <FormCard><Controller control={control} name="title" rules={{ validate: value => Boolean(value.trim()) || 'Task title is required' }}
+    return <SheetSection fill>
+      <FormCard compact><Controller control={control} name="title" rules={{ validate: value => Boolean(value.trim()) || 'Task title is required' }}
         render={({ field }) => <LiftedField id="task-title" label="Task title" placeholder="Task title" value={field.value} onChangeText={field.onChange} fieldOrder={order} error={errors.title?.message} />} /></FormCard>
-      <DateTimeField value={taskDueAt} onChange={setTaskDueAt} optional fallbackDate={selectedDate} />
-      <FormCard><SheetSection gap="sm"><Text style={{ color: colors['text-muted'] }}>Priority</Text>
+      <DateTimeField compact value={taskDueAt} onChange={setTaskDueAt} optional fallbackDate={selectedDate} />
+      <FormCard compact><SheetSection gap="sm"><Text style={{ color: colors['text-muted'] }}>Priority</Text>
         <SegmentedControl options={[{ value: 'low', label: 'Low' }, { value: 'medium', label: 'Medium' }, { value: 'high', label: 'High' }]}
           selectedValue={watch('priority')} onChange={value => setValue('priority', value)} />
       </SheetSection></FormCard>
-      <FormCard><SheetSection gap="sm">
+      <FormCard compact><SheetSection gap="sm">
         <FormRow icon={<Bell size={16} color={colors.tasks} />} label="Reminder"
           value={reminder === null ? 'Off' : reminder === 0 ? 'At due time' : reminder + ' minutes before'}
           right={<Switch value={reminder !== null} onValueChange={enabled => setValue('reminder', enabled ? 15 : null)} trackColor={{ true: colors.tasks, false: colors.border }} />} />
@@ -74,7 +74,7 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
             selected={offset === reminder} onPress={() => setValue('reminder', offset)} />)}
         </View>}
       </SheetSection></FormCard>
-      <FormCard><SheetSection gap="sm">
+      <FormCard compact><SheetSection gap="sm">
         <FormRow label="Subtasks" right={<Pressable accessibilityRole="button" accessibilityLabel="Add subtask"
           style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
           onPress={() => { closeBar(); setChildren(items => [...items, { title: '', done: false }]); }}><Plus size={20} color={colors.tasks} /></Pressable>} />

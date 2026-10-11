@@ -7,7 +7,11 @@ import {
   Alert,
   Modal,
   Platform,
+  ScrollView,
+  StyleSheet,
+  Keyboard,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useForm, Controller } from 'react-hook-form';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import {
@@ -19,6 +23,8 @@ import {
   ChevronRight,
   Sun,
   X,
+  Minus,
+  Plus,
 } from 'lucide-react-native';
 import { useUIStore } from '@/store/useUIStore';
 import {
@@ -31,6 +37,9 @@ import {
   formatReminderLabel,
   RECURRENCE_OPTIONS,
   REMINDER_OPTIONS,
+  DEFAULT_REMINDER_MINUTES,
+  adjustReminderDuration,
+  parseReminderDuration,
   RecurrenceFrequency,
 } from '@/utils/recurrence';
 import { formatTimeDisplay } from '@/utils/timelineLayout';
@@ -38,6 +47,7 @@ import { colors, spacing, layout } from '@/constants/theme';
 import { FormCard, FormCardRow, FormRow, SheetSection } from '@/components/ui';
 import { LiftedField } from '@/components/lifted-input/LiftedField';
 import { useLiftedInput } from '@/components/lifted-input/LiftedInputContext';
+import { LiftedInputProvider, LiftedInputHost } from '@/components/lifted-input';
 import { QuickAddFormHandle, QuickAddFormProps } from '@/types/quickAdd';
 
 export type EventFormProps = QuickAddFormProps;
@@ -51,6 +61,7 @@ interface FormValues {
   recurrence: RecurrenceFrequency;
   hasReminder: boolean;
   reminderMinutes: number;
+  customReminderMinutes: number;
 }
 
 function getDefaultDates(dateContext?: string) {
@@ -85,6 +96,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   function EventForm({ onClose, scrollViewRef }, ref) {
     const { editingEvent, selectedDateContext } = useUIStore();
     const { closeBar } = useLiftedInput();
+    const insets = useSafeAreaInsets();
     const isEditMode = Boolean(editingEvent);
 
   // Initialize dates
@@ -118,7 +130,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   } = useForm<FormValues>({
     defaultValues: {
       title: editingEvent?.title || '',
-      allDay: Boolean(editingEvent?.allDay),
+      allDay: editingEvent ? Boolean(editingEvent.allDay) : true,
       startDate: initialStartDate,
       endDate: initialEndDate,
       location: editingEvent?.location || '',
@@ -126,7 +138,8 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       hasReminder: editingEvent
         ? editingEvent.reminderMinutes !== null && editingEvent.reminderMinutes !== undefined
         : true,
-      reminderMinutes: editingEvent?.reminderMinutes ?? 15,
+      reminderMinutes: editingEvent?.reminderMinutes ?? DEFAULT_REMINDER_MINUTES,
+      customReminderMinutes: editingEvent?.reminderMinutes ?? DEFAULT_REMINDER_MINUTES,
     },
   });
 
@@ -137,6 +150,19 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   const isRepeating = recurrence !== 'none';
   const hasReminder = watch('hasReminder');
   const reminderMinutes = watch('reminderMinutes');
+  const customReminderMinutes = watch('customReminderMinutes');
+  const [customHoursText, setCustomHoursText] = useState(() => String(Math.floor(customReminderMinutes / 60)));
+  const [customMinutesText, setCustomMinutesText] = useState(() => String(customReminderMinutes % 60));
+  const parsedCustomDuration = parseReminderDuration(customHoursText, customMinutesText);
+  const updateCustomDuration = (minutes: number) => {
+    setValue('customReminderMinutes', minutes);
+    setCustomHoursText(String(Math.floor(minutes / 60)));
+    setCustomMinutesText(String(minutes % 60));
+  };
+  const [isCustomReminder, setIsCustomReminder] = useState(() =>
+    editingEvent?.reminderMinutes != null &&
+    !REMINDER_OPTIONS.some(option => option.value === editingEvent.reminderMinutes)
+  );
 
   // Picker State
   type PickerTarget = 'start' | 'end';
@@ -147,6 +173,12 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   // Modals for Recurrence and Reminder Selection
   const [isRecurrenceModalOpen, setIsRecurrenceModalOpen] = useState<boolean>(false);
   const [isReminderModalOpen, setIsReminderModalOpen] = useState<boolean>(false);
+
+  const closeReminderModal = () => {
+    if (isCustomReminder && parsedCustomDuration === null) return;
+    Keyboard.dismiss();
+    setIsReminderModalOpen(false);
+  };
 
   // Date and Time Picker Handlers
   const handleOpenPicker = (target: PickerTarget) => {
@@ -352,7 +384,9 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
       }
 
       const recurrenceVal = data.recurrence === 'none' ? null : data.recurrence;
-      const reminderVal = data.hasReminder ? data.reminderMinutes : null;
+      const reminderVal = data.hasReminder
+        ? isCustomReminder ? data.customReminderMinutes : data.reminderMinutes
+        : null;
 
       if (isEditMode && editingEvent) {
         await updateEvent(editingEvent.id, {
@@ -436,9 +470,9 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
   return (
     <>
       {/* Stacked Cards Container with standardized 12dp card gap */}
-      <SheetSection>
+      <SheetSection fill>
         {/* 1. Title Lifted Field Card */}
-        <FormCard>
+        <FormCard compact>
           <Controller
             control={control}
             name="title"
@@ -453,7 +487,6 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                   if (val.trim()) clearErrors('title');
                 }}
                 placeholder="Event title (e.g. Design Review)"
-                hint="Tap to add a title"
                 error={errors.title?.message}
                 fieldOrder={['title']}
                 actionLabel="Done"
@@ -472,8 +505,28 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           />
         </FormCard>
 
-        {/* 2. All-Day Toggle Row (56dp min height, vertically centered, no extra bottom space) */}
-        <FormCard singleLine>
+        {/* 2. Optional Location Lifted Field Card */}
+        <FormCard compact>
+          <Controller
+            control={control}
+            name="location"
+            render={({ field: { onChange, value } }) => (
+              <LiftedField
+                id="location"
+                label="Location (optional)"
+                value={value}
+                onChangeText={onChange}
+                placeholder="Add location"
+                fieldOrder={['location']}
+                actionLabel="Done"
+                icon={<MapPin size={16} color={colors['text-muted']} />}
+              />
+            )}
+          />
+        </FormCard>
+
+        {/* 3. All-Day Toggle Row (56dp min height, vertically centered, no extra bottom space) */}
+        <FormCard compact singleLine>
           <FormRow
             icon={<Sun size={16} color={colors['text-muted']} />}
             label="All-day"
@@ -494,10 +547,11 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           />
         </FormCard>
 
-        {/* 3. Starts & Ends Cards (Side-by-side, 12dp gap, equal widths) */}
+        {/* 4. Starts & Ends Cards (Side-by-side, 12dp gap, equal widths) */}
         <FormCardRow>
           {/* STARTS Card */}
           <FormCard
+            compact
             style={{ flex: 1 }}
             onPress={() => handleOpenPicker('start')}
             accessibilityRole="button"
@@ -541,6 +595,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
 
           {/* ENDS Card */}
           <FormCard
+            compact
             style={{ flex: 1 }}
             onPress={isRepeating && allDay ? undefined : handleOpenEndPicker}
             accessibilityRole="button"
@@ -638,28 +693,9 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
           </Text>
         )}
 
-        {/* 4. Location Lifted Field Card */}
-        <FormCard singleLine>
-          <Controller
-            control={control}
-            name="location"
-            render={({ field: { onChange, value } }) => (
-              <LiftedField
-                id="location"
-                label="Location"
-                value={value}
-                onChangeText={onChange}
-                placeholder="Add location (e.g. Studio B)"
-                fieldOrder={['location']}
-                actionLabel="Done"
-                icon={<MapPin size={16} color={colors['text-muted']} />}
-              />
-            )}
-          />
-        </FormCard>
-
         {/* 5. Repeats Row */}
         <FormCard
+          compact
           singleLine
           onPress={() => {
             closeBar();
@@ -690,7 +726,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         </FormCard>
 
         {/* 6. Reminder Row */}
-        <FormCard>
+        <FormCard compact>
           <FormRow
             icon={<Bell size={16} color={colors['text-muted']} />}
             label={
@@ -718,7 +754,9 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                       marginTop: layout.labelToValueGap,
                     }}
                   >
-                    {formatReminderLabel(reminderMinutes)}
+                    {isCustomReminder
+                      ? formatReminderLabel(customReminderMinutes)
+                      : formatReminderLabel(reminderMinutes)}
                   </Text>
                 )}
               </Pressable>
@@ -730,7 +768,12 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 render={({ field: { onChange, value } }) => (
                   <Switch
                     value={value}
-                    onValueChange={onChange}
+                    onValueChange={(enabled) => {
+                      onChange(enabled);
+                      if (!enabled) {
+                        closeBar();
+                      }
+                    }}
                     trackColor={{ false: colors.border, true: colors.primary }}
                     thumbColor={colors.surface}
                   />
@@ -900,14 +943,21 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
         visible={isReminderModalOpen}
         transparent
         animationType="fade"
-        onRequestClose={() => setIsReminderModalOpen(false)}
+        onRequestClose={closeReminderModal}
         statusBarTranslucent
       >
-        <Pressable
-          onPress={() => setIsReminderModalOpen(false)}
-          className="flex-1 justify-center items-center px-6"
-          style={{ backgroundColor: colors.overlay }}
-        >
+        {isReminderModalOpen && <LiftedInputProvider>
+        <View style={{ flex: 1, backgroundColor: colors.overlay, paddingTop: insets.top, paddingBottom: insets.bottom }}>
+          <Pressable
+            onPress={closeReminderModal}
+            style={StyleSheet.absoluteFill}
+            accessibilityRole="button"
+            accessibilityLabel="Close reminder picker"
+          />
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', padding: spacing.lg }}
+          >
           <View
             style={{
               backgroundColor: colors.surface,
@@ -936,7 +986,7 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 Reminder Time
               </Text>
               <Pressable
-                onPress={() => setIsReminderModalOpen(false)}
+                onPress={closeReminderModal}
                 className="rounded-full active:bg-background"
                 style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
                 accessibilityRole="button"
@@ -946,12 +996,14 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
               </Pressable>
             </View>
             {REMINDER_OPTIONS.map((opt) => {
-              const isSelected = reminderMinutes === opt.value;
+              const isSelected = !isCustomReminder && reminderMinutes === opt.value;
               return (
                 <Pressable
                   key={opt.value}
                   onPress={() => {
                     setValue('reminderMinutes', opt.value);
+                    updateCustomDuration(opt.value);
+                    setIsCustomReminder(false);
                     setIsReminderModalOpen(false);
                   }}
                   style={{
@@ -982,8 +1034,103 @@ export const EventForm = React.forwardRef<QuickAddFormHandle, EventFormProps>(
                 </Pressable>
               );
             })}
+            <Pressable
+              onPress={() => {
+                setIsCustomReminder(true);
+              }}
+              className="active:opacity-80"
+              style={{ minHeight: 44, paddingVertical: layout.cardGap, paddingHorizontal: spacing.base }}
+              accessibilityRole="button"
+              accessibilityState={{ selected: isCustomReminder }}
+            >
+              <FormRow
+                label="Custom time…"
+                right={isCustomReminder ? <Check size={16} color={colors.primary} /> :
+                  <ChevronRight size={16} color={colors['text-muted']} />}
+              />
+            </Pressable>
+            <Controller
+              control={control}
+              name="customReminderMinutes"
+              render={({ field: { onChange, value } }) => isCustomReminder ? (
+                <SheetSection>
+                  <FormCardRow>
+                    {(['hours', 'minutes'] as const).map(unit => {
+                      const amount = unit === 'hours' ? Math.floor(value / 60) : value % 60;
+                      const maximum = unit === 'hours' ? 35791393 : 59;
+                      return (
+                        <FormCard key={unit} compact style={{ flex: 1 }}>
+                          <SheetSection>
+                            <Text style={{ color: colors['text-muted'], textAlign: 'center', fontWeight: '500' }} maxFontSizeMultiplier={layout.maxFontScale}>
+                              {unit === 'hours' ? 'Hours' : 'Minutes'}
+                            </Text>
+                            <LiftedField
+                              id={`reminder-${unit}`}
+                              label={unit === 'hours' ? 'Reminder hours' : 'Reminder minutes'}
+                              value={unit === 'hours' ? customHoursText : customMinutesText}
+                              placeholder="0"
+                              keyboardType="number-pad"
+                              fieldOrder={['reminder-hours', 'reminder-minutes']}
+                              actionLabel="Done"
+                              displayTextStyle={{ fontSize: 28, fontWeight: '600', textAlign: 'center', fontVariant: ['tabular-nums'] }}
+                              onChangeText={text => {
+                                if (unit === 'hours') setCustomHoursText(text);
+                                else setCustomMinutesText(text);
+                                const parsed = parseReminderDuration(
+                                  unit === 'hours' ? text : customHoursText,
+                                  unit === 'minutes' ? text : customMinutesText
+                                );
+                                if (parsed !== null) onChange(parsed);
+                              }}
+                            />
+                            <FormCardRow>
+                              {([-1, 1] as const).map(delta => {
+                                const disabled = delta < 0 ? amount === 0 : amount >= maximum;
+                                return (
+                                  <Pressable
+                                    key={delta}
+                                    disabled={disabled}
+                                    onPress={() => updateCustomDuration(adjustReminderDuration(value, unit, delta))}
+                                    className="active:opacity-80"
+                                    style={{ flex: 1, minHeight: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: colors['surface-raised'], borderRadius: layout.cardBorderRadius, opacity: disabled ? 0.4 : 1 }}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={`${delta < 0 ? 'Decrease' : 'Increase'} ${unit}`}
+                                    accessibilityState={{ disabled }}
+                                  >
+                                    {delta < 0 ? <Minus size={20} color={colors.text} /> : <Plus size={20} color={colors.text} />}
+                                  </Pressable>
+                                );
+                              })}
+                            </FormCardRow>
+                          </SheetSection>
+                        </FormCard>
+                      );
+                    })}
+                  </FormCardRow>
+                  <Text style={{ color: colors['text-muted'], textAlign: 'center' }} maxFontSizeMultiplier={layout.maxFontScale}>
+                    {parsedCustomDuration === null
+                      ? 'Use whole hours (0 or more) and minutes (0–59).'
+                      : formatReminderLabel(value)}
+                  </Text>
+                  <Pressable
+                    onPress={closeReminderModal}
+                    disabled={parsedCustomDuration === null}
+                    className="active:opacity-80"
+                    style={{ minHeight: 44, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.primary, borderRadius: layout.cardBorderRadius, opacity: parsedCustomDuration === null ? 0.4 : 1 }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Use custom reminder time"
+                    accessibilityState={{ disabled: parsedCustomDuration === null }}
+                  >
+                    <Text style={{ color: colors['on-primary'], fontWeight: '600' }} maxFontSizeMultiplier={layout.maxFontScale}>Done</Text>
+                  </Pressable>
+                </SheetSection>
+              ) : <></>}
+            />
           </View>
-        </Pressable>
+          </ScrollView>
+          <LiftedInputHost />
+        </View>
+        </LiftedInputProvider>}
       </Modal>
     </>
   );

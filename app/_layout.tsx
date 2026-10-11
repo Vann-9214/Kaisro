@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator, AppState, Alert, Platform } from 'react-native';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { NavigationBar } from 'expo-navigation-bar';
+import { NavigationBar, setVisibilityAsync } from 'expo-navigation-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import {
   useFonts,
@@ -29,8 +29,22 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (Platform.OS !== 'android') return;
+    // setHidden caches repeated values; reapply natively after Android reveals bars.
+    const restoreNavigationBar = () => {
+      void setVisibilityAsync('hidden').catch(error => {
+        console.warn('[NavigationBar] Could not restore visibility:', error);
+      });
+    };
     NavigationBar.setHidden(true);
-    return () => NavigationBar.setHidden(false);
+    const focusListener = AppState.addEventListener('focus', restoreNavigationBar);
+    const stateListener = AppState.addEventListener('change', state => {
+      if (state === 'active') restoreNavigationBar();
+    });
+    return () => {
+      focusListener.remove();
+      stateListener.remove();
+      NavigationBar.setHidden(false);
+    };
   }, []);
 
   useEffect(() => {

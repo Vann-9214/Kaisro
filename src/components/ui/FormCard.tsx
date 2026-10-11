@@ -7,7 +7,7 @@ import {
   StyleProp,
   ViewStyle,
 } from 'react-native';
-import { colors, layout } from '@/constants/theme';
+import { colors, layout, spacing } from '@/constants/theme';
 
 export interface FormCardProps extends Omit<ViewProps, 'style'> {
   children: React.ReactNode;
@@ -16,6 +16,8 @@ export interface FormCardProps extends Omit<ViewProps, 'style'> {
   className?: string;
   /** When true, forces minimum height of 56dp with vertically centered content */
   singleLine?: boolean;
+  /** Compact quick-add cards retain a 44dp minimum touch target. */
+  compact?: boolean;
   disabled?: boolean;
   accessibilityRole?: PressableProps['accessibilityRole'];
   accessibilityLabel?: string;
@@ -28,6 +30,7 @@ export function FormCard({
   style,
   className = '',
   singleLine = false,
+  compact = false,
   disabled = false,
   accessibilityRole,
   accessibilityLabel,
@@ -39,10 +42,10 @@ export function FormCard({
     borderColor: colors.border,
     borderWidth: layout.cardBorderWidth,
     borderRadius: layout.cardBorderRadius,
-    paddingVertical: layout.cardPaddingVertical,
+    paddingVertical: compact ? spacing.sm : layout.cardPaddingVertical,
     paddingHorizontal: layout.cardPaddingHorizontal,
     justifyContent: 'center',
-    ...(singleLine ? { minHeight: layout.singleLineMinHeight } : {}),
+    ...(compact ? { minHeight: 44 } : singleLine ? { minHeight: layout.singleLineMinHeight } : {}),
   };
 
   if (onPress) {

@@ -1,5 +1,7 @@
-import React, { useImperativeHandle } from 'react';
-import { View, Text, Pressable, Switch, Alert } from 'react-native';
+import React, { useImperativeHandle, useState } from 'react';
+import { Text, Pressable, Switch, Alert, ScrollView } from 'react-native';
+import { Check, ChevronRight } from 'lucide-react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Controller, useForm } from 'react-hook-form';
 import { eq } from 'drizzle-orm';
 import { getDb, categories, recurringTransactions } from '@/db';
@@ -7,8 +9,8 @@ import { saveTransaction, deleteTransaction, catchUpMonthly } from '@/db/transac
 import { useUIStore } from '@/store/useUIStore';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { CURRENCY, parseToCentavos } from '@/constants/currency';
-import { colors, spacing } from '@/constants/theme';
-import { FormCard, FormRow, SheetSection, SegmentedControl, Chip } from '@/components/ui';
+import { colors, layout, spacing } from '@/constants/theme';
+import { FormCard, FormRow, SheetSection, SegmentedControl, BottomSheet } from '@/components/ui';
 import { DateTimeField } from '@/components/ui/DateTimeField';
 import { CategoryIcon } from '@/components/ui/CategoryIcon';
 import { LiftedField, useLiftedInput } from '@/components/lifted-input';
@@ -18,6 +20,8 @@ export const ExpenseForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProp
   function ExpenseForm({ onClose }, ref) {
     const { editingTransaction, transactionDate, setTransactionDate, selectedDate } = useUIStore();
     const { closeBar } = useLiftedInput();
+    const insets = useSafeAreaInsets();
+    const [categoryPickerOpen, setCategoryPickerOpen] = useState(false);
     const categoryRows = getDb().select().from(categories).all();
     const rule = editingTransaction?.recurringId ? getDb().select().from(recurringTransactions).where(eq(recurringTransactions.id, editingTransaction.recurringId)).get() : null;
     const { control, handleSubmit, watch, setValue, formState: { errors } } = useForm<{
@@ -49,26 +53,48 @@ export const ExpenseForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProp
         } },
       ]);
     };
-    return <SheetSection>
+    const selectedCategory = categoryRows.find(category => category.id === watch('categoryId'));
+    return <SheetSection fill>
       <SegmentedControl options={[{ value: 'expense', label: 'Expense' }, { value: 'income', label: 'Income' }]}
         selectedValue={watch('type')} onChange={value => setValue('type', value)} />
-      <FormCard><Controller control={control} name="amount"
+      <FormCard compact><Controller control={control} name="amount"
         rules={{ validate: value => parseToCentavos(value) > 0 || 'Enter a positive amount with up to two decimal places' }}
         render={({ field }) => <LiftedField id="amount" label="Amount" placeholder="0.00" prefix={CURRENCY.symbol} value={field.value}
           onChangeText={field.onChange} keyboardType="decimal-pad" error={errors.amount?.message} fieldOrder={['amount', 'description']} />} /></FormCard>
-      <FormCard><SheetSection gap="sm"><Text style={{ color: colors['text-muted'] }}>Category</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-          {categoryRows.map(category => <Chip key={category.id} label={category.name} icon={<CategoryIcon name={category.icon} size={14} />}
-            selected={watch('categoryId') === category.id} onPress={() => { closeBar(); setValue('categoryId', category.id); }} />)}
-        </View>
-      </SheetSection></FormCard>
-      <FormCard><Controller control={control} name="note" render={({ field }) => <LiftedField id="description" label="Description" placeholder="What was this for?"
+      <FormCard compact onPress={() => { closeBar(); setCategoryPickerOpen(true); }}
+        accessibilityLabel={`Category: ${selectedCategory?.name ?? 'None'}`}>
+        <FormRow label="Category" value={selectedCategory?.name ?? 'Select category'}
+          icon={selectedCategory ? <CategoryIcon name={selectedCategory.icon} size={16} /> : undefined}
+          right={<ChevronRight size={16} color={colors['text-muted']} />} />
+      </FormCard>
+      <FormCard compact><Controller control={control} name="note" render={({ field }) => <LiftedField id="description" label="Description" placeholder="What was this for?"
         value={field.value} onChangeText={field.onChange} fieldOrder={['amount', 'description']} />} /></FormCard>
-      <DateTimeField value={transactionDate} onChange={value => { if (value) setTransactionDate(value); }} fallbackDate={selectedDate} />
-      <FormCard><FormRow label="Repeats monthly"
-        value={rule ? 'Edits apply to this entry. Turning this off stops future entries.' : 'Uses this date each month, or the last day of shorter months.'}
-        right={<Switch value={watch('repeats')} onValueChange={value => setValue('repeats', value)} trackColor={{ true: colors.money, false: colors.border }} />} /></FormCard>
+      <DateTimeField compact value={transactionDate} onChange={value => { if (value) setTransactionDate(value); }} fallbackDate={selectedDate} />
+      <FormCard compact><FormRow label="Repeats monthly"
+        value={rule ? 'Off stops future entries.' : 'Last day if the month is shorter.'}
+        right={<Switch accessibilityLabel="Repeats monthly"
+          accessibilityHint={rule ? 'Edits apply to this entry. Turning this off stops future entries.' : 'Uses this date each month, or the last day of shorter months.'}
+          value={watch('repeats')} onValueChange={value => setValue('repeats', value)} trackColor={{ true: colors.money, false: colors.border }} />} /></FormCard>
       {editingTransaction && <Pressable onPress={remove} accessibilityRole="button" style={{ minHeight: 44, padding: spacing.md, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: colors['text-muted'] }}>Delete entry</Text></Pressable>}
+      <BottomSheet visible={categoryPickerOpen} onClose={() => setCategoryPickerOpen(false)}
+        title={<FormRow label="Category" right={<Pressable onPress={() => setCategoryPickerOpen(false)}
+          accessibilityRole="button" accessibilityLabel="Close category picker"
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.sm }}>
+          <Text style={{ color: colors.primary }}>Done</Text>
+        </Pressable>} />}>
+        <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{
+          paddingHorizontal: layout.sheetHorizontalPadding, paddingBottom: insets.bottom + spacing.lg,
+        }}>
+          <SheetSection>
+            {categoryRows.map(category => <FormCard compact key={category.id}
+              onPress={() => { setValue('categoryId', category.id); setCategoryPickerOpen(false); }}
+              accessibilityLabel={category.name} accessibilityState={{ selected: watch('categoryId') === category.id }}>
+              <FormRow label={category.name} icon={<CategoryIcon name={category.icon} size={16} />}
+                right={watch('categoryId') === category.id ? <Check size={16} color={colors.money} /> : undefined} />
+            </FormCard>)}
+          </SheetSection>
+        </ScrollView>
+      </BottomSheet>
     </SheetSection>;
   }
 );

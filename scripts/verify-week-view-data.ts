@@ -64,9 +64,22 @@ assert(getISOWeekNumber(monSep14) === 38, `Monday Sep 14, 2026 is in ISO week 38
 
 // September 2026 Week 3 in getVisibleWeeksForMonth
 const sepWeek3 = weeksSep2026[2];
-assert(sepWeek3.isoWeekNumber === 38, `September 2026 Week 3 has isoWeekNumber 38`);
-assert(sepWeek3.isoWeekLabel === 'Week 38', `September 2026 Week 3 has label "Week 38"`);
-assert(sepWeek3.shortWeekLabel === 'W38', `September 2026 Week 3 has short label "W38"`);
+assert(sepWeek3.weekNumber === 3, `September 2026 Week 3 has month-relative number 3`);
+assert(sepWeek3.weekLabel === '3rd week', `September 2026 Week 3 has label "3rd week"`);
+assert(sepWeek3.shortWeekLabel === '3rd', `September 2026 Week 3 has short label "3rd"`);
+
+// Labels restart within each viewed month, including partial and year-boundary weeks.
+for (const [year, month] of [[2027, 1], [2026, 8], [2026, 7], [2026, 9], [2027, 0]]) {
+  const ordinals = ['1st', '2nd', '3rd', '4th', '5th', '6th'];
+  getVisibleWeeksForMonth(year, month).forEach((week, index) => {
+    assert(week.weekNumber === index + 1, `${year}-${month + 1} month-relative week number`);
+    assert(week.weekLabel === `${ordinals[index]} week`, `Card label: ${week.weekLabel}`);
+    assert(week.shortWeekLabel === ordinals[index], `Compact label: ${week.shortWeekLabel}`);
+  });
+}
+const octoberFirstWeek = getVisibleWeeksForMonth(2026, 9)[0];
+assert(octoberFirstWeek.startDateStr === weeksSep2026[4].startDateStr,
+  'Shared boundary week is fifth in September and first in October');
 
 // -------------------------------------------------------------
 // 3. Date range labels across month and year boundaries
