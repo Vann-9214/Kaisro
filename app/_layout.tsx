@@ -96,39 +96,35 @@ export default function RootLayout() {
     return () => { listener.remove(); clearInterval(timer); };
   }, [dbReady]);
 
-  if (initError) return <SafeAreaProvider><View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center' }}>
-    <EmptyState variant="full" title="Could not open your planner" description="Try opening your local data again." actionLabel="Retry" onAction={() => setInitAttempt(value => value + 1)} />
-  </View></SafeAreaProvider>;
-  if (!fontsLoaded || !dbReady) {
-    return (
-      <SafeAreaProvider>
-        <StatusBar style={dark ? 'light' : 'dark'} />
-        <View
-          style={{ backgroundColor: colors.background }}
-          className="flex-1 items-center justify-center"
-        >
-          <ActivityIndicator size="small" color={colors.primary} />
-        </View>
-      </SafeAreaProvider>
-    );
-  }
-
   return (
     <SafeAreaProvider>
       <StatusBar style={dark ? 'light' : 'dark'} />
-      <View style={[{ flex: 1 }, vars(themeVariables())]}>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}
-      >
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="detail" options={{ headerShown: false }} />
-        <Stack.Screen name="categories" options={{ headerShown: false }} />
-        <Stack.Screen name="note" options={{ headerShown: false, animation: 'slide_from_right' }} />
-      </Stack>
-      <QuickAddBottomSheet />
+      {/* NativeWind's variable provider must exist on the initial render. */}
+      <View style={[{ flex: 1, backgroundColor: colors.background }, vars(themeVariables())]}>
+        {initError ? (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <EmptyState variant="full" title="Could not open your planner" description="Try opening your local data again." actionLabel="Retry" onAction={() => setInitAttempt(value => value + 1)} />
+          </View>
+        ) : !fontsLoaded || !dbReady ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+            <ActivityIndicator size="small" color={colors.primary} />
+          </View>
+        ) : (
+          <>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            >
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen name="detail" options={{ headerShown: false }} />
+              <Stack.Screen name="categories" options={{ headerShown: false }} />
+              <Stack.Screen name="note" options={{ headerShown: false, animation: 'slide_from_right' }} />
+            </Stack>
+            <QuickAddBottomSheet />
+          </>
+        )}
       </View>
     </SafeAreaProvider>
   );

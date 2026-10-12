@@ -458,3 +458,24 @@ database logic.
 
 Phone checklist: open Calendar > Day on an empty date; confirm the banner shows
 Nothing planned today and Add an event without the supporting sentence.
+
+## Expo updates and startup navigation error — 2026-10-12
+
+Updated Expo to 57.0.27 and the recommended Constants, Linking, Router, and
+SQLite patch versions. Expo dependency check passes.
+
+Fixed the root loading-to-ready transition: the NativeWind theme-variable
+provider now exists from the first render, including loading, initialization
+failure, and retry. Adding it only after loading triggered NativeWind's upgrade
+diagnostic, which recursively read React Navigation's throwing context getters
+and produced the reported NavigationContainer error.
+
+Validation: TypeScript passes. `node scripts/verify-root-startup.cjs` reproduces
+the original error using the installed NativeWind diagnostic and checks the
+actual root layout with mocked startup hooks across loading, error, retry, and
+ready states. It never opens a database. Existing screen layout is retained;
+this startup fix makes no new visual design decisions.
+
+Phone checklist: restart with `npx.cmd expo start --go --clear`, scan the new
+QR code, confirm loading reaches Calendar, switch tabs, and open Quick Add.
+Physical-device confirmation remains pending.
