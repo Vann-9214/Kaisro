@@ -34,6 +34,8 @@ Comprehensive mobile UI overhaul guided by `ui-ux-pro-max` and `make-interfaces-
    - `budget.tsx`: Memoized `buildBudget` calculation with `useMemo`.
    - `useLocalData.ts`: Initialized data synchronously on mount, and guarded `useFocusEffect` to only refresh SQLite if the database counter actually changed while away.
    - `TabBar.tsx`: Wrapped with `React.memo` to eliminate redundant dock re-renders.
+7. **Developer Tools Removal**:
+   - Removed the Developer Tools card ("Load sample data" and "Clear all data") from `settings.tsx` per user instruction, leaving the app completely clean and pure for live user testing.
 
 TypeScript (`tsc --noEmit`), `check:ui`, and all verification test scripts pass.
 
