@@ -1,5 +1,5 @@
 import { useThemeRefresh } from '@/hooks/useThemeRefresh';
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback } from 'react';
 import { View, StyleSheet, useWindowDimensions, Animated } from 'react-native';
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -51,12 +51,19 @@ export default function TabLayout() {
     ]).start();
   }, [isSettings, fabScale, fabOpacity]);
 
+  const renderTabBar = useCallback(
+    (props: any) => <TabBar {...props} onAddPress={() => openAddSheet()} />,
+    [openAddSheet]
+  );
+
   return (
     <View style={styles.container}>
       <Tabs
-        tabBar={(props) => <TabBar {...props} onAddPress={() => openAddSheet()} />}
+        tabBar={renderTabBar}
         screenOptions={{
           headerShown: false,
+          lazy: false,
+          animation: 'none',
           tabBarStyle: {
             backgroundColor: colors.background,
             borderTopColor: colors.border,

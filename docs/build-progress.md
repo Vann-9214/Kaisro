@@ -28,6 +28,12 @@ Comprehensive mobile UI overhaul guided by `ui-ux-pro-max` and `make-interfaces-
    - Strict adherence to 44dp touch targets, semantic theme tokens, and non-blocking layout rules.
 5. **Expo SDK Dependencies**:
    - Updated `expo` (~57.0.30), `expo-constants` (~57.0.22), `expo-dev-client` (~57.0.20), `expo-linking` (~57.0.13), and `expo-router` (~57.0.28).
+6. **Smooth Tab Switching & Performance Optimization**:
+   - `_layout.tsx`: Configured `lazy: false` and `animation: 'none'` in screenOptions to pre-render tabs and eliminate cold-mount delays; memoized `renderTabBar` callback to prevent recreation.
+   - `notes.tsx`: Added `readAllNotesWithTags` in `noteActions.ts` (fetching notes + tags via 2 fast indexed queries with in-memory Map instead of N+1 query loop); initialized notes synchronously on frame 1 to eliminate layout thrash and `ActivityIndicator` flash.
+   - `budget.tsx`: Memoized `buildBudget` calculation with `useMemo`.
+   - `useLocalData.ts`: Initialized data synchronously on mount, and guarded `useFocusEffect` to only refresh SQLite if the database counter actually changed while away.
+   - `TabBar.tsx`: Wrapped with `React.memo` to eliminate redundant dock re-renders.
 
 TypeScript (`tsc --noEmit`), `check:ui`, and all verification test scripts pass.
 

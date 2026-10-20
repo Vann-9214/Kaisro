@@ -1,5 +1,5 @@
 import { useThemeRefresh } from '@/hooks/useThemeRefresh';
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ChevronLeft, ChevronRight, Receipt } from 'lucide-react-native';
@@ -37,7 +37,9 @@ export default function BudgetScreen() {
     try { if (editingRule) updateRecurringAmount(getDb(), editingRule.id, parseToCentavos(ruleAmount)); setEditingRule(null); useCalendarSync.getState().triggerRefresh(); }
     catch (error) { Alert.alert('Could not update rule', error instanceof Error ? error.message : 'Please try again.'); }
   };
-  const budget = data ? buildBudget(budgetMonth, data.categories, data.transactions, data.rules) : null;
+  const budget = useMemo(() => {
+    return data ? buildBudget(budgetMonth, data.categories, data.transactions, data.rules) : null;
+  }, [budgetMonth, data]);
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
     <TopBar featureName="Budget" />
     <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: layout.tabContentBottomPadding + insets.bottom }}>

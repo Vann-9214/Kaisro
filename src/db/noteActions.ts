@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import type { AppDatabase } from './types';
 import { notes, noteLinks, noteTags, tags, type Note } from './schema';
 import { replaceNoteLinks, type NoteTarget } from './linkActions';
@@ -38,6 +38,32 @@ export function saveNote(db: AppDatabase, draft: NoteDraft, id?: number): Note {
 
 export function readNoteTags(db: AppDatabase, id: number): string[] {
   return db.select({ name: tags.name }).from(noteTags).innerJoin(tags, eq(tags.id, noteTags.tagId)).where(eq(noteTags.noteId, id)).all().map(row => row.name);
+}
+
+export function readAllNotesWithTags(db: AppDatabase): (Note & { tagNames: string[] })[] {
+  const allNotes = db
+    .select()
+    .from(notes)
+    .orderBy(sql`${notes.pinned} DESC`, sql`${notes.favorite} DESC`, sql`${notes.updatedAt} DESC`)
+    .all();
+
+  const allTags = db
+    .select({ noteId: noteTags.noteId, name: tags.name })
+    .from(noteTags)
+    .innerJoin(tags, eq(tags.id, noteTags.tagId))
+    .all();
+
+  const tagsByNote = new Map<number, string[]>();
+  for (const t of allTags) {
+    const list = tagsByNote.get(t.noteId) ?? [];
+    list.push(t.name);
+    tagsByNote.set(t.noteId, list);
+  }
+
+  return allNotes.map(n => ({
+    ...n,
+    tagNames: tagsByNote.get(n.id) ?? [],
+  }));
 }
 
 function saveNoteContent(db: AppDatabase, draft: NoteDraft, id?: number): Note {

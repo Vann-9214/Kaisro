@@ -21,7 +21,7 @@ import { FileText, Search, X, Pin, Star } from 'lucide-react-native';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
-import { filterNotes, readNoteTags } from '@/db/noteActions';
+import { filterNotes, readAllNotesWithTags } from '@/db/noteActions';
 import { Chip } from '@/components/ui';
 import { colors, spacing, layout, createThemedStyles } from '@/constants/theme';
 
@@ -50,26 +50,25 @@ export default function NotesScreen() {
   const insets = useSafeAreaInsets();
   const refreshCounter = useCalendarSync((s) => s.refreshCounter);
 
-  const [notesList, setNotesList] = useState<(schema.Note & { tagNames: string[] })[]>([]);
+  const [notesList, setNotesList] = useState<(schema.Note & { tagNames: string[] })[]>(() => {
+    try {
+      return readAllNotesWithTags(getDb());
+    } catch {
+      return [];
+    }
+  });
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Reserve space for TabBar (56 + insets.bottom) + FAB (52 + 16) + margin (24)
   const bottomScrollPadding = 56 + insets.bottom + 16 + 52 + 24;
 
-  const fetchNotes = useCallback(async () => {
+  const fetchNotes = useCallback(() => {
     try {
-      setIsLoading(true);
       const db = getDb();
-      const rows = await db
-        .select()
-        .from(schema.notes)
-        .orderBy(sql`${schema.notes.pinned} DESC`, sql`${schema.notes.favorite} DESC`, sql`${schema.notes.updatedAt} DESC`);
-      setNotesList(rows.map(note => ({ ...note, tagNames: readNoteTags(db, note.id) })));
+      setNotesList(readAllNotesWithTags(db));
     } catch (e) {
       console.error('[NotesScreen Error]', e);
-    } finally {
-      setIsLoading(false);
     }
   }, []);
 

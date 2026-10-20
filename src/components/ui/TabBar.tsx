@@ -52,7 +52,7 @@ export interface CustomTabBarProps {
   onAddPress?: () => void;
 }
 
-export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTabBarProps) {
+export const TabBar = React.memo(function TabBar({ state, descriptors, navigation, onAddPress }: CustomTabBarProps) {
   useThemeRefresh();
   const insets = useSafeAreaInsets();
   const { fontScale } = useWindowDimensions();
@@ -170,6 +170,6 @@ export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTab
       })}
     </View>
   );
-}
+});
 
 export default TabBar;
