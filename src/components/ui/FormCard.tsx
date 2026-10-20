@@ -3,6 +3,7 @@ import React from 'react';
 import {
   View,
   Pressable,
+  Animated,
   ViewProps,
   PressableProps,
   StyleProp,
@@ -39,6 +40,26 @@ export function FormCard({
   ...rest
 }: FormCardProps) {
   useThemeRefresh();
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 60,
+      bounciness: 0,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
   const cardStyle: ViewStyle = {
     backgroundColor: colors.surface,
     borderColor: colors.border,
@@ -47,25 +68,32 @@ export function FormCard({
     paddingVertical: compact ? spacing.sm : layout.cardPaddingVertical,
     paddingHorizontal: layout.cardPaddingHorizontal,
     justifyContent: 'center',
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 8,
+    elevation: 2,
     ...(compact ? { minHeight: 44 } : singleLine ? { minHeight: layout.singleLineMinHeight } : {}),
   };
 
   if (onPress) {
-    // NativeWind merges styles as objects; a Pressable style callback loses
-    // the card's padding, border and flex width during that merge.
     return (
-      <Pressable
-        onPress={onPress}
-        disabled={disabled}
-        accessibilityRole={accessibilityRole ?? 'button'}
-        accessibilityLabel={accessibilityLabel}
-        accessibilityState={accessibilityState}
-        style={[cardStyle, style]}
-        className={`active:opacity-75 ${className}`}
-        {...rest}
-      >
-        {children}
-      </Pressable>
+      <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          disabled={disabled}
+          accessibilityRole={accessibilityRole ?? 'button'}
+          accessibilityLabel={accessibilityLabel}
+          accessibilityState={accessibilityState}
+          style={cardStyle}
+          className={className}
+          {...rest}
+        >
+          {children}
+        </Pressable>
+      </Animated.View>
     );
   }
 

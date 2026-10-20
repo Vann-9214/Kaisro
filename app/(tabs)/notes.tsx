@@ -17,7 +17,7 @@ import { Button } from '@/components/ui/Button';
 import { TopBar } from '@/components/ui/TopBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SheetSection } from '@/components/ui/SheetSection';
-import { FileText, Search, X } from 'lucide-react-native';
+import { FileText, Search, X, Pin, Star } from 'lucide-react-native';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { getDb } from '@/db';
 import * as schema from '@/db/schema';
@@ -185,10 +185,28 @@ export default function NotesScreen() {
                 accessibilityRole="button"
                 accessibilityLabel={`Open note: ${note.title}`}
               >
-                {(note.pinned || note.favorite || note.tagNames.length > 0) && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>
-                  {note.pinned && <Chip label="Pinned" size="sm" />}{note.favorite && <Chip label="Favorite" size="sm" />}
-                  {note.tagNames.map(tag => <Chip key={tag} label={tag} size="sm" />)}
-                </View>}
+                {(note.pinned || note.favorite || note.tagNames.length > 0) && (
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.xs }}>
+                    {note.pinned && (
+                      <Chip
+                        label="Pinned"
+                        size="sm"
+                        variant="primary"
+                        icon={<Pin size={10} color={colors['on-primary']} />}
+                      />
+                    )}
+                    {note.favorite && (
+                      <Chip
+                        label="Favorite"
+                        size="sm"
+                        icon={<Star size={10} color={colors.money} fill={colors.money} />}
+                      />
+                    )}
+                    {note.tagNames.map((tag) => (
+                      <Chip key={tag} label={`#${tag}`} size="sm" />
+                    ))}
+                  </View>
+                )}
                 <View style={styles.cardHeader}>
                   <Text
                     numberOfLines={2}

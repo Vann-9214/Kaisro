@@ -1,5 +1,5 @@
-import React from 'react';
-import { Pressable, Text, View, StyleProp, ViewStyle } from 'react-native';
+import React, { useRef } from 'react';
+import { Pressable, Text, View, Animated, StyleProp, ViewStyle } from 'react-native';
 
 export type ChipVariant = 'default' | 'primary' | 'tasks' | 'money';
 export type ChipSize = 'sm' | 'md';
@@ -24,6 +24,25 @@ export function Chip({
   style,
 }: ChipProps) {
   const isSm = size === 'sm';
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.95,
+      useNativeDriver: true,
+      speed: 60,
+      bounciness: 0,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
 
   let containerClasses = 'rounded-full flex-row items-center justify-center';
   let textClasses = 'font-medium';
@@ -62,15 +81,19 @@ export function Chip({
 
   if (onPress) {
     return (
-      <Pressable
-        onPress={onPress}
-        className={containerClasses}
-        style={[{ minHeight: 44, maxWidth: '100%', borderRadius: 9999 }, style]}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-      >
-        {content}
-      </Pressable>
+      <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          className={containerClasses}
+          style={{ minHeight: 44, maxWidth: '100%', borderRadius: 9999 }}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+        >
+          {content}
+        </Pressable>
+      </Animated.View>
     );
   }
 

@@ -6,6 +6,28 @@ setup/notifications (5/6); earlier exclusions below are historical.
 
 ## Status
 
+### Modern UI & Tactile Feedback Overhaul - 2026-10-20
+
+Comprehensive mobile UI overhaul guided by `ui-ux-pro-max` and `make-interfaces-feel-better`:
+1. **Tactile Spring Feedback**:
+   - `Card.tsx` and `FormCard.tsx`: Smooth spring scale compression (`scale(0.97)` / `scale(0.98)`) and multi-layer elevation shadow (`shadowOpacity: 0.04`, `elevation: 2`).
+   - `Button.tsx`: Tuned physical spring compression (`scale(0.96)`) per Rule 12.
+   - `Chip.tsx`: Spring press bounce (`scale(0.95)`).
+   - `FloatingAddButton.tsx`: 45-degree rotation spring on press with layered elevation shadow.
+2. **Modern Fluid Navigation**:
+   - `TabBar.tsx`: Modern floating pill dock with active tab pill highlight (`bg-surface`, crisp border, subtle elevation), `Inter_600SemiBold` typography, and active indicator dot.
+3. **Hero Cards & Screen Elevation**:
+   - `budget.tsx`: Upgraded to Financial Hero Card with 32px tabular net balance, deficit status badge, and side-by-side Income vs Expense badges.
+   - `tasks.tsx`: Upgraded with Focus Momentum Hero Card (32px tabular completion percentage, progress bar, counts pill, and remaining badge), task opacity fading (0.55) when completed, and urgent priority accenting.
+   - `notes.tsx`: Modernized note cards with Lucide `Pin` and `Star` micro-badges, clean `#tag` chip cloud, and layered card elevation.
+   - `index.tsx`: Elevated timeline items (events, tasks, expenses) with subtle layered depth and corrected contrast token for expense badges (`text-money`).
+4. **Delight & Animations**:
+   - `EmptyState.tsx`: Added fade-in and spring slide-up entrance animation.
+   - Strict adherence to 44dp touch targets, semantic theme tokens, and non-blocking layout rules.
+
+TypeScript (`tsc --noEmit`), `check:ui`, and all verification test scripts pass.
+
+
 ### Integrated feature completion - 2026-10-11
 
 Added tagged/formatted/pinned/favorite notes and validated links with navigation;

@@ -1106,6 +1106,11 @@ export default function CalendarScreen() {
                           borderLeftColor: colors[ev.colorToken ?? 'primary'],
                           left: `${leftPercent}%`,
                           width: `${widthPercent - 1.5}%`,
+                          shadowColor: colors.text,
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.04,
+                          shadowRadius: 3,
+                          elevation: 1,
                         }}
                         className="bg-surface border border-border border-l-primary rounded-xl p-2 justify-between active:opacity-90 overflow-hidden"
                         accessibilityRole="button"
@@ -1156,6 +1161,11 @@ export default function CalendarScreen() {
                           height: item.height,
                           left: `${leftPercent}%`,
                           width: `${widthPercent - 1.5}%`,
+                          shadowColor: colors.text,
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.04,
+                          shadowRadius: 3,
+                          elevation: 1,
                         }}
                         className="bg-surface border border-border border-l-tasks rounded-xl px-2 py-1 flex-row items-center justify-between overflow-hidden"
                       >
@@ -1218,12 +1228,17 @@ export default function CalendarScreen() {
                           height: item.height,
                           left: `${leftPercent}%`,
                           width: `${widthPercent - 1.5}%`,
+                          shadowColor: colors.text,
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.04,
+                          shadowRadius: 3,
+                          elevation: 1,
                         }}
                         className="bg-surface border border-money rounded-full px-3 py-1 flex-row items-center justify-between active:opacity-90 overflow-hidden"
                         accessibilityRole="button"
                         accessibilityLabel={`Expense: ${formatCurrency(tx.amount)}`}
                       >
-                        <Text numberOfLines={1} style={{ flexShrink: 1 }} className="text-xs font-semibold text-on-money tabular-nums">
+                        <Text numberOfLines={1} style={{ flexShrink: 1 }} className="text-xs font-semibold text-money tabular-nums">
                           {formatCurrency(tx.amount)}
                         </Text>
                         <Text className="text-[10px] text-text-muted truncate ml-1 flex-1 text-right" numberOfLines={1}>

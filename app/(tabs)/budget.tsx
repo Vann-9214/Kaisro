@@ -49,40 +49,82 @@ export default function BudgetScreen() {
           </View>} />
         {error ? <EmptyState variant="full" title="Couldn't load budget" actionLabel="Try again" onAction={refresh} description="Please try reading your ledger again." />
           : !budget ? <ActivityIndicator color={colors.money} /> : <>
-          <FormCard style={{ backgroundColor: colors.surface }}><SheetSection gap="sm">
-            <Text style={{ color: colors['text-muted'] }}>MONTHLY SUMMARY</Text>
-            <FormRow label="Income" right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.income)}</Text>} />
-            <FormRow label="Expenses" right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.expenses)}</Text>} />
-            {(() => {
-              const isDeficit = budget.remaining < 0;
-              return (
-                <FormRow
-                  label={
-                    <View>
-                      <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Inter_500Medium' }}>Remaining</Text>
-                      {isDeficit && (
-                        <Text accessibilityRole="alert" style={{ color: colors.error, fontSize: 11, fontFamily: 'Inter_500Medium', marginTop: 2 }}>
-                          Deficit · Over budget by {formatCurrency(Math.abs(budget.remaining))}
-                        </Text>
-                      )}
-                    </View>
-                  }
-                  right={
-                    <Text
-                      style={{
-                        color: isDeficit ? colors.error : colors.primary,
-                        fontSize: 24,
-                        fontFamily: 'Inter_600SemiBold',
-                        fontVariant: ['tabular-nums'],
-                      }}
-                    >
-                      {formatCurrency(budget.remaining)}
+          {/* Modern Financial Hero Card */}
+          <FormCard style={{ backgroundColor: colors.surface }}>
+            <SheetSection gap="sm">
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Text style={{ color: colors['text-muted'], fontSize: 11, fontFamily: 'Inter_500Medium', letterSpacing: 0.8, textTransform: 'uppercase' }}>
+                  Remaining Balance
+                </Text>
+                {budget.remaining < 0 && (
+                  <View style={{ backgroundColor: colors.surface, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 9999, borderWidth: 1, borderColor: colors.error }}>
+                    <Text style={{ color: colors.error, fontSize: 10, fontFamily: 'Inter_600SemiBold', textTransform: 'uppercase' }}>
+                      Deficit
                     </Text>
-                  }
-                />
-              );
-            })()}
-          </SheetSection></FormCard>
+                  </View>
+                )}
+              </View>
+
+              <Text
+                style={{
+                  color: budget.remaining < 0 ? colors.error : colors.primary,
+                  fontSize: 32,
+                  fontFamily: 'Inter_600SemiBold',
+                  letterSpacing: -0.5,
+                  fontVariant: ['tabular-nums'],
+                }}
+              >
+                {formatCurrency(budget.remaining)}
+              </Text>
+
+              {budget.remaining < 0 && (
+                <Text accessibilityRole="alert" style={{ color: colors.error, fontSize: 12, fontFamily: 'Inter_500Medium' }}>
+                  Over monthly budget by {formatCurrency(Math.abs(budget.remaining))}
+                </Text>
+              )}
+
+              {/* Income vs Expenses Stats Badges */}
+              <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.xs }}>
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.background,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Text style={{ color: colors['text-muted'], fontSize: 10, fontFamily: 'Inter_500Medium', textTransform: 'uppercase' }}>
+                    Income
+                  </Text>
+                  <Text style={{ color: colors.tasks, fontSize: 15, fontFamily: 'Inter_600SemiBold', fontVariant: ['tabular-nums'], marginTop: 2 }}>
+                    +{formatCurrency(budget.income)}
+                  </Text>
+                </View>
+
+                <View
+                  style={{
+                    flex: 1,
+                    backgroundColor: colors.background,
+                    paddingHorizontal: 12,
+                    paddingVertical: 8,
+                    borderRadius: 12,
+                    borderWidth: 1,
+                    borderColor: colors.border,
+                  }}
+                >
+                  <Text style={{ color: colors['text-muted'], fontSize: 10, fontFamily: 'Inter_500Medium', textTransform: 'uppercase' }}>
+                    Expenses
+                  </Text>
+                  <Text style={{ color: colors.text, fontSize: 15, fontFamily: 'Inter_600SemiBold', fontVariant: ['tabular-nums'], marginTop: 2 }}>
+                    −{formatCurrency(budget.expenses)}
+                  </Text>
+                </View>
+              </View>
+            </SheetSection>
+          </FormCard>
           {budget.entries.length === 0 && <FormCard style={{ backgroundColor: colors.surface }}>
             <EmptyState variant="full" title="No spending logged yet" description="Track quiet daily purchases or archival notes with mindful precision." actionLabel="Log an expense" actionModule="money"
               icon={<Receipt size={22} color={colors['on-money']} />} onAction={() => openAddSheet('transaction')} />

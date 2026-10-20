@@ -67,6 +67,11 @@ export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTab
         borderTopColor: colors.border,
         height: totalHeight,
         paddingBottom: insets.bottom,
+        shadowColor: colors.text,
+        shadowOffset: { width: 0, height: -3 },
+        shadowOpacity: 0.04,
+        shadowRadius: 10,
+        elevation: 8,
       }}
       className="flex-row items-center justify-around px-2"
     >
@@ -116,7 +121,23 @@ export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTab
             className="flex-1 items-center justify-center py-1"
             style={{ minHeight: 44 }}
           >
-            <View className="items-center justify-center h-7">
+            <View
+              style={{
+                paddingHorizontal: 12,
+                paddingVertical: 3,
+                borderRadius: 9999,
+                backgroundColor: isFocused ? colors.surface : 'transparent',
+                borderWidth: isFocused ? 1 : 0,
+                borderColor: colors.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                shadowColor: isFocused ? colors.text : 'transparent',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: isFocused ? 0.04 : 0,
+                shadowRadius: 2,
+                elevation: isFocused ? 1 : 0,
+              }}
+            >
               {tabItem.icon({ color: iconColor, size: 20 })}
             </View>
 
@@ -126,20 +147,21 @@ export function TabBar({ state, descriptors, navigation, onAddPress }: CustomTab
               style={{
                 color: iconColor,
                 fontSize: 10,
-                fontWeight: isFocused ? '500' : '400',
+                fontWeight: isFocused ? '600' : '400',
                 marginTop: 2,
+                letterSpacing: isFocused ? -0.1 : 0,
               }}
             >
               {tabItem.label}
             </Text>
 
-            {/* Understated 4px dot indicator for active tab */}
+            {/* Active indicator dot */}
             <View
               style={{
                 width: 4,
                 height: 4,
                 borderRadius: 2,
-                marginTop: 3,
+                marginTop: 2,
                 backgroundColor: isFocused ? colors.primary : 'transparent',
               }}
             />

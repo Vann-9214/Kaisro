@@ -42,9 +42,9 @@ export function Button({
 
   const handlePressIn = () => {
     Animated.spring(scaleAnim, {
-      toValue: 0.98,
+      toValue: 0.96,
       useNativeDriver: true,
-      speed: 50,
+      speed: 60,
       bounciness: 0,
     }).start();
   };

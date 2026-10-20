@@ -1,6 +1,6 @@
 import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
-import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
+import { View, Text, Pressable, Animated, Easing, StyleProp, ViewStyle } from 'react-native';
 import { Clock, Plus } from 'lucide-react-native';
 import { colors, layout, spacing } from '@/constants/theme';
 
@@ -32,9 +32,29 @@ export function EmptyState({
   actionModule = 'primary',
 }: EmptyStateProps) {
   useThemeRefresh();
+  const fadeAnim = React.useRef(new Animated.Value(0)).current;
+  const slideAnim = React.useRef(new Animated.Value(4)).current;
+
+  React.useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 200,
+        easing: Easing.out(Easing.quad),
+        useNativeDriver: true,
+      }),
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        friction: 6,
+        tension: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim]);
+
   if (variant === 'inline') {
     return (
-      <View
+      <Animated.View
         testID={testID}
         style={[
           {
@@ -48,6 +68,8 @@ export function EmptyState({
             flexDirection: 'row',
             alignItems: 'center',
             justifyContent: 'space-between',
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
           },
           style,
         ]}
@@ -131,13 +153,13 @@ export function EmptyState({
             </Text>
           </Pressable>
         ) : null}
-      </View>
+      </Animated.View>
     );
   }
 
   // Full-screen empty state variant
   return (
-    <View
+    <Animated.View
       testID={testID}
       style={[
         {
@@ -146,6 +168,8 @@ export function EmptyState({
           justifyContent: 'center',
           paddingHorizontal: 24,
           paddingVertical: 40,
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }],
         },
         style,
       ]}
@@ -228,7 +252,7 @@ export function EmptyState({
           </Text>
         </Pressable>
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 

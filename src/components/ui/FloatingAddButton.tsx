@@ -17,24 +17,46 @@ export function FloatingAddButton({
 }: FloatingAddButtonProps) {
   useThemeRefresh();
   const scaleAnim = React.useRef(new Animated.Value(1)).current;
+  const rotateAnim = React.useRef(new Animated.Value(0)).current;
 
   const handlePressIn = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 0.94,
-      useNativeDriver: true,
-      speed: 50,
-      bounciness: 0,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 0.92,
+        useNativeDriver: true,
+        speed: 60,
+        bounciness: 0,
+      }),
+      Animated.spring(rotateAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 40,
+        bounciness: 6,
+      }),
+    ]).start();
   };
 
   const handlePressOut = () => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      useNativeDriver: true,
-      speed: 40,
-      bounciness: 4,
-    }).start();
+    Animated.parallel([
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 40,
+        bounciness: 5,
+      }),
+      Animated.spring(rotateAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        speed: 35,
+        bounciness: 4,
+      }),
+    ]).start();
   };
+
+  const spin = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '45deg'],
+  });
 
   return (
     <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
@@ -51,15 +73,17 @@ export function FloatingAddButton({
             borderRadius: size / 2,
             backgroundColor: colors.primary,
             shadowColor: colors.primary,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.18,
-            shadowRadius: 10,
-            elevation: 6,
+            shadowOffset: { width: 0, height: 6 },
+            shadowOpacity: 0.25,
+            shadowRadius: 14,
+            elevation: 8,
           },
         ]}
         className="items-center justify-center"
       >
-        <Plus size={24} color={colors['on-primary']} strokeWidth={2} />
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <Plus size={24} color={colors['on-primary']} strokeWidth={2.2} />
+        </Animated.View>
       </Pressable>
     </Animated.View>
   );

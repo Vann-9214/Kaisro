@@ -40,10 +40,11 @@ function TaskRow({ task, today, move }: { task: TaskListItem; today: string; mov
   const [expanded, setExpanded] = useState(false);
   const hasSubtasks = task.subtasks.length > 0;
   const completed = task.subtasks.filter(child => child.done).length;
-  const priority = task.priority === 'urgent' ? 'High' : task.priority[0].toUpperCase() + task.priority.slice(1);
+  const isUrgent = task.priority === 'urgent';
+  const priority = isUrgent ? 'High' : task.priority[0].toUpperCase() + task.priority.slice(1);
   return (
     <FormCard
-      style={styles.card}
+      style={[styles.card, task.done && styles.cardDone]}
     >
       <SheetSection>
         <FormRow
@@ -52,7 +53,11 @@ function TaskRow({ task, today, move }: { task: TaskListItem; today: string; mov
           value={
             <View style={styles.metadata}>
               <Chip label={formatTaskDue(task.dueAt, today)} size="sm" variant={expanded ? 'tasks' : 'default'} />
-              <Chip label={priority} size="sm" icon={<Flag size={10} color={colors['text-muted']} />} />
+              <Chip
+                label={priority}
+                size="sm"
+                icon={<Flag size={10} color={isUrgent ? colors.error : colors['text-muted']} />}
+              />
               <Chip label={task.listName ?? 'Inbox'} size="sm" />
               {hasSubtasks && <Chip label={completed + '/' + task.subtasks.length} size="sm" icon={<ListChecks size={12} color={colors['text-muted']} />} />}
             </View>
@@ -148,16 +153,37 @@ export default function TasksScreen() {
           ) : (
             <SheetSection gap="lg">
               {list.total > 0 && (
-                <FormCard style={styles.card}>
+                <FormCard style={styles.heroCard}>
                   <SheetSection gap="sm">
-                    <FormRow
-                      label={<Text style={styles.body}>{list.remaining} {list.remaining === 1 ? 'task' : 'tasks'} left <Text style={styles.caption}>· {list.done.length} of {list.total} done</Text></Text>}
-                      right={<Text style={styles.percent}>{percent}%</Text>}
-                    />
+                    <View style={styles.heroHeader}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.heroEyebrow}>
+                          {filter === 'today' ? "TODAY'S MOMENTUM" : 'LIST PROGRESS'}
+                        </Text>
+                        <View style={styles.heroStatRow}>
+                          <Text style={styles.heroPercent}>{percent}%</Text>
+                          <View style={styles.heroCountsBadge}>
+                            <Text style={styles.heroCountsText}>
+                              {list.done.length} / {list.total} completed
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                      <View style={styles.heroRemainingBadge}>
+                        <Text style={styles.heroRemainingNumber}>{list.remaining}</Text>
+                        <Text style={styles.heroRemainingLabel}>
+                          {list.remaining === 1 ? 'task left' : 'tasks left'}
+                        </Text>
+                      </View>
+                    </View>
                     <View accessibilityRole="progressbar" accessibilityLabel="Task completion" accessibilityValue={{ min: 0, max: 100, now: percent }}>
                       <ProgressBar progress={list.progress} module="tasks" />
                     </View>
-                    <Text style={styles.caption}>{percent}% of {filter === 'today' ? "today's focus" : 'this list'} completed with intent</Text>
+                    <Text style={styles.caption}>
+                      {percent === 100
+                        ? 'All tasks completed — serene day ahead.'
+                        : `${list.remaining} ${list.remaining === 1 ? 'task' : 'tasks'} remaining in ${filter === 'today' ? "today's focus" : 'this list'}`}
+                    </Text>
                   </SheetSection>
                 </FormCard>
               )}
@@ -203,7 +229,7 @@ export default function TasksScreen() {
                   accessibilityState={{ expanded: showDone, disabled: list.done.length === 0 }}
                   style={styles.doneHeader}
                 >
-                  <Text style={styles.body}><Text style={styles.percent}>• </Text>Done ({list.done.length})</Text>
+                  <Text style={styles.body}><Text style={styles.percent}>• </Text>Completed ({list.done.length})</Text>
                   {showDone ? <ChevronDown size={18} color={colors['text-muted']} /> : <ChevronRight size={18} color={colors['text-muted']} />}
                 </Pressable>
                 {showDone && list.done.map(task => <TaskRow key={task.id} task={task} today={today} />)}
@@ -224,7 +250,25 @@ const styles = createThemedStyles(() => StyleSheet.create({
   caption: { fontFamily: 'Inter_400Regular', fontSize: 12, lineHeight: 18, color: colors['text-muted'] },
   eyebrow: { fontFamily: 'Inter_500Medium', fontSize: 10, lineHeight: 14, color: colors['text-muted'] },
   percent: { fontFamily: 'Inter_500Medium', fontSize: 14, color: colors.tasks, fontVariant: ['tabular-nums'] },
+  heroCard: { backgroundColor: colors.surface },
+  heroHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  heroEyebrow: { fontFamily: 'Inter_500Medium', fontSize: 10, lineHeight: 14, color: colors['text-muted'], letterSpacing: 0.5 },
+  heroStatRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.xs },
+  heroPercent: { fontFamily: 'Inter_600SemiBold', fontSize: 32, lineHeight: 38, color: colors.tasks, fontVariant: ['tabular-nums'] },
+  heroCountsBadge: {
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: 9999,
+    backgroundColor: colors['surface-raised'],
+    borderWidth: layout.cardBorderWidth,
+    borderColor: colors.border,
+  },
+  heroCountsText: { fontFamily: 'Inter_500Medium', fontSize: 12, color: colors['text-muted'], fontVariant: ['tabular-nums'] },
+  heroRemainingBadge: { alignItems: 'flex-end', justifyContent: 'center' },
+  heroRemainingNumber: { fontFamily: 'Inter_600SemiBold', fontSize: 24, lineHeight: 28, color: colors.text, fontVariant: ['tabular-nums'] },
+  heroRemainingLabel: { fontFamily: 'Inter_400Regular', fontSize: 11, color: colors['text-muted'] },
   card: { backgroundColor: colors.surface },
+  cardDone: { opacity: 0.55 },
   metadata: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   completed: { color: colors['text-muted'], textDecorationLine: 'line-through' },
   subtasks: { marginLeft: spacing.lg + layout.iconToLabelGap, paddingTop: spacing.xs },

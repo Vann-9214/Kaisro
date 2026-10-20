@@ -11,7 +11,7 @@ import { saveNote, deleteNote, readNoteTags, type NoteDraft } from '@/db/noteAct
 import { readNoteTargets } from '@/db/linkActions';
 import { useCalendarSync } from '@/hooks/useCalendarDay';
 import { KeyboardSafeScrollView } from '@/components/ui/KeyboardSafeScrollView';
-import { FormCard, FormRow, SheetSection, Chip } from '@/components/ui';
+import { FormCard, FormRow, SheetSection, Chip, TopBar } from '@/components/ui';
 import { NoteTargetPicker } from '@/components/notes/LinkPicker';
 import { FormattedNote } from '@/components/notes/FormattedNote';
 import { formatNoteSelection, type NoteFormat } from '@/utils/noteFormatting';
@@ -108,12 +108,35 @@ export default function NoteEditorScreen() {
     } },
   ]);
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
-    <View style={{ paddingTop: insets.top + spacing.xs, paddingHorizontal: spacing.md, paddingBottom: spacing.sm, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-      <Pressable accessibilityRole="button" accessibilityLabel="Back" onPress={() => { if (flush()) router.back(); }} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><ArrowLeft color={colors.text} /></Pressable>
-      <Text style={{ color: colors['text-muted'], flex: 1 }}>{status}</Text>
-      <Pressable accessibilityRole="button" accessibilityLabel="Save note" onPress={flush} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}><Text style={{ color: colors.primary }}>Save</Text></Pressable>
-      <Pressable accessibilityRole="button" accessibilityLabel="Delete note" onPress={remove} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><Trash2 color={colors['text-muted']} size={20} /></Pressable>
-    </View>
+    <TopBar
+      featureName="Note"
+      onBack={() => { if (flush()) router.back(); }}
+      rightAction={
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+          {Boolean(status) && (
+            <Text style={{ color: colors['text-muted'], fontSize: 11, marginRight: spacing.xs }}>
+              {status}
+            </Text>
+          )}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Save note"
+            onPress={flush}
+            style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Text style={{ color: colors.primary, fontWeight: '600', fontSize: 14 }}>Save</Text>
+          </Pressable>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Delete note"
+            onPress={remove}
+            style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
+          >
+            <Trash2 color={colors['text-muted']} size={18} />
+          </Pressable>
+        </View>
+      }
+    />
     {loaded && <KeyboardSafeScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing.xl }}>
       <SheetSection>
         <TextInput value={draft.title} onChangeText={title => change({ title })} placeholder="Title" placeholderTextColor={colors['text-muted']} style={{ color: colors.text, fontSize: 24 }} />
