@@ -26,6 +26,8 @@ Comprehensive mobile UI overhaul guided by `ui-ux-pro-max` and `make-interfaces-
 4. **Delight & Animations**:
    - `EmptyState.tsx`: Added fade-in and spring slide-up entrance animation.
    - Strict adherence to 44dp touch targets, semantic theme tokens, and non-blocking layout rules.
+5. **Expo SDK Dependencies**:
+   - Updated `expo` (~57.0.30), `expo-constants` (~57.0.22), `expo-dev-client` (~57.0.20), `expo-linking` (~57.0.13), and `expo-router` (~57.0.28).
 
 TypeScript (`tsc --noEmit`), `check:ui`, and all verification test scripts pass.
 
