@@ -54,7 +54,7 @@ export default function CategoriesScreen() {
     } catch { Alert.alert('Could not check category', 'Please try again.'); }
   };
   return <View style={{ flex: 1, backgroundColor: colors.background }}>
-    <TopBar featureName="Categories" rightAction={<Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Back to Budget" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><ArrowLeft size={20} color={colors.primary} /></Pressable>} />
+    <TopBar featureName="Categories" onBack={() => router.back()} />
     <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: insets.bottom + spacing['2xl'] }}>
       <SheetSection gap="lg">
         <Button title="Add category" onPress={() => open()} fullWidth />

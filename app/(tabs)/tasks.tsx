@@ -2,7 +2,7 @@ import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React, { useState } from 'react';
 import { View, Text, ScrollView, Pressable, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { CheckCircle2, ChevronDown, ChevronRight, Flag, ListChecks } from 'lucide-react-native';
+import { CheckCircle2, ChevronDown, ChevronRight, ChevronUp, Flag, ListChecks } from 'lucide-react-native';
 import { TopBar } from '@/components/ui/TopBar';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { FormCard, FormCardRow } from '@/components/ui/FormCard';
@@ -46,7 +46,6 @@ function TaskRow({ task, today, move }: { task: TaskListItem; today: string; mov
       style={styles.card}
     >
       <SheetSection>
-        {move && <View style={styles.metadata}><Chip label="Move up" onPress={() => move(-1)} /><Chip label="Move down" onPress={() => move(1)} /></View>}
         <FormRow
           icon={<Checkbox checked={task.done} onToggle={() => toggle(task.id)} accessibilityLabel={task.title} />}
           label={<Pressable onPress={() => openAddSheet('task', task)} accessibilityRole="button" accessibilityLabel={'Edit ' + task.title} style={{ minHeight: 44, justifyContent: 'center' }}><Text numberOfLines={2} maxFontSizeMultiplier={layout.maxFontScale} style={[styles.body, task.done && styles.completed]}>{task.title}</Text></Pressable>}
@@ -58,7 +57,32 @@ function TaskRow({ task, today, move }: { task: TaskListItem; today: string; mov
               {hasSubtasks && <Chip label={completed + '/' + task.subtasks.length} size="sm" icon={<ListChecks size={12} color={colors['text-muted']} />} />}
             </View>
           }
-          right={hasSubtasks ? <Pressable onPress={() => setExpanded(value => !value)} accessibilityRole="button" accessibilityLabel={'Subtasks for ' + task.title} accessibilityState={{ expanded }} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>{expanded ? <ChevronDown size={20} color={colors['text-muted']} /> : <ChevronRight size={20} color={colors['text-muted']} />}</Pressable> : undefined}
+          right={
+            move ? (
+              <View style={{ flexDirection: 'column', alignItems: 'center', justifyContent: 'center', marginLeft: spacing.xs }}>
+                <Pressable
+                  onPress={() => move(-1)}
+                  hitSlop={{ top: 8, bottom: 4, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={'Move up ' + task.title}
+                  style={{ minWidth: 44, minHeight: 28, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <ChevronUp size={20} color={colors.primary} />
+                </Pressable>
+                <Pressable
+                  onPress={() => move(1)}
+                  hitSlop={{ top: 4, bottom: 8, left: 8, right: 8 }}
+                  accessibilityRole="button"
+                  accessibilityLabel={'Move down ' + task.title}
+                  style={{ minWidth: 44, minHeight: 28, alignItems: 'center', justifyContent: 'center' }}
+                >
+                  <ChevronDown size={20} color={colors.primary} />
+                </Pressable>
+              </View>
+            ) : hasSubtasks ? (
+              <Pressable onPress={() => setExpanded(value => !value)} accessibilityRole="button" accessibilityLabel={'Subtasks for ' + task.title} accessibilityState={{ expanded }} style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>{expanded ? <ChevronDown size={20} color={colors['text-muted']} /> : <ChevronRight size={20} color={colors['text-muted']} />}</Pressable>
+            ) : undefined
+          }
         />
         {expanded && (
           <SheetSection gap="xs" style={styles.subtasks}>
@@ -205,7 +229,7 @@ const styles = createThemedStyles(() => StyleSheet.create({
   completed: { color: colors['text-muted'], textDecorationLine: 'line-through' },
   subtasks: { marginLeft: spacing.lg + layout.iconToLabelGap, paddingTop: spacing.xs },
   sectionHeading: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', gap: spacing.sm },
-  overdue: { color: colors.text },
+  overdue: { color: colors.error, fontWeight: '600' },
   doneHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: layout.singleLineMinHeight },
   empty: { paddingHorizontal: spacing.lg, paddingVertical: spacing['2xl'] },
   summaryRow: { gap: spacing.cardGap },

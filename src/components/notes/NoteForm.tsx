@@ -6,6 +6,7 @@ import {
   Alert,
   Pressable,
 } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useForm, Controller } from 'react-hook-form';
 import { FileText, Tag as TagIcon } from 'lucide-react-native';
 import { eq } from 'drizzle-orm';
@@ -31,6 +32,7 @@ const NOTE_FIELD_ORDER = ['title', 'body', 'tag'];
 export const NoteForm = React.forwardRef<QuickAddFormHandle, NoteFormProps>(
   function NoteForm({ onClose, scrollViewRef }, ref) {
   useThemeRefresh();
+    const router = useRouter();
     const { editingNote } = useUIStore();
     const isEditMode = Boolean(editingNote);
 
@@ -265,6 +267,34 @@ export const NoteForm = React.forwardRef<QuickAddFormHandle, NoteFormProps>(
             )}
           />
         </FormCard>
+
+        {/* Open in full editor link */}
+        <View style={{ alignItems: 'center', marginTop: spacing.xs }}>
+          <Pressable
+            onPress={() => {
+              onClose();
+              if (editingNote) {
+                router.push({ pathname: '/note', params: { id: editingNote.id } });
+              } else {
+                router.push('/note');
+              }
+            }}
+            style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.md }}
+            accessibilityRole="button"
+            accessibilityLabel="Open in full note editor"
+          >
+            <Text
+              maxFontSizeMultiplier={layout.maxFontScale}
+              style={{
+                fontSize: 12,
+                color: colors.primary,
+                fontWeight: '500',
+              }}
+            >
+              Open in full editor ↗
+            </Text>
+          </Pressable>
+        </View>
 
         {/* Delete Button in Edit Mode */}
         {isEditMode && (

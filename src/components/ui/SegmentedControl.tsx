@@ -1,7 +1,7 @@
 import { useThemeRefresh } from '@/hooks/useThemeRefresh';
-import React from 'react';
-import { View, Text, Pressable, StyleProp, ViewStyle } from 'react-native';
-import { layout } from '@/constants/theme';
+import React, { useRef, useEffect, useState } from 'react';
+import { View, Text, Pressable, Animated, LayoutChangeEvent, StyleProp, ViewStyle } from 'react-native';
+import { colors, layout } from '@/constants/theme';
 
 export interface SegmentedControlOption<T extends string = string> {
   value: T;
@@ -22,30 +22,94 @@ export function SegmentedControl<T extends string = string>({
   style,
 }: SegmentedControlProps<T>) {
   useThemeRefresh();
+  const selectedIndex = Math.max(0, options.findIndex((o) => o.value === selectedValue));
+  const [containerWidth, setContainerWidth] = useState(0);
+  const animIndex = useRef(new Animated.Value(selectedIndex)).current;
+
+  useEffect(() => {
+    Animated.spring(animIndex, {
+      toValue: selectedIndex,
+      damping: 24,
+      stiffness: 280,
+      mass: 0.8,
+      useNativeDriver: true,
+    }).start();
+  }, [selectedIndex, animIndex]);
+
+  const onLayout = (e: LayoutChangeEvent) => {
+    setContainerWidth(e.nativeEvent.layout.width);
+  };
+
+  const segmentWidth = containerWidth > 0 && options.length > 0 ? (containerWidth - 8) / options.length : 0;
+
   return (
     <View
-      className="flex-row bg-background border border-border rounded-full p-1 items-center"
-      style={style}
+      onLayout={onLayout}
+      style={[
+        {
+          flexDirection: 'row',
+          backgroundColor: colors.background,
+          borderWidth: 1,
+          borderColor: colors.border,
+          borderRadius: 9999,
+          padding: 4,
+          alignItems: 'center',
+          position: 'relative',
+        },
+        style,
+      ]}
     >
+      {segmentWidth > 0 && (
+        <Animated.View
+          style={{
+            position: 'absolute',
+            left: 4,
+            top: 4,
+            bottom: 4,
+            width: segmentWidth,
+            borderRadius: 9999,
+            backgroundColor: colors.surface,
+            borderWidth: 1,
+            borderColor: colors.border,
+            transform: [
+              {
+                translateX: animIndex.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, segmentWidth],
+                }),
+              },
+            ],
+          }}
+        />
+      )}
       {options.map((option) => {
         const isSelected = option.value === selectedValue;
         return (
           <Pressable
             key={option.value}
             onPress={() => onChange(option.value)}
-            className={`flex-1 py-1.5 px-3 rounded-full items-center justify-center ${
-              isSelected ? 'bg-surface' : 'bg-transparent'
-            }`}
-            style={{ minHeight: 44, minWidth: 0 }}
+            style={{
+              flex: 1,
+              paddingVertical: 6,
+              paddingHorizontal: 12,
+              borderRadius: 9999,
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: 44,
+              minWidth: 0,
+              zIndex: 1,
+            }}
             accessibilityRole="button"
             accessibilityState={{ selected: isSelected }}
           >
             <Text
               numberOfLines={1}
               maxFontSizeMultiplier={layout.maxFontScale}
-              className={`text-xs font-medium ${
-                isSelected ? 'text-text' : 'text-text-muted'
-              }`}
+              style={{
+                fontSize: 12,
+                fontWeight: isSelected ? '600' : '500',
+                color: isSelected ? colors.text : colors['text-muted'],
+              }}
             >
               {option.label}
             </Text>

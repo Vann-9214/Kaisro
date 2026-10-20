@@ -5,14 +5,18 @@ import {
   Text,
   Platform,
   StatusBar,
+  Pressable,
   StyleProp,
   ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ArrowLeft } from 'lucide-react-native';
 import { colors, layout } from '@/constants/theme';
 
 export interface TopBarProps {
   featureName: string;
+  onBack?: () => void;
+  backAction?: React.ReactNode;
   rightAction?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
 }
@@ -31,7 +35,7 @@ export interface TopBarProps {
  * - If top inset is 0 on Android (edge-to-edge/translucent), falls back to StatusBar.currentHeight.
  * - Background is solid colors.background and extends behind the status bar so scrolling content never shows through.
  */
-export function TopBar({ featureName, rightAction, style }: TopBarProps) {
+export function TopBar({ featureName, onBack, backAction, rightAction, style }: TopBarProps) {
   useThemeRefresh();
   const insets = useSafeAreaInsets();
   const topInset =
@@ -48,6 +52,25 @@ export function TopBar({ featureName, rightAction, style }: TopBarProps) {
       <View className="px-5 pt-2 pb-2.5 flex-row items-center justify-between">
         {/* App Branding & Feature Title */}
         <View className="flex-row items-center flex-1 min-w-0">
+          {onBack ? (
+            <Pressable
+              onPress={onBack}
+              accessibilityRole="button"
+              accessibilityLabel="Go back"
+              style={{
+                minWidth: 44,
+                minHeight: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: -8,
+                marginRight: 4,
+              }}
+            >
+              <ArrowLeft size={20} color={colors.text} />
+            </Pressable>
+          ) : backAction ? (
+            <View style={{ marginRight: 4 }}>{backAction}</View>
+          ) : null}
           <Text maxFontSizeMultiplier={layout.maxFontScale} numberOfLines={1} className="text-xl font-semibold text-primary tracking-tight">
             Kaisro
           </Text>

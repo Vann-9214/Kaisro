@@ -90,9 +90,10 @@ export const TaskForm = React.forwardRef<QuickAddFormHandle, QuickAddFormProps>(
         </View>}
       </SheetSection></FormCard>
       <FormCard compact><SheetSection gap="sm">
-        <FormRow label="Subtasks" right={<Pressable accessibilityRole="button" accessibilityLabel="Add subtask"
+        <FormRow label="Subtasks" value={children.length > 0 ? `${children.length} ${children.length === 1 ? 'item' : 'items'}` : undefined} right={<Pressable accessibilityRole="button" accessibilityLabel="Add subtask"
           style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
           onPress={() => { closeBar(); setChildren(items => [...items, { title: '', done: false }]); }}><Plus size={20} color={colors.tasks} /></Pressable>} />
+        {children.length === 0 && <Text style={{ color: colors['text-muted'], fontSize: 12 }}>Tap + to break down this task into smaller steps.</Text>}
         {children.map((child, index) => <FormRow key={child.id ?? 'new-' + index} label="" right={
           <Pressable accessibilityRole="button" accessibilityLabel={'Remove subtask ' + (index + 1)}
             style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}

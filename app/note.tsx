@@ -30,6 +30,7 @@ export default function NoteEditorScreen() {
   const [loaded, setLoaded] = useState(false);
   const [preview, setPreview] = useState(false);
   const [tagText, setTagText] = useState('');
+  const [tagInput, setTagInput] = useState('');
   const [selection, setSelection] = useState({ start: 0, end: 0 });
   const draftRef = useRef(draft);
   const idRef = useRef<number | undefined>(undefined);
@@ -74,6 +75,32 @@ export default function NoteEditorScreen() {
   const applyFormat = (format: NoteFormat) => {
     const result = formatNoteSelection(draft.body, selection, format); change({ body: result.body }); setSelection(result.selection);
   };
+  const handleTagInputChange = (text: string) => {
+    if (text.includes(',')) {
+      const parts = text.split(',').map(s => s.trim()).filter(Boolean);
+      const next = [...new Set([...draft.tags, ...parts])];
+      change({ tags: next });
+      setTagText(next.join(', '));
+      setTagInput('');
+    } else {
+      setTagInput(text);
+    }
+  };
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (trimmed && !draft.tags.includes(trimmed)) {
+      const next = [...draft.tags, trimmed];
+      change({ tags: next });
+      setTagText(next.join(', '));
+      setTagInput('');
+    }
+  };
+  const handleRemoveTag = (index: number) => {
+    const next = draft.tags.filter((_, i) => i !== index);
+    change({ tags: next });
+    setTagText(next.join(', '));
+  };
+
   const remove = () => Alert.alert('Delete note?', 'This removes the note and its links.', [
     { text: 'Cancel', style: 'cancel' }, { text: 'Delete', onPress: () => {
       try { if (idRef.current !== undefined) deleteNote(getDb(), idRef.current); dirtyRef.current = false; if (timer.current) clearTimeout(timer.current); useCalendarSync.getState().triggerRefresh(); router.back(); }
@@ -95,7 +122,25 @@ export default function NoteEditorScreen() {
           <Chip label="Favorite" selected={draft.favorite} onPress={() => change({ favorite: !draft.favorite })} />
           <Chip label={preview ? 'Edit text' : 'Preview'} selected={preview} onPress={() => setPreview(value => !value)} />
         </View>
-        <FormCard compact><FormRow label="Tags (comma separated)" /><TextInput value={tagText} onChangeText={text => { setTagText(text); change({ tags: text.split(',') }); }} placeholder="Ideas, Personal" placeholderTextColor={colors['text-muted']} style={{ color: colors.text, minHeight: 44 }} /></FormCard>
+        <FormCard compact>
+          <SheetSection gap="xs">
+            <FormRow label="Tags" value={draft.tags.length > 0 ? `${draft.tags.length} linked` : undefined} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, alignItems: 'center' }}>
+              {draft.tags.filter(t => t.trim()).map((tag, idx) => (
+                <Chip key={`${tag}-${idx}`} label={`${tag.trim()} ×`} selected onPress={() => handleRemoveTag(idx)} />
+              ))}
+              <TextInput
+                value={tagInput}
+                onChangeText={handleTagInputChange}
+                onSubmitEditing={handleAddTag}
+                placeholder={draft.tags.length === 0 ? "Add tags (e.g. Ideas, Design)..." : "+ tag..."}
+                placeholderTextColor={colors['text-muted']}
+                returnKeyType="done"
+                style={{ color: colors.text, minHeight: 44, paddingHorizontal: spacing.sm, fontSize: 13, flex: 1, minWidth: 90 }}
+              />
+            </View>
+          </SheetSection>
+        </FormCard>
         <NoteTargetPicker selected={draft.links} onChange={links => change({ links })} />
         {draft.links.length > 0 && <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm }}>{draft.links.map(link => {
           const db = getDb();

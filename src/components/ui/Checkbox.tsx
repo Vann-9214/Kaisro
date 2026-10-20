@@ -1,6 +1,6 @@
 import { useThemeRefresh } from '@/hooks/useThemeRefresh';
 import React from 'react';
-import { Pressable, View, Text, StyleProp, ViewStyle } from 'react-native';
+import { Pressable, View, Text, StyleProp, ViewStyle, Animated } from 'react-native';
 import { Check } from 'lucide-react-native';
 import { colors } from '@/constants/theme';
 
@@ -24,14 +24,25 @@ export function Checkbox({
   style,
 }: CheckboxProps) {
   useThemeRefresh();
+  const scaleAnim = React.useRef(new Animated.Value(1)).current;
+
+  const triggerAnim = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 0.8, duration: 70, useNativeDriver: true }),
+      Animated.spring(scaleAnim, { toValue: 1, friction: 3, tension: 220, useNativeDriver: true }),
+    ]).start();
+  };
+
   const handleBoxPress = () => {
     if (!disabled) {
+      triggerAnim();
       onToggle(!checked);
     }
   };
 
   const handleLabelPress = () => {
     if (!disabled) {
+      triggerAnim();
       if (onLabelPress) {
         onLabelPress();
       } else {
@@ -51,7 +62,8 @@ export function Checkbox({
         hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}
       >
-        <View
+        <Animated.View
+          style={{ transform: [{ scale: scaleAnim }] }}
           className={`w-5 h-5 rounded-full items-center justify-center ${
             checked
               ? 'bg-tasks border border-tasks'
@@ -59,7 +71,7 @@ export function Checkbox({
           } ${disabled ? 'opacity-50' : ''}`}
         >
           {checked && <Check size={12} color={colors['on-tasks']} strokeWidth={2.5} />}
-        </View>
+        </Animated.View>
       </Pressable>
 
       {label && (

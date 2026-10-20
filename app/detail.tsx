@@ -68,7 +68,7 @@ export default function DetailScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      <TopBar featureName="Detail" rightAction={<Pressable onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Go back" style={{ minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center' }}><ArrowLeft size={20} color={colors.text} /></Pressable>} />
+      <TopBar featureName="Detail" onBack={() => router.back()} />
 
       <ScrollView
         className="flex-1 px-5 pt-5"
@@ -181,7 +181,7 @@ export default function DetailScreen() {
         )}
 
         <Button
-          title="Back to Day View"
+          title="Back"
           variant="primary"
           size="md"
           onPress={() => router.back()}

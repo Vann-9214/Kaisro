@@ -1,6 +1,6 @@
 import { useThemeRefresh } from '@/hooks/useThemeRefresh';
-import React from 'react';
-import { View, StyleSheet, useWindowDimensions } from 'react-native';
+import React, { useRef, useEffect } from 'react';
+import { View, StyleSheet, useWindowDimensions, Animated } from 'react-native';
 import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { TabBar } from '@/components/ui/TabBar';
@@ -18,7 +18,7 @@ export default function TabLayout() {
 
   const handleFabPress = () => {
     if (pathname === '/notes') {
-      router.push('/note');
+      openAddSheet('note');
     } else if (pathname === '/tasks') {
       openAddSheet('task');
     } else if (pathname === '/budget') {
@@ -31,6 +31,25 @@ export default function TabLayout() {
   // Tab bar base dock height is 56px, plus insets.bottom.
   // FAB sits cleanly 16px above the tab bar top edge.
   const fabBottomOffset = tabDockHeight(fontScale) + insets.bottom + 16;
+  const isSettings = pathname === '/settings';
+  const fabScale = useRef(new Animated.Value(isSettings ? 0 : 1)).current;
+  const fabOpacity = useRef(new Animated.Value(isSettings ? 0 : 1)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(fabScale, {
+        toValue: isSettings ? 0 : 1,
+        damping: 20,
+        stiffness: 260,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fabOpacity, {
+        toValue: isSettings ? 0 : 1,
+        duration: 180,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, [isSettings, fabScale, fabOpacity]);
 
   return (
     <View style={styles.container}>
@@ -76,12 +95,20 @@ export default function TabLayout() {
         />
       </Tabs>
 
-      {/* Floating Add Button (FAB) anchored above bottom dock respecting safe-area insets */}
-      <View
-        style={[styles.fabContainer, { bottom: fabBottomOffset, pointerEvents: 'box-none' }]}
+      {/* Floating Add Button (FAB) anchored above bottom dock respecting safe-area insets, animated out on Settings */}
+      <Animated.View
+        style={[
+          styles.fabContainer,
+          {
+            bottom: fabBottomOffset,
+            pointerEvents: isSettings ? 'none' : 'box-none',
+            opacity: fabOpacity,
+            transform: [{ scale: fabScale }],
+          },
+        ]}
       >
         <FloatingAddButton onPress={handleFabPress} />
-      </View>
+      </Animated.View>
     </View>
   );
 }

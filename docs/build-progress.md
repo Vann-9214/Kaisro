@@ -479,3 +479,24 @@ this startup fix makes no new visual design decisions.
 Phone checklist: restart with `npx.cmd expo start --go --clear`, scan the new
 QR code, confirm loading reaches Calendar, switch tabs, and open Quick Add.
 Physical-device confirmation remains pending.
+
+
+## UI/UX enhancements and animation polish — 2026-10-20
+
+Implemented all 5 high-impact UI/UX improvements identified in the UI audit:
+1. Quick-Add Note Continuity: Note creation is unified inside QuickAddBottomSheet using NoteForm, with an "Open in full editor ↗" link, avoiding jarring modal dismissal.
+2. Tasks Reordering Ergonomics & Checkbox/Progress Animations: Removed bloated in-card chips in favor of right-gutter vertical steppers; added tactile spring scale feedback to Checkbox and smooth width animation to ProgressBar.
+3. Financial Deficit & Balance Contrast: Enhanced budget remaining typography and added explicit colors.error deficit alert pills when expenses exceed income; dynamic error module for category progress bars exceeding cap.
+4. Shell Navigation Hygiene: FloatingAddButton now smoothly animates out on the Settings screen via spring scaling/fading; standardized TopBar back navigation to top-left on Detail and Categories screens.
+5. Interactive Tag Cloud & Subtask Guidance: Note editor tags upgraded to interactive Chip cloud with quick delete and Enter-to-add; TaskForm subtasks feature item count summary and clear empty guidance.
+6. SegmentedControl spring animation: Fluid sliding background indicator using native spring physics across all tab switchers.
+
+Validation: `npm run check-types` passed, `npm run check:ui` passed, and verification test scripts (`verify-quickadd-save-button.ts`, `verify-note-experience.ts`, `verify-budget-features.ts`) passed.
+
+Phone checklist:
+1. Open Quick Add (+), tap "Note", and verify it displays the note creation form within the sheet with title, body, and tag fields. Tap "Open in full editor ↗" and confirm navigation.
+2. In Tasks, tap "Reorder" and verify clean vertical steppers appear on the right side of each card without distorting card heights. Tap checkboxes to confirm spring pop animation.
+3. In Budget, inspect the remaining balance; verify high-contrast text and error signaling if expenses exceed income. Inspect category progress bars when approaching or exceeding caps.
+4. Switch to the Settings tab; confirm the floating "+" button smoothly animates out and disappears. Open Detail or Categories and confirm the Back arrow is on the top-left of the TopBar.
+5. Open Note editor, add tags, and verify they render as interactive chips with "×" removal. In Task Form, inspect subtask count and creation flow.
+6. Toggle segmented controls in Tasks, Budget, and Settings; verify smooth sliding pill animation.

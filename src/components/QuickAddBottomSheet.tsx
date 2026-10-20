@@ -123,21 +123,8 @@ function QuickAddBottomSheetContent() {
 
   const handleTabPress = useCallback((type: QuickAddType) => {
     closeBar();
-    if (type === 'note') {
-      closeAddSheet();
-      router.push('/note');
-      return;
-    }
     setActiveAddType(type);
-  }, [closeBar, closeAddSheet, router, setActiveAddType]);
-
-  useEffect(() => {
-    if (isAddSheetOpen && activeAddType === 'note') {
-      closeBar();
-      closeAddSheet();
-      router.push('/note');
-    }
-  }, [isAddSheetOpen, activeAddType, closeBar, closeAddSheet, router]);
+  }, [closeBar, setActiveAddType]);
 
   // Ensure bar is closed whenever sheet becomes hidden
   useEffect(() => {

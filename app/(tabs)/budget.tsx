@@ -53,7 +53,35 @@ export default function BudgetScreen() {
             <Text style={{ color: colors['text-muted'] }}>MONTHLY SUMMARY</Text>
             <FormRow label="Income" right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.income)}</Text>} />
             <FormRow label="Expenses" right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.expenses)}</Text>} />
-            <FormRow label="Remaining" right={<Text style={{ color: colors['on-money'], fontSize: 24, fontVariant: ['tabular-nums'] }}>{formatCurrency(budget.remaining)}</Text>} />
+            {(() => {
+              const isDeficit = budget.remaining < 0;
+              return (
+                <FormRow
+                  label={
+                    <View>
+                      <Text style={{ color: colors.text, fontSize: 16, fontFamily: 'Inter_500Medium' }}>Remaining</Text>
+                      {isDeficit && (
+                        <Text accessibilityRole="alert" style={{ color: colors.error, fontSize: 11, fontFamily: 'Inter_500Medium', marginTop: 2 }}>
+                          Deficit · Over budget by {formatCurrency(Math.abs(budget.remaining))}
+                        </Text>
+                      )}
+                    </View>
+                  }
+                  right={
+                    <Text
+                      style={{
+                        color: isDeficit ? colors.error : colors.primary,
+                        fontSize: 24,
+                        fontFamily: 'Inter_600SemiBold',
+                        fontVariant: ['tabular-nums'],
+                      }}
+                    >
+                      {formatCurrency(budget.remaining)}
+                    </Text>
+                  }
+                />
+              );
+            })()}
           </SheetSection></FormCard>
           {budget.entries.length === 0 && <FormCard style={{ backgroundColor: colors.surface }}>
             <EmptyState variant="full" title="No spending logged yet" description="Track quiet daily purchases or archival notes with mindful precision." actionLabel="Log an expense" actionModule="money"
@@ -69,14 +97,37 @@ export default function BudgetScreen() {
             {budget.categoryRows.map(category => <FormCard key={category.id} style={{ backgroundColor: colors.surface }}><SheetSection gap="sm">
               <FormRow icon={<CategoryIcon name={category.icon} />} label={category.name}
                 right={<Text style={{ color: colors.text, fontVariant: ['tabular-nums'] }}>{formatCurrency(category.spent)}</Text>} />
-              {category.monthlyCap !== null && category.monthlyCap > 0 && <>
-                <ProgressBar module="money" progress={Math.min(1, category.spent / category.monthlyCap)} />
-                <Text style={{ color: colors['text-muted'], fontSize: 12 }}>{formatCurrency(category.monthlyCap)} cap</Text>
-                {budgetAlert(category.spent, category.monthlyCap, threshold) && <Text accessibilityRole="alert" style={{ color: colors.text }}>
-                  {budgetAlert(category.spent, category.monthlyCap, threshold) === 'near' ? 'Approaching your cap' : budgetAlert(category.spent, category.monthlyCap, threshold) === 'reached' ? 'Cap reached' : 'Over your cap'}
-                  {' · '}{formatCurrency(Math.max(0, category.monthlyCap - category.spent))} remaining
-                </Text>}
-              </>}
+              {category.monthlyCap !== null && category.monthlyCap > 0 && (() => {
+                const alertStatus = budgetAlert(category.spent, category.monthlyCap, threshold);
+                const isOver = alertStatus === 'over';
+                const isReached = alertStatus === 'reached';
+                const isNear = alertStatus === 'near';
+                return (
+                  <>
+                    <ProgressBar
+                      module={isOver ? 'error' : 'money'}
+                      progress={Math.min(1, category.spent / category.monthlyCap)}
+                    />
+                    <Text style={{ color: colors['text-muted'], fontSize: 12 }}>
+                      {formatCurrency(category.monthlyCap)} cap
+                    </Text>
+                    {alertStatus && (
+                      <Text
+                        accessibilityRole="alert"
+                        style={{
+                          color: isOver ? colors.error : isReached ? colors.text : colors['text-muted'],
+                          fontSize: 12,
+                          fontFamily: isOver ? 'Inter_500Medium' : 'Inter_400Regular',
+                        }}
+                      >
+                        {isNear ? 'Approaching cap' : isReached ? 'Cap reached' : 'Over cap'}
+                        {' · '}
+                        {formatCurrency(Math.max(0, category.monthlyCap - category.spent))} remaining
+                      </Text>
+                    )}
+                  </>
+                );
+              })()}
             </SheetSection></FormCard>)}
           </SheetSection>
           {budget.groups.length > 0 && <SheetSection>
