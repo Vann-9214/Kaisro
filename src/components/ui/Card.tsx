@@ -59,10 +59,10 @@ export function Card({
 
   const shadowStyle: ViewStyle = {
     shadowColor: colors.text,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 3,
   };
 
   if (className) {
@@ -81,6 +81,7 @@ export function Card({
             backgroundColor: elevated ? colors['surface-raised'] : colors.surface,
             borderColor: colors.border,
             borderWidth: layout.cardBorderWidth,
+            borderBottomWidth: 2.5,
             borderRadius: layout.cardBorderRadius,
             minHeight: 44,
           }}
@@ -101,6 +102,7 @@ export function Card({
           backgroundColor: elevated ? colors['surface-raised'] : colors.surface,
           borderColor: colors.border,
           borderWidth: layout.cardBorderWidth,
+          borderBottomWidth: 2.5,
           borderRadius: layout.cardBorderRadius,
         },
         shadowStyle,

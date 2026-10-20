@@ -93,7 +93,13 @@ export default function BudgetScreen() {
                     paddingVertical: 8,
                     borderRadius: 12,
                     borderWidth: 1,
+                    borderBottomWidth: 2.5,
                     borderColor: colors.border,
+                    shadowColor: colors.text,
+                    shadowOffset: { width: 0, height: 1.5 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1.5,
                   }}
                 >
                   <Text style={{ color: colors['text-muted'], fontSize: 10, fontFamily: 'Inter_500Medium', textTransform: 'uppercase' }}>
@@ -112,7 +118,13 @@ export default function BudgetScreen() {
                     paddingVertical: 8,
                     borderRadius: 12,
                     borderWidth: 1,
+                    borderBottomWidth: 2.5,
                     borderColor: colors.border,
+                    shadowColor: colors.text,
+                    shadowOffset: { width: 0, height: 1.5 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 2,
+                    elevation: 1.5,
                   }}
                 >
                   <Text style={{ color: colors['text-muted'], fontSize: 10, fontFamily: 'Inter_500Medium', textTransform: 'uppercase' }}>

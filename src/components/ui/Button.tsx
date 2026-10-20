@@ -110,6 +110,20 @@ export function Button({
       ? colors['on-money']
       : colors.text;
 
+  const isGhost = variant === 'ghost';
+  const buttonDepthStyle: ViewStyle = isGhost ? {} : {
+    borderRadius: 10,
+    borderWidth: 1,
+    borderBottomWidth: 3,
+    borderColor: variant === 'secondary' ? colors.border : colors[variant],
+    borderBottomColor: variant === 'secondary' ? colors.border : colors.text,
+    shadowColor: variant === 'primary' ? colors.primary : colors.text,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  };
+
   return (
     <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, fullWidth && { width: '100%' }]}>
       <Pressable
@@ -119,7 +133,7 @@ export function Button({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={containerClasses}
-        style={style}
+        style={[buttonDepthStyle, style]}
         {...rest}
       >
         {loading ? (

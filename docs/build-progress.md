@@ -6,21 +6,23 @@ setup/notifications (5/6); earlier exclusions below are historical.
 
 ## Status
 
-### Modern UI & Tactile Feedback Overhaul - 2026-10-20
+### Modern UI, 3D Tactile Affordance & TopBar Overhaul - 2026-10-20
 
 Comprehensive mobile UI overhaul guided by `ui-ux-pro-max` and `make-interfaces-feel-better`:
-1. **Tactile Spring Feedback**:
-   - `Card.tsx` and `FormCard.tsx`: Smooth spring scale compression (`scale(0.97)` / `scale(0.98)`) and multi-layer elevation shadow (`shadowOpacity: 0.04`, `elevation: 2`).
-   - `Button.tsx`: Tuned physical spring compression (`scale(0.96)`) per Rule 12.
-   - `Chip.tsx`: Spring press bounce (`scale(0.95)`).
-   - `FloatingAddButton.tsx`: 45-degree rotation spring on press with layered elevation shadow.
-2. **Modern Fluid Navigation**:
+1. **TopBar Elevation & Branding**:
+   - `TopBar.tsx`: Replaced flat text with a tactile 3D brand badge `[K]` in primary blue with layered elevation, semibold `Kaisro` title, and a 3D tactile feature capsule pill with semantic micro-icon (`CalendarDays`, `CheckSquare2`, `Wallet`, `FileText`, `Sliders`) and border rim.
+   - Added a live date pill (`[• Oct 20]`) in the right slot when no custom rightAction is provided.
+   - Added clean bottom separator border for crisp header structure.
+2. **Tactile 3D Affordance Across Components**:
+   - `Card.tsx` and `FormCard.tsx`: Added physical keycap bottom rim (`borderBottomWidth: 2.5`), multi-stop elevation shadows (`elevation: 3`), and spring scale compression.
+   - `Button.tsx`: Added 3D tactile keycap rim (`borderBottomWidth: 3`) and elevation shadow on primary, tasks, money, and secondary buttons.
+   - `FloatingAddButton.tsx`: Added 3D keycap float rim (`borderBottomWidth: 3.5`), rotation spring, and deep elevation shadow.
+   - `SegmentedControl.tsx`: Added 3D sliding keycap pill (`borderBottomWidth: 2`, `elevation: 2`) and track bottom rim.
+   - `CategoryIcon.tsx`: Wrapped category icons in an embossed 3D squircle badge (`borderBottomWidth: 2.5`, elevation).
+   - `Chip.tsx`: Added 3D pill rim (`borderBottomWidth: 2`, `elevation: 1`) and tactile spring compression.
+   - `budget.tsx` & `tasks.tsx`: Upgraded hero stat breakdown cards with 3D keycap rims and elevation.
+3. **Modern Fluid Navigation**:
    - `TabBar.tsx`: Modern floating pill dock with active tab pill highlight (`bg-surface`, crisp border, subtle elevation), `Inter_600SemiBold` typography, and active indicator dot.
-3. **Hero Cards & Screen Elevation**:
-   - `budget.tsx`: Upgraded to Financial Hero Card with 32px tabular net balance, deficit status badge, and side-by-side Income vs Expense badges.
-   - `tasks.tsx`: Upgraded with Focus Momentum Hero Card (32px tabular completion percentage, progress bar, counts pill, and remaining badge), task opacity fading (0.55) when completed, and urgent priority accenting.
-   - `notes.tsx`: Modernized note cards with Lucide `Pin` and `Star` micro-badges, clean `#tag` chip cloud, and layered card elevation.
-   - `index.tsx`: Elevated timeline items (events, tasks, expenses) with subtle layered depth and corrected contrast token for expense badges (`text-money`).
 4. **Delight & Animations**:
    - `EmptyState.tsx`: Added fade-in and spring slide-up entrance animation.
    - Strict adherence to 44dp touch targets, semantic theme tokens, and non-blocking layout rules.

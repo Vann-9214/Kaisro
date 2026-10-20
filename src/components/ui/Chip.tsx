@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Pressable, Text, View, Animated, StyleProp, ViewStyle } from 'react-native';
+import { colors } from '@/constants/theme';
 
 export type ChipVariant = 'default' | 'primary' | 'tasks' | 'money';
 export type ChipSize = 'sm' | 'md';
@@ -79,6 +80,16 @@ export function Chip({
     </>
   );
 
+  const chipDepthStyle: ViewStyle = {
+    borderBottomWidth: 2,
+    borderBottomColor: colors.border,
+    shadowColor: colors.text,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1.5,
+    elevation: 1,
+  };
+
   if (onPress) {
     return (
       <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
@@ -87,7 +98,7 @@ export function Chip({
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           className={containerClasses}
-          style={{ minHeight: 44, maxWidth: '100%', borderRadius: 9999 }}
+          style={[chipDepthStyle, { minHeight: 44, maxWidth: '100%', borderRadius: 9999 }]}
           accessibilityRole="button"
           accessibilityLabel={label}
         >
@@ -98,7 +109,7 @@ export function Chip({
   }
 
   return (
-    <View className={containerClasses} style={[{ maxWidth: '100%' }, style]}>
+    <View className={containerClasses} style={[chipDepthStyle, { maxWidth: '100%' }, style]}>
       {content}
     </View>
   );

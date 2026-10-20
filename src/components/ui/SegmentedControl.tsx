@@ -50,6 +50,7 @@ export function SegmentedControl<T extends string = string>({
           flexDirection: 'row',
           backgroundColor: colors.background,
           borderWidth: 1,
+          borderBottomWidth: 2,
           borderColor: colors.border,
           borderRadius: 9999,
           padding: 4,
@@ -70,7 +71,13 @@ export function SegmentedControl<T extends string = string>({
             borderRadius: 9999,
             backgroundColor: colors.surface,
             borderWidth: 1,
+            borderBottomWidth: 2,
             borderColor: colors.border,
+            shadowColor: colors.text,
+            shadowOffset: { width: 0, height: 1.5 },
+            shadowOpacity: 0.08,
+            shadowRadius: 2,
+            elevation: 2,
             transform: [
               {
                 translateX: animIndex.interpolate({
